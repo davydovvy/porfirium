@@ -7,20 +7,22 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from temporalio.client import Client
 
+from .agent import AgentWorkflowV1, workflow_id
 from .auth import CurrentIdentity, Identity
 from .chat import append_event, cancel_turn, event_stream, start_turn
 from .config import settings
 from .db import get_session
 from .models import Conversation, Message, Turn, User, now_utc
 
-app = FastAPI(title="Porfirium Portal API", version="0.2.0")
+app = FastAPI(title="Porfirium Portal API", version="0.3.0")
 Session = Annotated[AsyncSession, Depends(get_session)]
 
 
 class ConversationCreate(BaseModel):
     title: str = Field(default="New conversation", min_length=1, max_length=200)
-    mode: Literal["direct"] = "direct"
+    mode: Literal["direct", "agent"] = "direct"
 
 
 class ConversationPatch(BaseModel):
@@ -109,7 +111,7 @@ async def me(identity: CurrentIdentity, session: Session) -> dict[str, object]:
         "display_name": identity.display_name,
         "email": identity.email,
         "roles": identity.roles,
-        "capabilities": {"chat": True, "agent": False, "tools": False},
+        "capabilities": {"chat": True, "agent": True, "tools": False},
     }
 
 
@@ -117,7 +119,10 @@ async def me(identity: CurrentIdentity, session: Session) -> dict[str, object]:
 async def capabilities(identity: CurrentIdentity) -> dict[str, object]:
     return {
         "default_mode": "direct",
-        "modes": [{"id": "direct", "name": "Direct LLM", "enabled": True}],
+        "modes": [
+            {"id": "direct", "name": "Direct LLM", "enabled": True},
+            {"id": "agent", "name": "Agent", "enabled": True},
+        ],
         "model": {"provider": "Yandex", "alias": "default"},
     }
 
@@ -154,7 +159,7 @@ async def get_conversation(
     user = await ensure_user(identity, session)
     item = await session.scalar(
         select(Conversation)
-        .options(selectinload(Conversation.messages))
+        .options(selectinload(Conversation.messages), selectinload(Conversation.turns))
         .where(Conversation.id == conversation_id, Conversation.owner_id == user.id)
     )
     if item is None:
@@ -171,6 +176,10 @@ async def get_conversation(
         }
         for message in sorted(item.messages, key=lambda value: value.created_at)
     ]
+    active_turns = [turn for turn in item.turns if turn.state in {"accepted", "running"}]
+    result["active_turn"] = (
+        turn_json(max(active_turns, key=lambda value: value.created_at)) if active_turns else None
+    )
     return result
 
 
@@ -203,9 +212,10 @@ async def create_turn(
         conversation_id=conversation.id,
         owner_id=user.id,
         idempotency_key=body.idempotency_key,
-        mode="direct",
+        mode=conversation.mode,
         state="accepted",
         correlation_id=turn_id.hex,
+        workflow_id=workflow_id(turn_id) if conversation.mode == "agent" else None,
     )
     session.add(turn)
     await session.flush()
@@ -222,8 +232,35 @@ async def create_turn(
         conversation.title = body.content.strip()[:80]
     conversation.updated_at = now_utc()
     await session.commit()
-    await append_event(turn.id, "turn.accepted", {"mode": "direct"})
-    start_turn(turn.id)
+    await append_event(turn.id, "turn.accepted", {"mode": conversation.mode})
+    if conversation.mode == "agent":
+        try:
+            temporal = await Client.connect(
+                settings.temporal_address, namespace=settings.temporal_namespace
+            )
+            await temporal.start_workflow(
+                AgentWorkflowV1.run,
+                str(turn.id),
+                id=turn.workflow_id,
+                task_queue=settings.temporal_task_queue,
+            )
+        except Exception as exc:
+            turn.state = "failed"
+            turn.error_code = "workflow_unavailable"
+            turn.updated_at = now_utc()
+            await session.commit()
+            await append_event(
+                turn.id,
+                "turn.failed",
+                {
+                    "code": "workflow_unavailable",
+                    "message": "The durable workflow service is unavailable.",
+                    "correlation_id": turn.correlation_id,
+                },
+            )
+            raise HTTPException(status_code=503, detail="Agent workflow unavailable") from exc
+    else:
+        start_turn(turn.id)
     return turn_json(turn)
 
 
@@ -266,7 +303,16 @@ async def cancel(
     turn = await owned_turn(turn_id, identity, session)
     if turn.state not in {"accepted", "running"}:
         return turn_json(turn)
-    if not await cancel_turn(turn_id):
+    if turn.mode == "agent" and turn.workflow_id:
+        temporal = await Client.connect(
+            settings.temporal_address, namespace=settings.temporal_namespace
+        )
+        await temporal.get_workflow_handle(turn.workflow_id).cancel()
+        turn.state = "cancelled"
+        turn.updated_at = now_utc()
+        await session.commit()
+        await append_event(turn.id, "turn.cancelled", {})
+    elif not await cancel_turn(turn_id):
         turn.state = "cancelled"
         turn.updated_at = now_utc()
         await session.commit()

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+cd "$repo_dir"
+./scripts/phase1/bootstrap.sh
+docker compose up -d --build application-postgres temporal temporal-ui diagnostic-mcp langfuse-web langfuse-worker bifrost
+./scripts/phase3/bifrost-policy.sh
+docker compose up -d --build portal-api agent-worker portal
+./scripts/phase3/status.sh

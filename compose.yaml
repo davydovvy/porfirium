@@ -35,6 +35,9 @@ services:
       LLM_MODEL: ${YANDEX_MODEL}
       LLM_TIMEOUT_SECONDS: "120"
       LLM_MAX_OUTPUT_TOKENS: "2048"
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      TEMPORAL_TASK_QUEUE: porfirium-agent-v1
     extra_hosts:
       - "keycloak.local:host-gateway"
     volumes:
@@ -44,11 +47,69 @@ services:
         condition: service_healthy
       bifrost:
         condition: service_healthy
+      temporal:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)"]
       interval: 5s
       timeout: 3s
       retries: 18
+
+  agent-worker:
+    build:
+      context: apps/portal-api
+    restart: unless-stopped
+    command: [".venv/bin/python", "-m", "portal_api.worker"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://genai:${APPLICATION_POSTGRES_PASSWORD}@application-postgres:5432/genai
+      BIFROST_URL: http://bifrost:8080
+      LLM_MODEL: ${YANDEX_MODEL}
+      LLM_TIMEOUT_SECONDS: "120"
+      LLM_MAX_OUTPUT_TOKENS: "2048"
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      TEMPORAL_TASK_QUEUE: porfirium-agent-v1
+    depends_on:
+      portal-api:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+      bifrost:
+        condition: service_healthy
+
+  temporal:
+    image: temporalio/auto-setup@sha256:b44cbfeb43dbeae42db113b44fb8414c3452f05643b3d6b1592f955277d73526
+    restart: unless-stopped
+    environment:
+      DB: postgres12
+      DB_PORT: "5432"
+      POSTGRES_USER: genai
+      POSTGRES_PWD: ${APPLICATION_POSTGRES_PASSWORD}
+      POSTGRES_SEEDS: application-postgres
+      DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/docker.yaml
+    depends_on:
+      application-postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:7233:7233"
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "temporal:7233"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  temporal-ui:
+    image: temporalio/ui@sha256:afc274fbc21e217ff4585394b604aa2f97fac71059bf301d9e70269bd164bd3a
+    restart: unless-stopped
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: https://portal.local:8444
+    depends_on:
+      temporal:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
 
   application-postgres:
     image: postgres:17.6-alpine

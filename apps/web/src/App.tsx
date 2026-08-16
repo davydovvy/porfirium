@@ -2,7 +2,8 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { apiFetch, keycloak } from './auth'
 
 type Identity = { id: string; username: string; display_name: string; roles: string[] }
-type Conversation = { id: string; title: string; mode: 'direct'; messages?: Message[] }
+type Mode = 'direct' | 'agent'
+type Conversation = { id: string; title: string; mode: Mode; messages?: Message[]; active_turn?: Turn | null }
 type Message = { id: string; turn_id?: string; role: 'user' | 'assistant'; content: string; status: string }
 type Turn = { turn_id: string; state: string; events_url: string; correlation_id: string }
 type StreamEvent = { sequence: number; type: string; payload: Record<string, string> }
@@ -23,6 +24,8 @@ export function App({ authenticated }: { authenticated: boolean }) {
   const [draft, setDraft] = useState('')
   const [turn, setTurn] = useState<Turn | null>(null)
   const [streamText, setStreamText] = useState('')
+  const [progress, setProgress] = useState<string[]>([])
+  const [newMode, setNewMode] = useState<Mode>('direct')
   const [error, setError] = useState<string | null>(null)
   const streamAbort = useRef<AbortController | null>(null)
 
@@ -36,9 +39,11 @@ export function App({ authenticated }: { authenticated: boolean }) {
     streamAbort.current?.abort()
     setTurn(null)
     setStreamText('')
+    setProgress([])
     setError(null)
     const item = await json<Conversation>(`/api/v1/conversations/${id}`)
     setActive(item)
+    setNewMode(item.mode)
     window.history.replaceState({}, '', `/chat/${id}`)
   }, [])
 
@@ -54,16 +59,33 @@ export function App({ authenticated }: { authenticated: boolean }) {
       .catch((reason: Error) => setError(reason.message))
   }, [authenticated, loadConversations, openConversation])
 
-  async function createConversation() {
+  async function createConversation(mode: Mode = newMode) {
     const item = await json<Conversation>('/api/v1/conversations', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: 'New conversation', mode: 'direct' }),
+      body: JSON.stringify({ title: 'New conversation', mode }),
     })
     setConversations((current) => [item, ...current])
     setActive({ ...item, messages: [] })
     setTurn(null)
     setStreamText('')
+    setProgress([])
     window.history.replaceState({}, '', `/chat/${item.id}`)
+  }
+
+  function selectMode(mode: Mode) {
+    setNewMode(mode)
+    const next = conversations.find((item) => item.mode === mode)
+    if (next) {
+      openConversation(next.id).catch((reason: Error) => setError(reason.message))
+    } else {
+      streamAbort.current?.abort()
+      setActive(null)
+      setTurn(null)
+      setStreamText('')
+      setProgress([])
+      setError(null)
+      window.history.replaceState({}, '', '/')
+    }
   }
 
   async function consumeEvents(created: Turn, conversationId: string, after = 0) {
@@ -85,6 +107,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
         if (!data) continue
         const event = JSON.parse(data.slice(6)) as StreamEvent
         if (event.type === 'assistant.delta') setStreamText((value) => value + event.payload.delta)
+        if (event.type === 'agent.status') setProgress((value) => [...value, event.payload.label])
         if (event.type === 'turn.failed') setError(`${event.payload.message} Reference: ${event.payload.correlation_id}`)
         if (['turn.completed', 'turn.failed', 'turn.cancelled'].includes(event.type)) {
           setTurn((current) => current ? { ...current, state: event.type.slice(5) } : current)
@@ -94,6 +117,17 @@ export function App({ authenticated }: { authenticated: boolean }) {
     await openConversation(conversationId)
     await loadConversations()
   }
+
+  useEffect(() => {
+    if (!active?.active_turn || turn) return
+    const resumed = active.active_turn
+    setTurn(resumed)
+    consumeEvents(resumed, active.id).catch((reason: Error) => {
+      if (reason.name !== 'AbortError') setError(reason.message)
+    })
+  // consumeEvents intentionally follows the selected conversation only.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.id, active?.active_turn?.turn_id])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -123,34 +157,39 @@ export function App({ authenticated }: { authenticated: boolean }) {
   }
 
   if (!authenticated) return (
-    <main className="landing"><nav><span className="brand">PORFIRIUM</span><span className="status">Phase 2</span></nav>
+    <main className="landing"><nav><span className="brand">PORFIRIUM</span><span className="status">Phase 3</span></nav>
       <section className="hero"><p className="eyebrow">A durable, observable AI workspace</p>
         <h1>One place to talk,<br /><em>build, and inspect.</em></h1>
-        <p className="lede">Stream direct model conversations through your private, local-first workspace.</p>
+        <p className="lede">Run direct conversations or durable agents through your private, local-first workspace.</p>
         <button onClick={() => keycloak.login()}>Sign in with Keycloak <span>↗</span></button></section>
-      <footer><span>Identity protected</span><span>Local-first</span><span>Phase 2 / 5</span></footer></main>
+      <footer><span>Identity protected</span><span>Temporal durable</span><span>Phase 3 / 5</span></footer></main>
   )
 
   const busy = turn && ['accepted', 'running'].includes(turn.state)
   return <main className="app-shell">
     <aside><div className="brand">PORFIRIUM</div>
-      <button className="new-chat" onClick={() => createConversation().catch((reason) => setError(reason.message))}>＋ New conversation</button>
-      <div className="conversation-list">{conversations.map((item) =>
+      <div className="mode-picker" aria-label="New conversation mode">
+        <button className={newMode === 'direct' ? 'active' : ''} onClick={() => selectMode('direct')}>Direct</button>
+        <button className={newMode === 'agent' ? 'active' : ''} onClick={() => selectMode('agent')}>Agent</button>
+      </div>
+      <button className="new-chat" onClick={() => createConversation().catch((reason) => setError(reason.message))}>＋ New {newMode} conversation</button>
+      <div className="conversation-list">{conversations.filter((item) => item.mode === newMode).map((item) =>
         <button className={active?.id === item.id ? 'selected' : ''} key={item.id} onClick={() => openConversation(item.id).catch((reason) => setError(reason.message))}>{item.title}</button>)}</div>
       <div className="profile"><div className="avatar">{identity?.display_name?.[0] ?? '…'}</div>
         <div><strong>{identity?.display_name ?? 'Loading identity'}</strong><small>{identity?.username}</small></div>
         <button className="logout" aria-label="Sign out" onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>↗</button></div>
     </aside>
-    <section className="workspace"><header><span className="dot" /> Direct LLM <span className="model">Yandex · default</span><span className="phase">PHASE 2</span></header>
+    <section className="workspace"><header><span className="dot" /> {active?.mode === 'agent' ? 'Agent' : 'Direct LLM'} <span className="model">{active?.mode === 'agent' ? 'Temporal · Agent v1' : 'Yandex · default'}</span><span className="phase">PHASE 3</span></header>
       {!active ? <div className="empty-state"><div className="orb"><span /></div><p className="eyebrow">Direct channel ready</p>
-        <h1>Welcome, {identity?.display_name ?? 'traveler'}.</h1><p>Create a conversation to begin a persistent, streamed chat.</p>
+        <h1>Welcome, {identity?.display_name ?? 'traveler'}.</h1><p>Create a direct conversation or a durable Agent run.</p>
         <button className="primary" onClick={() => createConversation().catch((reason) => setError(reason.message))}>Start a conversation</button></div>
-      : <><div className="messages"><div className="conversation-heading"><small>DIRECT LLM</small><h1>{active.title}</h1></div>
+      : <><div className="messages"><div className="conversation-heading"><small>{active.mode === 'agent' ? 'DURABLE AGENT' : 'DIRECT LLM'}</small><h1>{active.title}</h1></div>
           {(active.messages ?? []).map((message) => <article className={message.role} key={message.id}><label>{message.role}</label><p>{message.content}</p>{message.status !== 'complete' && <small>{message.status}</small>}</article>)}
           {streamText && <article className="assistant streaming"><label>assistant</label><p>{streamText}</p></article>}
+          {busy && active.mode === 'agent' && <div className="agent-progress"><small>WORKFLOW PROGRESS</small>{progress.length ? progress.map((item, index) => <p key={`${item}-${index}`}>✓ {item}</p>) : <p>○ Waiting for worker</p>}</div>}
           {error && <div className="error">{error}</div>}</div>
-        <form className="composer" onSubmit={submit}><textarea aria-label="Message" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Message the Yandex model…" disabled={Boolean(busy)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} />
-          {busy ? <button type="button" className="cancel" onClick={() => cancel().catch((reason) => setError(reason.message))}>Stop</button> : <button type="submit" disabled={!draft.trim()}>Send ↗</button>}<small>Responses stream through Bifrost and persist locally.</small></form></>}
+        <form className="composer" onSubmit={submit}><textarea aria-label="Message" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={active.mode === 'agent' ? 'Give the durable agent a task…' : 'Message the Yandex model…'} disabled={Boolean(busy)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} />
+          {busy ? <button type="button" className="cancel" onClick={() => cancel().catch((reason) => setError(reason.message))}>Stop</button> : <button type="submit" disabled={!draft.trim()}>Send ↗</button>}<small>{active.mode === 'agent' ? 'Temporal preserves this run across worker restarts.' : 'Responses stream through Bifrost and persist locally.'}</small></form></>}
     </section>
   </main>
 }

@@ -70,6 +70,7 @@ class Turn(Base):
     mode: Mapped[str] = mapped_column(String(32), default="direct", nullable=False)
     correlation_id: Mapped[str] = mapped_column(String(64), nullable=False)
     error_code: Mapped[str | None] = mapped_column(String(64))
+    workflow_id: Mapped[str | None] = mapped_column(String(255), unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     conversation: Mapped[Conversation] = relationship(back_populates="turns")

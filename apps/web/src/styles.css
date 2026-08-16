@@ -14,18 +14,22 @@ nav, footer { display: flex; align-items: center; justify-content: space-between
 .hero button { margin-top: 28px; padding: 17px 22px; border: 0; background: #d7ff70; color: #11180d; cursor: pointer; font-weight: 600; }
 .hero button span { margin-left: 34px; }
 footer { color: #586672; border-top: 1px solid #29323b; padding-top: 20px; }
-.app-shell { min-height: 100vh; display: grid; grid-template-columns: 280px 1fr; }
-aside { padding: 28px 20px; border-right: 1px solid #26303a; display: flex; flex-direction: column; background: #0a0e14; }
+.app-shell { height: 100vh; overflow: hidden; display: grid; grid-template-columns: 280px 1fr; }
+aside { min-height: 0; overflow: hidden; padding: 28px 20px; border-right: 1px solid #26303a; display: flex; flex-direction: column; background: #0a0e14; }
 .new-chat { margin-top: 42px; padding: 13px; color: #d7ff70; background: #151b23; border: 1px solid #35432d; text-align: left; cursor: pointer; }
+.mode-picker { margin-top: 36px; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #29343e; padding: 3px; }
+.mode-picker button { border: 0; padding: 8px; color: #71808b; background: transparent; cursor: pointer; font-size: 11px; }
+.mode-picker button.active { color: #10150c; background: #d7ff70; }
+.mode-picker + .new-chat { margin-top: 8px; }
 .empty-nav { color: #515e68; margin: 24px 8px; font-size: 12px; }
-.conversation-list { margin: 20px 0; display: flex; flex-direction: column; gap: 5px; overflow: auto; }
+.conversation-list { min-height: 0; flex: 1; margin: 20px 0; display: flex; flex-direction: column; gap: 5px; overflow: auto; }
 .conversation-list button { color: #77848d; background: transparent; border: 0; border-radius: 4px; padding: 11px 10px; text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .conversation-list button:hover, .conversation-list .selected { color: #e8e5dd; background: #151b23; }
-.profile { margin-top: auto; padding-top: 18px; border-top: 1px solid #26303a; display: flex; align-items: center; gap: 10px; }
+.profile { flex: 0 0 auto; margin-top: auto; padding-top: 18px; border-top: 1px solid #26303a; display: flex; align-items: center; gap: 10px; }
 .profile strong, .profile small { display: block; font-size: 12px; }.profile small { color: #71808b; margin-top: 3px; }
 .avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #273621; color: #d7ff70; }
 .logout { margin-left: auto; color: #8c999f; background: transparent; border: 0; cursor: pointer; }
-.workspace { display: flex; flex-direction: column; background: radial-gradient(circle at 50% 44%, #17242d, #0c1018 46%); }
+.workspace { min-height: 0; overflow: hidden; display: flex; flex-direction: column; background: radial-gradient(circle at 50% 44%, #17242d, #0c1018 46%); }
 .workspace header { height: 72px; border-bottom: 1px solid #26303a; padding: 0 30px; display: flex; align-items: center; gap: 10px; color: #7f8d96; font-size: 12px; }
 .workspace .phase { margin-left: auto; font: 10px ui-monospace, monospace; }
 .model { color: #4f5e68; margin-left: 8px; }
@@ -55,4 +59,7 @@ article.streaming p::after { content: '▋'; color: #d7ff70; animation: blink 1s
 .composer button:disabled { opacity: .35; cursor: default; }.composer .cancel { color: #ff9d91; border: 1px solid #70463f; background: transparent; }
 .composer > small { grid-column: 1 / -1; color: #56636d; font: 9px ui-monospace, monospace; padding: 0 10px 3px; }
 .error, .fatal { color: #ff8d81; padding: 20px; }.fatal { margin: 50px; }
+.agent-progress { margin: 18px 0 36px; padding: 18px 20px; border: 1px solid #32404a; background: #111820; }
+.agent-progress small { color: #d7ff70; font: 10px ui-monospace, monospace; letter-spacing: .12em; }
+.agent-progress p { margin: 10px 0 0; color: #83919a; font: 12px ui-monospace, monospace; }
 @media (max-width: 700px) { .app-shell { grid-template-columns: 1fr; } aside { display: none; } .hero { margin-left: 0; } footer span:nth-child(2) { display: none; } .composer { left: 20px; right: 20px; } .messages { padding-left: 20px; padding-right: 20px; } }

@@ -16,6 +16,9 @@ class Settings:
     llm_model: str = os.getenv("LLM_MODEL", "")
     llm_timeout_seconds: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "120"))
     llm_max_output_tokens: int = int(os.getenv("LLM_MAX_OUTPUT_TOKENS", "2048"))
+    temporal_address: str = os.getenv("TEMPORAL_ADDRESS", "temporal:7233")
+    temporal_namespace: str = os.getenv("TEMPORAL_NAMESPACE", "default")
+    temporal_task_queue: str = os.getenv("TEMPORAL_TASK_QUEUE", "porfirium-agent-v1")
 
     @property
     def jwks_url(self) -> str:
