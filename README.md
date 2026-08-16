@@ -1,6 +1,17 @@
 # Porfirium
 
-Porfirium is a local-first agent and LLM demonstration platform. The repository contains the completed Phase 0 diagnostics increment and the user-testable Phase 1 authenticated platform skeleton.
+Porfirium is a local-first agent and LLM demonstration platform. The repository contains the completed Phase 0 diagnostics and Phase 1 identity increments plus the user-testable Phase 2 Direct LLM chat.
+
+## Phase 2 quick start
+
+With the standalone Keycloak prerequisite running and `portal.local` mapped to `127.0.0.1`:
+
+```bash
+./scripts/phase2/start.sh
+./scripts/phase2/verify.sh
+```
+
+Open `https://portal.local:8444`, sign in, and create a persistent conversation. Bifrost is available at `http://localhost:8088` and Langfuse at `http://localhost:3000`. See [the Phase 2 runbook](docs/phase2/RUNBOOK.md) for operation and recovery details.
 
 ## Phase 1 quick start
 
@@ -52,4 +63,4 @@ Stop without deleting persistent state:
 
 See [the Phase 0 runbook](docs/phase0/RUNBOOK.md) for verification and recovery details. Product architecture and later phases are defined in [SPECIFICATION.md](SPECIFICATION.md).
 
-Phase 0 evidence is recorded in [Phase 0 results](docs/phase0/RESULTS.md). Current identity/portal evidence and limitations are recorded in [Phase 1 results](docs/phase1/RESULTS.md). Phase 1 is implemented and awaiting user handoff review.
+Phase evidence is recorded in [Phase 0 results](docs/phase0/RESULTS.md), [Phase 1 results](docs/phase1/RESULTS.md), and [Phase 2 results](docs/phase2/RESULTS.md). Phases 0–2 are implemented and accepted; Phase 3 has not started.

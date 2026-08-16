@@ -14,10 +14,12 @@ export async function initializeAuth(): Promise<boolean> {
   })
 }
 
-export async function apiFetch(path: string): Promise<Response> {
+export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   if (!keycloak.authenticated || !keycloak.token) {
     throw new Error('Authentication required')
   }
   await keycloak.updateToken(30)
-  return fetch(path, { headers: { Authorization: `Bearer ${keycloak.token}` } })
+  const headers = new Headers(init.headers)
+  headers.set('Authorization', `Bearer ${keycloak.token}`)
+  return fetch(path, { ...init, headers })
 }

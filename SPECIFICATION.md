@@ -2,7 +2,7 @@
 
 Status: Living implementation specification — core deployment decisions accepted  
 Last updated: 2026-08-16  
-Implementation status: Phases 0 and 1 implemented; Phase 1 awaiting user handoff review
+Implementation status: Phases 0, 1, and 2 implemented and accepted; Phase 3 not started
 
 ## 1. Purpose
 

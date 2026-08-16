@@ -28,4 +28,3 @@ async def run_async_migrations():
 
 
 asyncio.run(run_async_migrations())
-

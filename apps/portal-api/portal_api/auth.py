@@ -72,4 +72,3 @@ async def get_identity(
 
 
 CurrentIdentity = Annotated[Identity, Depends(get_identity)]
-

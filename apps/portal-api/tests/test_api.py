@@ -26,4 +26,3 @@ def test_identity_requires_authentication() -> None:
 
 def test_conversations_require_authentication() -> None:
     assert client.get("/api/v1/conversations").status_code == 401
-

@@ -31,12 +31,18 @@ services:
       OIDC_AUDIENCE: genai-demo-api
       OIDC_REQUIRED_ROLE: genai-user
       OIDC_CA_FILE: /certs/keycloak-root-ca.pem
+      BIFROST_URL: http://bifrost:8080
+      LLM_MODEL: ${YANDEX_MODEL}
+      LLM_TIMEOUT_SECONDS: "120"
+      LLM_MAX_OUTPUT_TOKENS: "2048"
     extra_hosts:
       - "keycloak.local:host-gateway"
     volumes:
       - /home/dvy/Projects/KeyCloak/certs/contextforge-demo-root-ca.pem:/certs/keycloak-root-ca.pem:ro
     depends_on:
       application-postgres:
+        condition: service_healthy
+      bifrost:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)"]

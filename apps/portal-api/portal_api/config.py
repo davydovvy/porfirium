@@ -7,13 +7,15 @@ class Settings:
     database_url: str = os.getenv(
         "DATABASE_URL", "postgresql+asyncpg://genai:genai@application-postgres:5432/genai"
     )
-    oidc_issuer: str = os.getenv(
-        "OIDC_ISSUER", "https://keycloak.local:8443/realms/GenAI-platform"
-    )
+    oidc_issuer: str = os.getenv("OIDC_ISSUER", "https://keycloak.local:8443/realms/GenAI-platform")
     oidc_audience: str = os.getenv("OIDC_AUDIENCE", "genai-demo-api")
     oidc_required_role: str = os.getenv("OIDC_REQUIRED_ROLE", "genai-user")
     oidc_ca_file: str | None = os.getenv("OIDC_CA_FILE")
     oidc_jwks_url: str | None = os.getenv("OIDC_JWKS_URL")
+    bifrost_url: str = os.getenv("BIFROST_URL", "http://bifrost:8080")
+    llm_model: str = os.getenv("LLM_MODEL", "")
+    llm_timeout_seconds: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "120"))
+    llm_max_output_tokens: int = int(os.getenv("LLM_MAX_OUTPUT_TOKENS", "2048"))
 
     @property
     def jwks_url(self) -> str:
