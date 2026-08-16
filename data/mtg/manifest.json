@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status": "phase0-selection",
+  "description": "Planned static demo catalog: 20 curated popular cards from each of five sets.",
+  "total_cards": 100,
+  "cards_per_set": 20,
+  "sets": [
+    {"year": 2010, "name": "Magic 2011", "code": "M11", "card_count": 20},
+    {"year": 2011, "name": "Innistrad", "code": "ISD", "card_count": 20},
+    {"year": 2012, "name": "Return to Ravnica", "code": "RTR", "card_count": 20},
+    {"year": 2013, "name": "Theros", "code": "THS", "card_count": 20},
+    {"year": 2014, "name": "Khans of Tarkir", "code": "KTK", "card_count": 20}
+  ],
+  "required_fields": [
+    "id", "name", "set_name", "set_code", "collector_number", "release_year",
+    "rarity", "mana_cost", "mana_value", "colors", "color_identity", "types",
+    "subtypes", "rules_text", "power", "toughness", "loyalty", "price",
+    "price_currency", "price_basis", "price_source", "price_captured_at"
+  ],
+  "price_policy": "Dated illustrative snapshot only; never presented as a live quote or valuation.",
+  "source_status": "Must be selected and reviewed for attribution and permitted use before Phase 4 data import."
+}
+

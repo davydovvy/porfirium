@@ -1,0 +1,13 @@
+.env
+.phase0/
+.phase1/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+node_modules/
+dist/
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+*.pyc

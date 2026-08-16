@@ -1,0 +1,248 @@
+name: genai-platform
+
+services:
+  portal:
+    build:
+      context: apps/web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8444:8444"
+    extra_hosts:
+      - "portal.local:127.0.0.1"
+    depends_on:
+      portal-api:
+        condition: service_healthy
+    volumes:
+      - portal_caddy_data:/data
+      - portal_caddy_config:/config
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "--spider", "https://portal.local:8444/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  portal-api:
+    build:
+      context: apps/portal-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://genai:${APPLICATION_POSTGRES_PASSWORD}@application-postgres:5432/genai
+      OIDC_ISSUER: https://keycloak.local:8443/realms/GenAI-platform
+      OIDC_AUDIENCE: genai-demo-api
+      OIDC_REQUIRED_ROLE: genai-user
+      OIDC_CA_FILE: /certs/keycloak-root-ca.pem
+    extra_hosts:
+      - "keycloak.local:host-gateway"
+    volumes:
+      - /home/dvy/Projects/KeyCloak/certs/contextforge-demo-root-ca.pem:/certs/keycloak-root-ca.pem:ro
+    depends_on:
+      application-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 18
+
+  application-postgres:
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: genai
+      POSTGRES_PASSWORD: ${APPLICATION_POSTGRES_PASSWORD}
+      POSTGRES_DB: genai
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - application_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U genai -d genai"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  diagnostic-mcp:
+    build:
+      context: services/diagnostic-mcp
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    ports:
+      - "127.0.0.1:8091:8091"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  bifrost:
+    image: maximhq/bifrost@sha256:ef8e686b3588884066ec3d0e57f3fc15136b11047ad94678adefe5a9573539af
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_PORT: "8080"
+    volumes:
+      - ./deploy/bifrost/config.json:/app/data/config.json:ro
+      - bifrost_data:/app/data
+    ports:
+      - "127.0.0.1:8088:8080"
+    depends_on:
+      diagnostic-mcp:
+        condition: service_healthy
+      langfuse-web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
+
+  langfuse-worker:
+    image: langfuse/langfuse-worker@sha256:138a5b510cd76262a2abb02af1ddc563105013fdc9a62e63ccce526140ad05ba
+    restart: unless-stopped
+    depends_on: &langfuse-dependencies
+      langfuse-postgres:
+        condition: service_healthy
+      langfuse-clickhouse:
+        condition: service_healthy
+      langfuse-minio:
+        condition: service_healthy
+      langfuse-redis:
+        condition: service_healthy
+    environment: &langfuse-environment
+      NEXTAUTH_URL: http://localhost:3000
+      DATABASE_URL: postgresql://langfuse:${LANGFUSE_POSTGRES_PASSWORD}@langfuse-postgres:5432/langfuse
+      SALT: ${LANGFUSE_SALT}
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY}
+      TELEMETRY_ENABLED: "false"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "false"
+      CLICKHOUSE_MIGRATION_URL: clickhouse://langfuse-clickhouse:9000
+      CLICKHOUSE_URL: http://langfuse-clickhouse:8123
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_MINIO_USER}
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_PASSWORD}
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_MINIO_USER}
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_PASSWORD}
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+      REDIS_HOST: langfuse-redis
+      REDIS_PORT: "6379"
+      REDIS_AUTH: ${LANGFUSE_REDIS_PASSWORD}
+      LANGFUSE_INIT_ORG_ID: phase0-org
+      LANGFUSE_INIT_ORG_NAME: GenAI Platform Phase 0
+      LANGFUSE_INIT_PROJECT_ID: phase0-project
+      LANGFUSE_INIT_PROJECT_NAME: GenAI Platform Diagnostics
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_INIT_PUBLIC_KEY}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_INIT_SECRET_KEY}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL}
+      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD}
+
+  langfuse-web:
+    image: langfuse/langfuse@sha256:60a668b1dd06e2d9a034ba8b2ed5e84303e66c6202d76b288020059a755fd037
+    restart: unless-stopped
+    depends_on: *langfuse-dependencies
+    environment:
+      <<: *langfuse-environment
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET}
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://$$(hostname):3000/api/public/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  langfuse-clickhouse:
+    image: clickhouse/clickhouse-server@sha256:8a790dd3468db22b1d4e7b18a176f378ff5ff6053b9c48dd4ea1fa71a24c5ba6
+    restart: unless-stopped
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD}
+      TZ: UTC
+    volumes:
+      - langfuse_clickhouse_data:/var/lib/clickhouse
+      - langfuse_clickhouse_logs:/var/log/clickhouse-server
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8123/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  langfuse-minio:
+    image: cgr.dev/chainguard/minio@sha256:4c94e754559e9fb91cefe103a056d63582b5892de612b647d8e1b0751af5067e
+    restart: unless-stopped
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: ${LANGFUSE_MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${LANGFUSE_MINIO_PASSWORD}
+    volumes:
+      - langfuse_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  langfuse-redis:
+    image: redis@sha256:6aaf3f5e6bc8a592fbfe2cccf19eb36d27c39d12dab4f4b01556b7449e7b1f44
+    restart: unless-stopped
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --maxmemory-policy noeviction"]
+    environment:
+      REDIS_PASSWORD: ${LANGFUSE_REDIS_PASSWORD}
+    volumes:
+      - langfuse_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  langfuse-postgres:
+    image: postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_POSTGRES_PASSWORD}
+      POSTGRES_DB: langfuse
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - langfuse_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse -d langfuse"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  application_postgres_data:
+  portal_caddy_data:
+  portal_caddy_config:
+  bifrost_data:
+  langfuse_postgres_data:
+  langfuse_clickhouse_data:
+  langfuse_clickhouse_logs:
+  langfuse_minio_data:
+  langfuse_redis_data:

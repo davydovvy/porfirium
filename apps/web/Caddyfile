@@ -1,0 +1,22 @@
+https://portal.local:8444 {
+    tls internal
+    encode zstd gzip
+    handle /api/* {
+        reverse_proxy portal-api:8000
+    }
+    handle /health/* {
+        reverse_proxy portal-api:8000
+    }
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+        -Server
+    }
+}
