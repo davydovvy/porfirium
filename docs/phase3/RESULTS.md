@@ -1,7 +1,7 @@
 # Porfirium Phase 3 implementation results
 
 Date: 2026-08-16  
-Status: Implemented; awaiting user review and acceptance.
+Status: Implemented and accepted by the user on 2026-08-16.
 
 ## Delivered
 
@@ -59,3 +59,7 @@ Approximate live memory usage after the durability test:
 ## Phase boundary
 
 Phase 4 introduces the time and MTG catalog MCP servers, explicit tool-call validation, read-only allowlists, execution activities, tool audit events, and prompt-injection security tests.
+
+## Handoff acceptance
+
+The user exercised Agent mode and the updated conversation UI, reported issues that were corrected and regression-tested, and accepted Phase 3 on 2026-08-16.

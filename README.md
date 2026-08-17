@@ -74,4 +74,4 @@ Stop without deleting persistent state:
 
 See [the Phase 0 runbook](docs/phase0/RUNBOOK.md) for verification and recovery details. Product architecture and later phases are defined in [SPECIFICATION.md](SPECIFICATION.md).
 
-Phase evidence is recorded in [Phase 0 results](docs/phase0/RESULTS.md), [Phase 1 results](docs/phase1/RESULTS.md), [Phase 2 results](docs/phase2/RESULTS.md), and [Phase 3 results](docs/phase3/RESULTS.md). Phases 0–2 are accepted; Phase 3 is implemented and awaiting user acceptance.
+Phase evidence is recorded in [Phase 0 results](docs/phase0/RESULTS.md), [Phase 1 results](docs/phase1/RESULTS.md), [Phase 2 results](docs/phase2/RESULTS.md), and [Phase 3 results](docs/phase3/RESULTS.md). Phases 0–3 are implemented and accepted; Phase 4 has not started.
