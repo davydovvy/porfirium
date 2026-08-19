@@ -1,0 +1,3928 @@
+[
+  {
+    "collector_number": "168",
+    "color_identity": [
+      "G"
+    ],
+    "colors": [
+      "G"
+    ],
+    "id": "m11-168",
+    "loyalty": null,
+    "mana_cost": "{2}{G}",
+    "mana_value": 3.0,
+    "name": "Cultivate",
+    "oracle_text": "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.55",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/168/cultivate?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/m11/168/cultivate?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "2ef3dbe4-5c03-4be4-ab48-45b6689b6712",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "229",
+    "color_identity": [],
+    "colors": [],
+    "id": "m11-229",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Terramorphic Expanse",
+    "oracle_text": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.15",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/229/terramorphic-expanse?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/m11/229/terramorphic-expanse?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "8b98de91-7fa3-4a9c-805b-5f573009c2b0",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "165",
+    "color_identity": [
+      "G"
+    ],
+    "colors": [
+      "G"
+    ],
+    "id": "m11-165",
+    "loyalty": null,
+    "mana_cost": "{G}",
+    "mana_value": 1.0,
+    "name": "Birds of Paradise",
+    "oracle_text": "Flying\n{T}: Add one mana of any color.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "0",
+    "price": {
+      "amount": "11.42",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/165/birds-of-paradise?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/m11/165/birds-of-paradise?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "31c9d029-c568-4728-bf74-9d02b6772f48",
+    "subtypes": [
+      "Bird"
+    ],
+    "toughness": "1",
+    "type_line": "Creature — Bird",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "68",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "m11-68",
+    "loyalty": null,
+    "mana_cost": "{1}{U}",
+    "mana_value": 2.0,
+    "name": "Negate",
+    "oracle_text": "Counter target noncreature spell.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.16",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/68/negate?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/m11/68/negate?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "ae89bd67-3c72-449f-be72-d04bb7cca916",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "184",
+    "color_identity": [
+      "G"
+    ],
+    "colors": [
+      "G"
+    ],
+    "id": "m11-184",
+    "loyalty": null,
+    "mana_cost": "{G}",
+    "mana_value": 1.0,
+    "name": "Llanowar Elves",
+    "oracle_text": "{T}: Add {G}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "1",
+    "price": {
+      "amount": "0.32",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/184/llanowar-elves?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/m11/184/llanowar-elves?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "c4d1835a-913f-4979-953b-ddd933214538",
+    "subtypes": [
+      "Elf",
+      "Druid"
+    ],
+    "toughness": "1",
+    "type_line": "Creature — Elf Druid",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "223",
+    "color_identity": [
+      "B",
+      "R"
+    ],
+    "colors": [],
+    "id": "m11-223",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Dragonskull Summit",
+    "oracle_text": "This land enters tapped unless you control a Swamp or a Mountain.\n{T}: Add {B} or {R}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "1.10",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/223/dragonskull-summit?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/m11/223/dragonskull-summit?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "11b5408a-0fde-48d4-bcbf-b949a20b79c0",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "225",
+    "color_identity": [
+      "U",
+      "W"
+    ],
+    "colors": [],
+    "id": "m11-225",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Glacial Fortress",
+    "oracle_text": "This land enters tapped unless you control a Plains or an Island.\n{T}: Add {W} or {U}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.59",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/225/glacial-fortress?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/m11/225/glacial-fortress?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "b9d18532-2247-4e33-a760-bc42a727e9f5",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "224",
+    "color_identity": [
+      "B",
+      "U"
+    ],
+    "colors": [],
+    "id": "m11-224",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Drowned Catacomb",
+    "oracle_text": "This land enters tapped unless you control an Island or a Swamp.\n{T}: Add {U} or {B}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "3.62",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/224/drowned-catacomb?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/m11/224/drowned-catacomb?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "ddb09397-c3cc-4ecc-aef7-bee4dfa6957f",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "227",
+    "color_identity": [
+      "G",
+      "R"
+    ],
+    "colors": [],
+    "id": "m11-227",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Rootbound Crag",
+    "oracle_text": "This land enters tapped unless you control a Mountain or a Forest.\n{T}: Add {R} or {G}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.91",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/227/rootbound-crag?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/m11/227/rootbound-crag?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "abacafc8-ae6f-4e7b-ad8b-4492ac29338f",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "228",
+    "color_identity": [
+      "G",
+      "W"
+    ],
+    "colors": [],
+    "id": "m11-228",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Sunpetal Grove",
+    "oracle_text": "This land enters tapped unless you control a Forest or a Plains.\n{T}: Add {G} or {W}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "1.06",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/228/sunpetal-grove?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/m11/228/sunpetal-grove?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "eeee9597-674f-4f72-90f4-5491f4432ec5",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "149",
+    "color_identity": [
+      "R"
+    ],
+    "colors": [
+      "R"
+    ],
+    "id": "m11-149",
+    "loyalty": null,
+    "mana_cost": "{R}",
+    "mana_value": 1.0,
+    "name": "Lightning Bolt",
+    "oracle_text": "Lightning Bolt deals 3 damage to any target.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "1.12",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/149/lightning-bolt?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/m11/149/lightning-bolt?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "e768c957-3a1f-42f5-853a-96942f645df5",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "70",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "m11-70",
+    "loyalty": null,
+    "mana_cost": "{U}",
+    "mana_value": 1.0,
+    "name": "Preordain",
+    "oracle_text": "Scry 2, then draw a card. (To scry 2, look at the top two cards of your library, then put any number of them on the bottom and the rest on top in any order.)",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.60",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/70/preordain?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/m11/70/preordain?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "e3868c3d-4fcd-444b-866f-0f8e50ce7b67",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "117",
+    "color_identity": [
+      "B"
+    ],
+    "colors": [
+      "B"
+    ],
+    "id": "m11-117",
+    "loyalty": null,
+    "mana_cost": "{B}{B}",
+    "mana_value": 2.0,
+    "name": "Sign in Blood",
+    "oracle_text": "Target player draws two cards and loses 2 life.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.93",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/117/sign-in-blood?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/m11/117/sign-in-blood?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "3705ee27-9725-42ee-8d3b-481cdb8c9250",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "120",
+    "color_identity": [
+      "B"
+    ],
+    "colors": [
+      "B"
+    ],
+    "id": "m11-120",
+    "loyalty": null,
+    "mana_cost": "{B}",
+    "mana_value": 1.0,
+    "name": "Viscera Seer",
+    "oracle_text": "Sacrifice a creature: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "1",
+    "price": {
+      "amount": "1.08",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/120/viscera-seer?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/m11/120/viscera-seer?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "6179f847-e334-4f7f-9a4e-0013942a394f",
+    "subtypes": [
+      "Vampire",
+      "Wizard"
+    ],
+    "toughness": "1",
+    "type_line": "Creature — Vampire Wizard",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "35",
+    "color_identity": [
+      "W"
+    ],
+    "colors": [
+      "W"
+    ],
+    "id": "m11-35",
+    "loyalty": null,
+    "mana_cost": "{4}{W}{W}",
+    "mana_value": 6.0,
+    "name": "Sun Titan",
+    "oracle_text": "Vigilance\nWhenever this creature enters or attacks, you may return target permanent card with mana value 3 or less from your graveyard to the battlefield.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "6",
+    "price": {
+      "amount": "0.99",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/35/sun-titan?utm_source=api"
+    },
+    "rarity": "mythic",
+    "reference_url": "https://scryfall.com/card/m11/35/sun-titan?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "d8db2b8e-dce9-49b7-833f-381ee55288cb",
+    "subtypes": [
+      "Giant"
+    ],
+    "toughness": "6",
+    "type_line": "Creature — Giant",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "221",
+    "color_identity": [],
+    "colors": [],
+    "id": "m11-221",
+    "loyalty": null,
+    "mana_cost": "{3}",
+    "mana_value": 3.0,
+    "name": "Whispersilk Cloak",
+    "oracle_text": "Equipped creature can't be blocked and has shroud. (It can't be the target of spells or abilities.)\nEquip {2}",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "2.87",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/221/whispersilk-cloak?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/m11/221/whispersilk-cloak?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "d83821b3-a6a6-4a15-9169-5c6d1942903d",
+    "subtypes": [
+      "Equipment"
+    ],
+    "toughness": null,
+    "type_line": "Artifact — Equipment",
+    "types": [
+      "Artifact"
+    ]
+  },
+  {
+    "collector_number": "30",
+    "color_identity": [
+      "W"
+    ],
+    "colors": [
+      "W"
+    ],
+    "id": "m11-30",
+    "loyalty": null,
+    "mana_cost": "{W}",
+    "mana_value": 1.0,
+    "name": "Silence",
+    "oracle_text": "Your opponents can't cast spells this turn.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "7.42",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/30/silence?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/m11/30/silence?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "37b70d17-e4ec-4731-8892-b444f82be7a2",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "93",
+    "color_identity": [
+      "B"
+    ],
+    "colors": [
+      "B"
+    ],
+    "id": "m11-93",
+    "loyalty": null,
+    "mana_cost": "{2}{B}{B}",
+    "mana_value": 4.0,
+    "name": "Diabolic Tutor",
+    "oracle_text": "Search your library for a card, put that card into your hand, then shuffle.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "2.03",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/93/diabolic-tutor?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/m11/93/diabolic-tutor?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "98724907-0469-4016-87ff-02cbce8008fa",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "189",
+    "color_identity": [
+      "G"
+    ],
+    "colors": [
+      "G"
+    ],
+    "id": "m11-189",
+    "loyalty": null,
+    "mana_cost": "{3}{G}{G}",
+    "mana_value": 5.0,
+    "name": "Overwhelming Stampede",
+    "oracle_text": "Until end of turn, creatures you control gain trample and get +X/+X, where X is the greatest power among creatures you control.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "3.10",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/189/overwhelming-stampede?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/m11/189/overwhelming-stampede?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "1d5a46d0-09fe-454c-a920-0343f846b832",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "173",
+    "color_identity": [
+      "G"
+    ],
+    "colors": [
+      "G"
+    ],
+    "id": "m11-173",
+    "loyalty": null,
+    "mana_cost": "{G}",
+    "mana_value": 1.0,
+    "name": "Fog",
+    "oracle_text": "Prevent all combat damage that would be dealt this turn.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.29",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/m11/173/fog?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/m11/173/fog?utm_source=api",
+    "release_year": 2010,
+    "released_at": "2010-07-16",
+    "set_code": "M11",
+    "set_name": "Magic 2011",
+    "source_id": "f5498e4d-8ccd-4874-8ecc-3b1819b15f85",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "130",
+    "color_identity": [
+      "R"
+    ],
+    "colors": [
+      "R"
+    ],
+    "id": "isd-130",
+    "loyalty": null,
+    "mana_cost": "{8}{R}",
+    "mana_value": 9.0,
+    "name": "Blasphemous Act",
+    "oracle_text": "This spell costs {1} less to cast for each creature on the battlefield.\nBlasphemous Act deals 13 damage to each creature.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "1.63",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/130/blasphemous-act?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/130/blasphemous-act?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "509ce648-fb76-486d-8b39-183e368b7cb7",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "248",
+    "color_identity": [
+      "R",
+      "U"
+    ],
+    "colors": [],
+    "id": "isd-248",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Sulfur Falls",
+    "oracle_text": "This land enters tapped unless you control an Island or a Mountain.\n{T}: Add {U} or {R}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.67",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/248/sulfur-falls?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/248/sulfur-falls?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "4968b65d-50e5-4d7e-b78b-cdada1cbf7a7",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "238",
+    "color_identity": [
+      "R",
+      "W"
+    ],
+    "colors": [],
+    "id": "isd-238",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Clifftop Retreat",
+    "oracle_text": "This land enters tapped unless you control a Mountain or a Plains.\n{T}: Add {R} or {W}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.88",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/238/clifftop-retreat?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/238/clifftop-retreat?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "fd7e1bf9-bd6a-48e3-9331-178e5142c06a",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "242",
+    "color_identity": [
+      "B",
+      "W"
+    ],
+    "colors": [],
+    "id": "isd-242",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Isolated Chapel",
+    "oracle_text": "This land enters tapped unless you control a Plains or a Swamp.\n{T}: Add {W} or {B}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "1.45",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/242/isolated-chapel?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/242/isolated-chapel?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "b3c1a371-5ded-4a3a-bf96-503c4f1a665d",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "241",
+    "color_identity": [
+      "G",
+      "U"
+    ],
+    "colors": [],
+    "id": "isd-241",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Hinterland Harbor",
+    "oracle_text": "This land enters tapped unless you control a Forest or an Island.\n{T}: Add {G} or {U}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.79",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/241/hinterland-harbor?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/241/hinterland-harbor?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "72f15306-56fe-4643-bb4c-4c7c12378d01",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "249",
+    "color_identity": [
+      "B",
+      "G"
+    ],
+    "colors": [],
+    "id": "isd-249",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Woodland Cemetery",
+    "oracle_text": "This land enters tapped unless you control a Swamp or a Forest.\n{T}: Add {B} or {G}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "1.48",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/249/woodland-cemetery?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/249/woodland-cemetery?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "67139101-ec5e-434b-be3a-21338cc33840",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "243",
+    "color_identity": [
+      "G",
+      "R"
+    ],
+    "colors": [],
+    "id": "isd-243",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Kessig Wolf Run",
+    "oracle_text": "{T}: Add {C}.\n{X}{R}{G}, {T}: Target creature gets +X/+0 and gains trample until end of turn.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.58",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/243/kessig-wolf-run?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/243/kessig-wolf-run?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "4a8447fe-7368-470a-911a-1083ec6cc831",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "199",
+    "color_identity": [
+      "G"
+    ],
+    "colors": [
+      "G"
+    ],
+    "id": "isd-199",
+    "loyalty": null,
+    "mana_cost": "{3}{G}",
+    "mana_value": 4.0,
+    "name": "Parallel Lives",
+    "oracle_text": "If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "36.25",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/199/parallel-lives?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/199/parallel-lives?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "01033dae-fec1-41f2-b7f2-cc6a43331790",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Enchantment",
+    "types": [
+      "Enchantment"
+    ]
+  },
+  {
+    "collector_number": "170",
+    "color_identity": [
+      "G",
+      "W"
+    ],
+    "colors": [
+      "G"
+    ],
+    "id": "isd-170",
+    "loyalty": null,
+    "mana_cost": "{G}",
+    "mana_value": 1.0,
+    "name": "Avacyn's Pilgrim",
+    "oracle_text": "{T}: Add {W}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "1",
+    "price": {
+      "amount": "0.42",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/170/avacyns-pilgrim?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/isd/170/avacyns-pilgrim?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "7eb39e97-53c2-4df0-9fb3-a3d6a24ec41f",
+    "subtypes": [
+      "Human",
+      "Monk"
+    ],
+    "toughness": "1",
+    "type_line": "Creature — Human Monk",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "61",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "isd-61",
+    "loyalty": null,
+    "mana_cost": "{2}{U}",
+    "mana_value": 3.0,
+    "name": "Laboratory Maniac",
+    "oracle_text": "If you would draw a card while your library has no cards in it, you win the game instead.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "2",
+    "price": {
+      "amount": "2.32",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/61/laboratory-maniac?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/61/laboratory-maniac?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "809205f3-acf5-4244-b360-09ce4ba76795",
+    "subtypes": [
+      "Human",
+      "Wizard"
+    ],
+    "toughness": "2",
+    "type_line": "Creature — Human Wizard",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "49",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "isd-49",
+    "loyalty": null,
+    "mana_cost": "{U}",
+    "mana_value": 1.0,
+    "name": "Curiosity",
+    "oracle_text": "Enchant creature\nWhenever enchanted creature deals damage to an opponent, you may draw a card.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.85",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/49/curiosity?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/isd/49/curiosity?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "b212c36a-6d1f-4217-b384-1c2b0e07b68a",
+    "subtypes": [
+      "Aura"
+    ],
+    "toughness": null,
+    "type_line": "Enchantment — Aura",
+    "types": [
+      "Enchantment"
+    ]
+  },
+  {
+    "collector_number": "21",
+    "color_identity": [
+      "W"
+    ],
+    "colors": [
+      "W"
+    ],
+    "id": "isd-21",
+    "loyalty": null,
+    "mana_cost": "{2}{W}",
+    "mana_value": 3.0,
+    "name": "Mentor of the Meek",
+    "oracle_text": "Whenever another creature you control with power 2 or less enters, you may pay {1}. If you do, draw a card.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "2",
+    "price": {
+      "amount": "0.30",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/21/mentor-of-the-meek?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/21/mentor-of-the-meek?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "bd8f179a-f6ab-4d4c-8195-ed077a7770d3",
+    "subtypes": [
+      "Human",
+      "Soldier"
+    ],
+    "toughness": "2",
+    "type_line": "Creature — Human Soldier",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "19",
+    "color_identity": [
+      "W"
+    ],
+    "colors": [
+      "W"
+    ],
+    "id": "isd-19",
+    "loyalty": null,
+    "mana_cost": "{1}{W}",
+    "mana_value": 2.0,
+    "name": "Intangible Virtue",
+    "oracle_text": "Creature tokens you control get +1/+1 and have vigilance.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.15",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/19/intangible-virtue?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/isd/19/intangible-virtue?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "0dd21f5e-d284-4072-87b9-7f0e6140fe60",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Enchantment",
+    "types": [
+      "Enchantment"
+    ]
+  },
+  {
+    "collector_number": "240",
+    "color_identity": [],
+    "colors": [],
+    "id": "isd-240",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Ghost Quarter",
+    "oracle_text": "{T}: Add {C}.\n{T}, Sacrifice this land: Destroy target land. Its controller may search their library for a basic land card, put it onto the battlefield, then shuffle.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.86",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/240/ghost-quarter?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/isd/240/ghost-quarter?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "1c6456ed-0ffb-4d22-b252-5775076030ce",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "239",
+    "color_identity": [
+      "G",
+      "W"
+    ],
+    "colors": [],
+    "id": "isd-239",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Gavony Township",
+    "oracle_text": "{T}: Add {C}.\n{2}{G}{W}, {T}: Put a +1/+1 counter on each creature you control.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "5.31",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/239/gavony-township?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/239/gavony-township?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "b5f73443-2fe8-424f-8e71-fc7ce1f3a3eb",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "129",
+    "color_identity": [
+      "R"
+    ],
+    "colors": [
+      "R"
+    ],
+    "id": "isd-129",
+    "loyalty": null,
+    "mana_cost": "{5}{R}{R}",
+    "mana_value": 7.0,
+    "name": "Balefire Dragon",
+    "oracle_text": "Flying\nWhenever this creature deals combat damage to a player, it deals that much damage to each creature that player controls.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "6",
+    "price": {
+      "amount": "14.71",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/129/balefire-dragon?utm_source=api"
+    },
+    "rarity": "mythic",
+    "reference_url": "https://scryfall.com/card/isd/129/balefire-dragon?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "b0dce4ac-f472-4f3b-b01a-eff0902a578f",
+    "subtypes": [
+      "Dragon"
+    ],
+    "toughness": "6",
+    "type_line": "Creature — Dragon",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "155",
+    "color_identity": [
+      "R"
+    ],
+    "colors": [
+      "R"
+    ],
+    "id": "isd-155",
+    "loyalty": null,
+    "mana_cost": "{3}{R}",
+    "mana_value": 4.0,
+    "name": "Past in Flames",
+    "oracle_text": "Each instant and sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost.\nFlashback {4}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "2.55",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/155/past-in-flames?utm_source=api"
+    },
+    "rarity": "mythic",
+    "reference_url": "https://scryfall.com/card/isd/155/past-in-flames?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "23af6033-4930-48e4-821d-14cbbe1754b4",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "78",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "isd-78",
+    "loyalty": null,
+    "mana_cost": "{1}{U}",
+    "mana_value": 2.0,
+    "name": "Snapcaster Mage",
+    "oracle_text": "Flash\nWhen this creature enters, target instant or sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost. (You may cast that card from your graveyard for its flashback cost. Then exile it.)",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "2",
+    "price": {
+      "amount": "14.85",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/78/snapcaster-mage?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/isd/78/snapcaster-mage?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "9e5b279e-4670-4a1e-87d0-3cab7e4f9e58",
+    "subtypes": [
+      "Human",
+      "Wizard"
+    ],
+    "toughness": "1",
+    "type_line": "Creature — Human Wizard",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "87",
+    "color_identity": [
+      "B"
+    ],
+    "colors": [
+      "B"
+    ],
+    "id": "isd-87",
+    "loyalty": null,
+    "mana_cost": "{5}{B}{B}{B}",
+    "mana_value": 8.0,
+    "name": "Army of the Damned",
+    "oracle_text": "Create thirteen tapped 2/2 black Zombie creature tokens.\nFlashback {7}{B}{B}{B} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "1.29",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/87/army-of-the-damned?utm_source=api"
+    },
+    "rarity": "mythic",
+    "reference_url": "https://scryfall.com/card/isd/87/army-of-the-damned?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "260a4544-a1eb-4d07-943f-0401ae288e13",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "23",
+    "color_identity": [
+      "W"
+    ],
+    "colors": [
+      "W"
+    ],
+    "id": "isd-23",
+    "loyalty": null,
+    "mana_cost": "{X}{W}",
+    "mana_value": 1.0,
+    "name": "Mikaeus, the Lunarch",
+    "oracle_text": "Mikaeus enters with X +1/+1 counters on it.\n{T}: Put a +1/+1 counter on Mikaeus.\n{T}, Remove a +1/+1 counter from Mikaeus: Put a +1/+1 counter on each other creature you control.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "0",
+    "price": {
+      "amount": "0.73",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/isd/23/mikaeus-the-lunarch?utm_source=api"
+    },
+    "rarity": "mythic",
+    "reference_url": "https://scryfall.com/card/isd/23/mikaeus-the-lunarch?utm_source=api",
+    "release_year": 2011,
+    "released_at": "2011-09-30",
+    "set_code": "ISD",
+    "set_name": "Innistrad",
+    "source_id": "c22dc283-ea54-4344-b1ca-fd6cc05080d9",
+    "subtypes": [
+      "Human",
+      "Cleric"
+    ],
+    "toughness": "0",
+    "type_line": "Legendary Creature — Human Cleric",
+    "types": [
+      "Legendary",
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "245",
+    "color_identity": [],
+    "colors": [],
+    "id": "rtr-245",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Rogue's Passage",
+    "oracle_text": "{T}: Add {C}.\n{4}, {T}: Target creature can't be blocked this turn.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.43",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/245/rogues-passage?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/rtr/245/rogues-passage?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "f416e36a-15cb-43c8-b27f-82f65a95ddef",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "35",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "rtr-35",
+    "loyalty": null,
+    "mana_cost": "{1}{U}",
+    "mana_value": 2.0,
+    "name": "Cyclonic Rift",
+    "oracle_text": "Return target nonland permanent you don't control to its owner's hand.\nOverload {6}{U} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "29.72",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/35/cyclonic-rift?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/rtr/35/cyclonic-rift?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "205c4689-8b02-4d40-9274-3c1fcafa8b82",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "241",
+    "color_identity": [
+      "U",
+      "W"
+    ],
+    "colors": [],
+    "id": "rtr-241",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Hallowed Fountain",
+    "oracle_text": "({T}: Add {W} or {U}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "6.37",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/241/hallowed-fountain?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/rtr/241/hallowed-fountain?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "af7091c9-5f98-4078-a42b-c9e057346d9b",
+    "subtypes": [
+      "Plains",
+      "Island"
+    ],
+    "toughness": null,
+    "type_line": "Land — Plains Island",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "247",
+    "color_identity": [
+      "R",
+      "U"
+    ],
+    "colors": [],
+    "id": "rtr-247",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Steam Vents",
+    "oracle_text": "({T}: Add {U} or {R}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "12.73",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/247/steam-vents?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/rtr/247/steam-vents?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "de911c88-f5c8-4955-9fa5-1f28a9b17236",
+    "subtypes": [
+      "Island",
+      "Mountain"
+    ],
+    "toughness": null,
+    "type_line": "Land — Island Mountain",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "238",
+    "color_identity": [
+      "B",
+      "R"
+    ],
+    "colors": [],
+    "id": "rtr-238",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Blood Crypt",
+    "oracle_text": "({T}: Add {B} or {R}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "8.90",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/238/blood-crypt?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/rtr/238/blood-crypt?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "8bd5828b-8dcd-4ce6-b834-ebe9cbaa12d1",
+    "subtypes": [
+      "Swamp",
+      "Mountain"
+    ],
+    "toughness": null,
+    "type_line": "Land — Swamp Mountain",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "243",
+    "color_identity": [
+      "B",
+      "G"
+    ],
+    "colors": [],
+    "id": "rtr-243",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Overgrown Tomb",
+    "oracle_text": "({T}: Add {B} or {G}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "9.70",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/243/overgrown-tomb?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/rtr/243/overgrown-tomb?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "1c7d50d6-b63a-4d8c-88fa-1d78ae693a45",
+    "subtypes": [
+      "Swamp",
+      "Forest"
+    ],
+    "toughness": null,
+    "type_line": "Land — Swamp Forest",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "248",
+    "color_identity": [
+      "G",
+      "W"
+    ],
+    "colors": [],
+    "id": "rtr-248",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Temple Garden",
+    "oracle_text": "({T}: Add {G} or {W}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "7.43",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/248/temple-garden?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/rtr/248/temple-garden?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "b821e604-f9fd-47a4-b5ff-bfb5022834c2",
+    "subtypes": [
+      "Forest",
+      "Plains"
+    ],
+    "toughness": null,
+    "type_line": "Land — Forest Plains",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "226",
+    "color_identity": [],
+    "colors": [],
+    "id": "rtr-226",
+    "loyalty": null,
+    "mana_cost": "{3}",
+    "mana_value": 3.0,
+    "name": "Chromatic Lantern",
+    "oracle_text": "Lands you control have \"{T}: Add one mana of any color.\"\n{T}: Add one mana of any color.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "1.79",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/226/chromatic-lantern?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/rtr/226/chromatic-lantern?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "57f4e0f0-13d1-43ed-8d95-13cff94a26e7",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Artifact",
+    "types": [
+      "Artifact"
+    ]
+  },
+  {
+    "collector_number": "111",
+    "color_identity": [
+      "R"
+    ],
+    "colors": [
+      "R"
+    ],
+    "id": "rtr-111",
+    "loyalty": null,
+    "mana_cost": "{R}",
+    "mana_value": 1.0,
+    "name": "Vandalblast",
+    "oracle_text": "Destroy target artifact you don't control.\nOverload {4}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "2.06",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/111/vandalblast?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/rtr/111/vandalblast?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "5925c559-3e3c-481b-ba95-20a405cbffce",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "184",
+    "color_identity": [
+      "B",
+      "R"
+    ],
+    "colors": [
+      "B",
+      "R"
+    ],
+    "id": "rtr-184",
+    "loyalty": null,
+    "mana_cost": "{B}{R}",
+    "mana_value": 2.0,
+    "name": "Rakdos Charm",
+    "oracle_text": "Choose one —\n• Exile target player's graveyard.\n• Destroy target artifact.\n• Each creature deals 1 damage to its controller.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.51",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/184/rakdos-charm?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/rtr/184/rakdos-charm?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "0fcd4394-d22d-4eec-ad73-ffaf10ad60de",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "98",
+    "color_identity": [
+      "R"
+    ],
+    "colors": [
+      "R"
+    ],
+    "id": "rtr-98",
+    "loyalty": null,
+    "mana_cost": "{2}{R}",
+    "mana_value": 3.0,
+    "name": "Guttersnipe",
+    "oracle_text": "Whenever you cast an instant or sorcery spell, this creature deals 2 damage to each opponent.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "2",
+    "price": {
+      "amount": "0.28",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/98/guttersnipe?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/rtr/98/guttersnipe?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "9d8590ea-512c-4e09-97cc-7f07d0706f2b",
+    "subtypes": [
+      "Goblin",
+      "Shaman"
+    ],
+    "toughness": "2",
+    "type_line": "Creature — Goblin Shaman",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "201",
+    "color_identity": [
+      "U",
+      "W"
+    ],
+    "colors": [
+      "U",
+      "W"
+    ],
+    "id": "rtr-201",
+    "loyalty": null,
+    "mana_cost": "{1}{W}{W}{U}",
+    "mana_value": 4.0,
+    "name": "Supreme Verdict",
+    "oracle_text": "This spell can't be countered.\nDestroy all creatures.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "1.94",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/201/supreme-verdict?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/rtr/201/supreme-verdict?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "4e9648f9-7a67-4717-bca1-861d1f7fed43",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "213",
+    "color_identity": [
+      "B",
+      "G"
+    ],
+    "colors": [
+      "B",
+      "G"
+    ],
+    "id": "rtr-213",
+    "loyalty": null,
+    "mana_cost": "{B/G}",
+    "mana_value": 1.0,
+    "name": "Deathrite Shaman",
+    "oracle_text": "{T}: Exile target land card from a graveyard. Add one mana of any color. (Activate only as an instant.)\n{B}, {T}: Exile target instant or sorcery card from a graveyard. Each opponent loses 2 life.\n{G}, {T}: Exile target creature card from a graveyard. You gain 2 life.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "1",
+    "price": {
+      "amount": "8.06",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/213/deathrite-shaman?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/rtr/213/deathrite-shaman?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "70496f16-c4c0-4c03-beef-454eb4824cd1",
+    "subtypes": [
+      "Elf",
+      "Shaman"
+    ],
+    "toughness": "2",
+    "type_line": "Creature — Elf Shaman",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "163",
+    "color_identity": [
+      "R",
+      "U"
+    ],
+    "colors": [
+      "R",
+      "U"
+    ],
+    "id": "rtr-163",
+    "loyalty": null,
+    "mana_cost": "{U}{R}",
+    "mana_value": 2.0,
+    "name": "Goblin Electromancer",
+    "oracle_text": "Instant and sorcery spells you cast cost {1} less to cast.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "2",
+    "price": {
+      "amount": "0.31",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/163/goblin-electromancer?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/rtr/163/goblin-electromancer?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "79fb620f-4057-4f60-94b9-56ab855be974",
+    "subtypes": [
+      "Goblin",
+      "Wizard"
+    ],
+    "toughness": "2",
+    "type_line": "Creature — Goblin Wizard",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "24",
+    "color_identity": [
+      "W"
+    ],
+    "colors": [
+      "W"
+    ],
+    "id": "rtr-24",
+    "loyalty": null,
+    "mana_cost": "{4}{W}",
+    "mana_value": 5.0,
+    "name": "Sphere of Safety",
+    "oracle_text": "Creatures can't attack you or planeswalkers you control unless their controller pays {X} for each of those creatures, where X is the number of enchantments you control.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "4.19",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/24/sphere-of-safety?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/rtr/24/sphere-of-safety?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "ce3bd0d8-7e44-4cf2-9012-8ff0bc39417f",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Enchantment",
+    "types": [
+      "Enchantment"
+    ]
+  },
+  {
+    "collector_number": "141",
+    "color_identity": [
+      "B",
+      "G"
+    ],
+    "colors": [
+      "B",
+      "G"
+    ],
+    "id": "rtr-141",
+    "loyalty": null,
+    "mana_cost": "{B}{G}",
+    "mana_value": 2.0,
+    "name": "Abrupt Decay",
+    "oracle_text": "This spell can't be countered.\nDestroy target nonland permanent with mana value 3 or less.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "2.00",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/141/abrupt-decay?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/rtr/141/abrupt-decay?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "3b1e92b4-6e53-4dba-a572-c67e01965ac5",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "36",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "rtr-36",
+    "loyalty": null,
+    "mana_cost": "{U}",
+    "mana_value": 1.0,
+    "name": "Dispel",
+    "oracle_text": "Counter target instant spell.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.32",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/36/dispel?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/rtr/36/dispel?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "08d4a8d7-c136-472f-8146-a1100701ca4f",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "9",
+    "color_identity": [
+      "W"
+    ],
+    "colors": [
+      "W"
+    ],
+    "id": "rtr-9",
+    "loyalty": null,
+    "mana_cost": "{W}",
+    "mana_value": 1.0,
+    "name": "Ethereal Armor",
+    "oracle_text": "Enchant creature\nEnchanted creature gets +1/+1 for each enchantment you control and has first strike.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.49",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/9/ethereal-armor?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/rtr/9/ethereal-armor?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "76960e65-e5c7-4414-b9a5-37d7b2ded4a0",
+    "subtypes": [
+      "Aura"
+    ],
+    "toughness": null,
+    "type_line": "Enchantment — Aura",
+    "types": [
+      "Enchantment"
+    ]
+  },
+  {
+    "collector_number": "19",
+    "color_identity": [
+      "W"
+    ],
+    "colors": [
+      "W"
+    ],
+    "id": "rtr-19",
+    "loyalty": null,
+    "mana_cost": "{2}{W}",
+    "mana_value": 3.0,
+    "name": "Rootborn Defenses",
+    "oracle_text": "Populate. Creatures you control gain indestructible until end of turn. (To populate, create a token that's a copy of a creature token you control.)",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.33",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/19/rootborn-defenses?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/rtr/19/rootborn-defenses?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "deccfa48-b8df-4dcc-ba1b-920f8352def7",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "165",
+    "color_identity": [
+      "B",
+      "G"
+    ],
+    "colors": [
+      "B",
+      "G"
+    ],
+    "id": "rtr-165",
+    "loyalty": null,
+    "mana_cost": "{B}{G}",
+    "mana_value": 2.0,
+    "name": "Grisly Salvage",
+    "oracle_text": "Reveal the top five cards of your library. You may put a creature or land card from among them into your hand. Put the rest into your graveyard.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.24",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/rtr/165/grisly-salvage?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/rtr/165/grisly-salvage?utm_source=api",
+    "release_year": 2012,
+    "released_at": "2012-10-05",
+    "set_code": "RTR",
+    "set_name": "Return to Ravnica",
+    "source_id": "dcb5eb2a-ae7a-4416-970c-6e9306689c88",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "65",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "ths-65",
+    "loyalty": null,
+    "mana_cost": "{U}",
+    "mana_value": 1.0,
+    "name": "Swan Song",
+    "oracle_text": "Counter target enchantment, instant, or sorcery spell. Its controller creates a 2/2 blue Bird creature token with flying.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "11.04",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/65/swan-song?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/65/swan-song?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "efd26041-059b-4a1e-9ce8-c3cfd69a3721",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "223",
+    "color_identity": [],
+    "colors": [],
+    "id": "ths-223",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Nykthos, Shrine to Nyx",
+    "oracle_text": "{T}: Add {C}.\n{2}, {T}: Choose a color. Add an amount of mana of that color equal to your devotion to that color. (Your devotion to a color is the number of mana symbols of that color in the mana costs of permanents you control.)",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "51.75",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/223/nykthos-shrine-to-nyx?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/223/nykthos-shrine-to-nyx?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "834b27a0-dfd7-4f96-8cde-cacac4b24acc",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Legendary Land",
+    "types": [
+      "Legendary",
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "89",
+    "color_identity": [
+      "B"
+    ],
+    "colors": [
+      "B"
+    ],
+    "id": "ths-89",
+    "loyalty": null,
+    "mana_cost": "{3}{B}{B}",
+    "mana_value": 5.0,
+    "name": "Gray Merchant of Asphodel",
+    "oracle_text": "When this creature enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way. (Each {B} in the mana costs of permanents you control counts toward your devotion to black.)",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "2",
+    "price": {
+      "amount": "1.33",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/89/gray-merchant-of-asphodel?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/ths/89/gray-merchant-of-asphodel?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "b06078ce-f534-4e16-9a70-d51620a33eb2",
+    "subtypes": [
+      "Zombie"
+    ],
+    "toughness": "4",
+    "type_line": "Creature — Zombie",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "227",
+    "color_identity": [
+      "B",
+      "W"
+    ],
+    "colors": [],
+    "id": "ths-227",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Temple of Silence",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{T}: Add {W} or {B}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.37",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/227/temple-of-silence?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/227/temple-of-silence?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "0f14b6b3-5f40-4328-a3be-28fe32dd7cb1",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "228",
+    "color_identity": [
+      "R",
+      "W"
+    ],
+    "colors": [],
+    "id": "ths-228",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Temple of Triumph",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{T}: Add {R} or {W}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.30",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/228/temple-of-triumph?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/228/temple-of-triumph?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "4f53049c-2491-4d20-aa19-00eb5c55b438",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "226",
+    "color_identity": [
+      "G",
+      "U"
+    ],
+    "colors": [],
+    "id": "ths-226",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Temple of Mystery",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{T}: Add {G} or {U}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.33",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/226/temple-of-mystery?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/226/temple-of-mystery?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "2f66945b-3e64-498a-9478-5f96a61d4ec7",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "225",
+    "color_identity": [
+      "B",
+      "U"
+    ],
+    "colors": [],
+    "id": "ths-225",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Temple of Deceit",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{T}: Add {U} or {B}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.40",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/225/temple-of-deceit?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/225/temple-of-deceit?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "686559d7-8ac1-496b-a5a6-1467bf8fc7c5",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "42",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "ths-42",
+    "loyalty": null,
+    "mana_cost": "{2}{U}{U}",
+    "mana_value": 4.0,
+    "name": "Bident of Thassa",
+    "oracle_text": "Whenever a creature you control deals combat damage to a player, you may draw a card.\n{1}{U}, {T}: Creatures your opponents control attack this turn if able.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.66",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/42/bident-of-thassa?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/42/bident-of-thassa?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "85e45d14-a501-40b9-af0a-720ecd20dad7",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Legendary Enchantment Artifact",
+    "types": [
+      "Legendary",
+      "Enchantment",
+      "Artifact"
+    ]
+  },
+  {
+    "collector_number": "101",
+    "color_identity": [
+      "B"
+    ],
+    "colors": [
+      "B"
+    ],
+    "id": "ths-101",
+    "loyalty": null,
+    "mana_cost": "{2}{B}",
+    "mana_value": 3.0,
+    "name": "Read the Bones",
+    "oracle_text": "Scry 2, then draw two cards. You lose 2 life. (To scry 2, look at the top two cards of your library, then put any number of them on the bottom and the rest on top in any order.)",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.40",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/101/read-the-bones?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/ths/101/read-the-bones?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "dbbdbf1a-2d15-4291-aa19-614f854d8cb3",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "213",
+    "color_identity": [],
+    "colors": [],
+    "id": "ths-213",
+    "loyalty": null,
+    "mana_cost": "{3}",
+    "mana_value": 3.0,
+    "name": "Burnished Hart",
+    "oracle_text": "{3}, Sacrifice this creature: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "2",
+    "price": {
+      "amount": "0.19",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/213/burnished-hart?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/ths/213/burnished-hart?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "772cbcba-9efa-4894-9b57-e73fd296333d",
+    "subtypes": [
+      "Elk"
+    ],
+    "toughness": "2",
+    "type_line": "Artifact Creature — Elk",
+    "types": [
+      "Artifact",
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "224",
+    "color_identity": [
+      "G",
+      "R"
+    ],
+    "colors": [],
+    "id": "ths-224",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Temple of Abandon",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{T}: Add {R} or {G}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.31",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/224/temple-of-abandon?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/224/temple-of-abandon?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "46febc5d-1625-4e48-bb3f-31ee06fc13dd",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "135",
+    "color_identity": [
+      "R"
+    ],
+    "colors": [
+      "R"
+    ],
+    "id": "ths-135",
+    "loyalty": null,
+    "mana_cost": "{3}{R}",
+    "mana_value": 4.0,
+    "name": "Purphoros, God of the Forge",
+    "oracle_text": "Indestructible\nAs long as your devotion to red is less than five, Purphoros isn't a creature.\nWhenever another creature you control enters, Purphoros deals 2 damage to each opponent.\n{2}{R}: Creatures you control get +1/+0 until end of turn.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "6",
+    "price": {
+      "amount": "31.15",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/135/purphoros-god-of-the-forge?utm_source=api"
+    },
+    "rarity": "mythic",
+    "reference_url": "https://scryfall.com/card/ths/135/purphoros-god-of-the-forge?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "7bf6baf2-d20b-467d-8929-abefcf7dfa99",
+    "subtypes": [
+      "God"
+    ],
+    "toughness": "5",
+    "type_line": "Legendary Enchantment Creature — God",
+    "types": [
+      "Legendary",
+      "Enchantment",
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "110",
+    "color_identity": [
+      "B"
+    ],
+    "colors": [
+      "B"
+    ],
+    "id": "ths-110",
+    "loyalty": null,
+    "mana_cost": "{2}{B}{B}",
+    "mana_value": 4.0,
+    "name": "Whip of Erebos",
+    "oracle_text": "Creatures you control have lifelink.\n{2}{B}{B}, {T}: Return target creature card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of the next end step. If it would leave the battlefield, exile it instead of putting it anywhere else. Activate only as a sorcery.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "9.15",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/110/whip-of-erebos?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/110/whip-of-erebos?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "9e5ec47c-47a2-4eda-b81a-4a07f04e5989",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Legendary Enchantment Artifact",
+    "types": [
+      "Legendary",
+      "Enchantment",
+      "Artifact"
+    ]
+  },
+  {
+    "collector_number": "39",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "ths-39",
+    "loyalty": null,
+    "mana_cost": "{U}",
+    "mana_value": 1.0,
+    "name": "Aqueous Form",
+    "oracle_text": "Enchant creature\nEnchanted creature can't be blocked.\nWhenever enchanted creature attacks, scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.39",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/39/aqueous-form?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/ths/39/aqueous-form?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "ba104245-0483-407f-971b-ad6d8efd9733",
+    "subtypes": [
+      "Aura"
+    ],
+    "toughness": null,
+    "type_line": "Enchantment — Aura",
+    "types": [
+      "Enchantment"
+    ]
+  },
+  {
+    "collector_number": "9",
+    "color_identity": [
+      "W"
+    ],
+    "colors": [
+      "W"
+    ],
+    "id": "ths-9",
+    "loyalty": "4",
+    "mana_cost": "{4}{W}{W}",
+    "mana_value": 6.0,
+    "name": "Elspeth, Sun's Champion",
+    "oracle_text": "+1: Create three 1/1 white Soldier creature tokens.\n−3: Destroy all creatures with power 4 or greater.\n−7: You get an emblem with \"Creatures you control get +2/+2 and have flying.\"",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "2.93",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/9/elspeth-suns-champion?utm_source=api"
+    },
+    "rarity": "mythic",
+    "reference_url": "https://scryfall.com/card/ths/9/elspeth-suns-champion?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "fd5b1633-c41d-42b1-af1b-4a872077ffbd",
+    "subtypes": [
+      "Elspeth"
+    ],
+    "toughness": null,
+    "type_line": "Legendary Planeswalker — Elspeth",
+    "types": [
+      "Legendary",
+      "Planeswalker"
+    ]
+  },
+  {
+    "collector_number": "46",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "ths-46",
+    "loyalty": null,
+    "mana_cost": "{X}{U}{U}",
+    "mana_value": 2.0,
+    "name": "Curse of the Swine",
+    "oracle_text": "Exile X target creatures. For each creature exiled this way, its controller creates a 2/2 green Boar creature token.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.25",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/46/curse-of-the-swine?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/46/curse-of-the-swine?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "78831fc6-ea90-4546-b46a-9c192dbefc65",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "14",
+    "color_identity": [
+      "W"
+    ],
+    "colors": [
+      "W"
+    ],
+    "id": "ths-14",
+    "loyalty": null,
+    "mana_cost": "{2}{W}",
+    "mana_value": 3.0,
+    "name": "Gift of Immortality",
+    "oracle_text": "Enchant creature\nWhen enchanted creature dies, return that card to the battlefield under its owner's control. Return this card to the battlefield attached to that creature at the beginning of the next end step.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "1.88",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/14/gift-of-immortality?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/14/gift-of-immortality?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "2336faaa-fc6d-4fbb-bdd4-969eae565c72",
+    "subtypes": [
+      "Aura"
+    ],
+    "toughness": null,
+    "type_line": "Enchantment — Aura",
+    "types": [
+      "Enchantment"
+    ]
+  },
+  {
+    "collector_number": "180",
+    "color_identity": [
+      "G"
+    ],
+    "colors": [
+      "G"
+    ],
+    "id": "ths-180",
+    "loyalty": null,
+    "mana_cost": "{1}{G}",
+    "mana_value": 2.0,
+    "name": "Sylvan Caryatid",
+    "oracle_text": "Defender, hexproof\n{T}: Add one mana of any color.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "0",
+    "price": {
+      "amount": "1.27",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/180/sylvan-caryatid?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/180/sylvan-caryatid?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "d40b65c1-b24d-492d-81b9-d8474ebdc08c",
+    "subtypes": [
+      "Plant"
+    ],
+    "toughness": "3",
+    "type_line": "Creature — Plant",
+    "types": [
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "90",
+    "color_identity": [
+      "B"
+    ],
+    "colors": [
+      "B"
+    ],
+    "id": "ths-90",
+    "loyalty": null,
+    "mana_cost": "{1}{B}{B}",
+    "mana_value": 3.0,
+    "name": "Hero's Downfall",
+    "oracle_text": "Destroy target creature or planeswalker.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.27",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/90/heros-downfall?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ths/90/heros-downfall?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "596822f6-dbd4-4cc8-aa50-9331ff42544e",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "66",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "ths-66",
+    "loyalty": null,
+    "mana_cost": "{2}{U}",
+    "mana_value": 3.0,
+    "name": "Thassa, God of the Sea",
+    "oracle_text": "Indestructible\nAs long as your devotion to blue is less than five, Thassa isn't a creature. (Each {U} in the mana costs of permanents you control counts toward your devotion to blue.)\nAt the beginning of your upkeep, scry 1.\n{1}{U}: Target creature you control can't be blocked this turn.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": "5",
+    "price": {
+      "amount": "3.98",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ths/66/thassa-god-of-the-sea?utm_source=api"
+    },
+    "rarity": "mythic",
+    "reference_url": "https://scryfall.com/card/ths/66/thassa-god-of-the-sea?utm_source=api",
+    "release_year": 2013,
+    "released_at": "2013-09-27",
+    "set_code": "THS",
+    "set_name": "Theros",
+    "source_id": "d6876c7a-8bbe-484e-b733-70229fa336cd",
+    "subtypes": [
+      "God"
+    ],
+    "toughness": "5",
+    "type_line": "Legendary Enchantment Creature — God",
+    "types": [
+      "Legendary",
+      "Enchantment",
+      "Creature"
+    ]
+  },
+  {
+    "collector_number": "239",
+    "color_identity": [],
+    "colors": [],
+    "id": "ktk-239",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Polluted Delta",
+    "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "18.74",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/239/polluted-delta?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ktk/239/polluted-delta?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "ff2f5f58-9a95-4ca6-93a0-813738f0072f",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "233",
+    "color_identity": [],
+    "colors": [],
+    "id": "ktk-233",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Flooded Strand",
+    "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "13.69",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/233/flooded-strand?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ktk/233/flooded-strand?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "8c2996d9-3287-4480-8c04-7a378e37e3cf",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "230",
+    "color_identity": [],
+    "colors": [],
+    "id": "ktk-230",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Bloodstained Mire",
+    "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Swamp or Mountain card, put it onto the battlefield, then shuffle.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "16.24",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/230/bloodstained-mire?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ktk/230/bloodstained-mire?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "7f430794-0d86-4f6a-97e0-4bbb6716d613",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "248",
+    "color_identity": [],
+    "colors": [],
+    "id": "ktk-248",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Windswept Heath",
+    "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Forest or Plains card, put it onto the battlefield, then shuffle.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "11.50",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/248/windswept-heath?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ktk/248/windswept-heath?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "e7b28650-cddc-4878-b1d1-b5a764f4df49",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "249",
+    "color_identity": [],
+    "colors": [],
+    "id": "ktk-249",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Wooded Foothills",
+    "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Mountain or Forest card, put it onto the battlefield, then shuffle.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "17.06",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/249/wooded-foothills?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ktk/249/wooded-foothills?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "a8503cca-7e7d-44c4-8587-81376b396398",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "133",
+    "color_identity": [
+      "G"
+    ],
+    "colors": [
+      "G"
+    ],
+    "id": "ktk-133",
+    "loyalty": null,
+    "mana_cost": "{G}",
+    "mana_value": 1.0,
+    "name": "Hardened Scales",
+    "oracle_text": "If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "3.45",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/133/hardened-scales?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ktk/133/hardened-scales?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "7dcdf1db-bfaf-4160-8003-1fa2e56b00dc",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Enchantment",
+    "types": [
+      "Enchantment"
+    ]
+  },
+  {
+    "collector_number": "237",
+    "color_identity": [
+      "B",
+      "R",
+      "W"
+    ],
+    "colors": [],
+    "id": "ktk-237",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Nomad Outpost",
+    "oracle_text": "This land enters tapped.\n{T}: Add {R}, {W}, or {B}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.37",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/237/nomad-outpost?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/ktk/237/nomad-outpost?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "fb6ae4a5-227d-465b-9e99-bae158b7d410",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "236",
+    "color_identity": [
+      "R",
+      "U",
+      "W"
+    ],
+    "colors": [],
+    "id": "ktk-236",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Mystic Monastery",
+    "oracle_text": "This land enters tapped.\n{T}: Add {U}, {R}, or {W}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.26",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/236/mystic-monastery?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/ktk/236/mystic-monastery?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "bae51d77-e06b-4e5a-9543-a17dd0b2a333",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "238",
+    "color_identity": [
+      "B",
+      "G",
+      "U"
+    ],
+    "colors": [],
+    "id": "ktk-238",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Opulent Palace",
+    "oracle_text": "This land enters tapped.\n{T}: Add {B}, {G}, or {U}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.35",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/238/opulent-palace?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/ktk/238/opulent-palace?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "21326575-80b9-4a4e-a93c-6880ec6575d5",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "234",
+    "color_identity": [
+      "G",
+      "R",
+      "U"
+    ],
+    "colors": [],
+    "id": "ktk-234",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Frontier Bivouac",
+    "oracle_text": "This land enters tapped.\n{T}: Add {G}, {U}, or {R}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.31",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/234/frontier-bivouac?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/ktk/234/frontier-bivouac?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "e4335951-e73e-45cb-b2a5-6e9d14ba87ee",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "241",
+    "color_identity": [
+      "B",
+      "G",
+      "W"
+    ],
+    "colors": [],
+    "id": "ktk-241",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Sandsteppe Citadel",
+    "oracle_text": "This land enters tapped.\n{T}: Add {W}, {B}, or {G}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.37",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/241/sandsteppe-citadel?utm_source=api"
+    },
+    "rarity": "uncommon",
+    "reference_url": "https://scryfall.com/card/ktk/241/sandsteppe-citadel?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "2dd40d90-c939-458a-9a98-27d10da6ff2f",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "36",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "ktk-36",
+    "loyalty": null,
+    "mana_cost": "{6}{U}{U}",
+    "mana_value": 8.0,
+    "name": "Dig Through Time",
+    "oracle_text": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nLook at the top seven cards of your library. Put two of them into your hand and the rest on the bottom of your library in any order.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.35",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/36/dig-through-time?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ktk/36/dig-through-time?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "5c18c2d8-995c-4736-bdef-464abcd1d31a",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Instant",
+    "types": [
+      "Instant"
+    ]
+  },
+  {
+    "collector_number": "59",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "id": "ktk-59",
+    "loyalty": null,
+    "mana_cost": "{7}{U}",
+    "mana_value": 8.0,
+    "name": "Treasure Cruise",
+    "oracle_text": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nDraw three cards.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.31",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/59/treasure-cruise?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/ktk/59/treasure-cruise?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "7a59d4b1-6cf4-44ec-8a96-1bb7094fea21",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Sorcery",
+    "types": [
+      "Sorcery"
+    ]
+  },
+  {
+    "collector_number": "242",
+    "color_identity": [
+      "B",
+      "W"
+    ],
+    "colors": [],
+    "id": "ktk-242",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Scoured Barrens",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, you gain 1 life.\n{T}: Add {W} or {B}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.18",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/242/scoured-barrens?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/ktk/242/scoured-barrens?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "0824a960-dd89-45c5-90f0-3ec9eb47d9ce",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "235",
+    "color_identity": [
+      "B",
+      "G"
+    ],
+    "colors": [],
+    "id": "ktk-235",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Jungle Hollow",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, you gain 1 life.\n{T}: Add {B} or {G}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.18",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/235/jungle-hollow?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/ktk/235/jungle-hollow?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "fea27aa7-7fcf-4198-b03a-5034a03ba81f",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "207",
+    "color_identity": [
+      "G",
+      "R",
+      "U"
+    ],
+    "colors": [
+      "G",
+      "R",
+      "U"
+    ],
+    "id": "ktk-207",
+    "loyalty": null,
+    "mana_cost": "{G}{U}{R}",
+    "mana_value": 3.0,
+    "name": "Temur Ascendancy",
+    "oracle_text": "Creatures you control have haste.\nWhenever a creature you control with power 4 or greater enters, you may draw a card.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "3.18",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/207/temur-ascendancy?utm_source=api"
+    },
+    "rarity": "rare",
+    "reference_url": "https://scryfall.com/card/ktk/207/temur-ascendancy?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "11746bf1-d813-4ade-8ce4-9935cebef856",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Enchantment",
+    "types": [
+      "Enchantment"
+    ]
+  },
+  {
+    "collector_number": "229",
+    "color_identity": [
+      "B",
+      "R"
+    ],
+    "colors": [],
+    "id": "ktk-229",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Bloodfell Caves",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, you gain 1 life.\n{T}: Add {B} or {R}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.16",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/229/bloodfell-caves?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/ktk/229/bloodfell-caves?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "15a7b30a-c59f-4a87-9e8a-b29daea27422",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "232",
+    "color_identity": [
+      "B",
+      "U"
+    ],
+    "colors": [],
+    "id": "ktk-232",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Dismal Backwater",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, you gain 1 life.\n{T}: Add {U} or {B}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.15",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/232/dismal-backwater?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/ktk/232/dismal-backwater?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "63742780-47ee-4a66-993a-69e06c14967d",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "247",
+    "color_identity": [
+      "R",
+      "W"
+    ],
+    "colors": [],
+    "id": "ktk-247",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Wind-Scarred Crag",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, you gain 1 life.\n{T}: Add {R} or {W}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.12",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/247/wind-scarred-crag?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/ktk/247/wind-scarred-crag?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "3b296781-78ac-411f-88fc-2d924ad22986",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  },
+  {
+    "collector_number": "243",
+    "color_identity": [
+      "R",
+      "U"
+    ],
+    "colors": [],
+    "id": "ktk-243",
+    "loyalty": null,
+    "mana_cost": null,
+    "mana_value": 0.0,
+    "name": "Swiftwater Cliffs",
+    "oracle_text": "This land enters tapped.\nWhen this land enters, you gain 1 life.\n{T}: Add {U} or {R}.",
+    "popularity_basis": "Scryfall EDHREC ascending rank at snapshot time",
+    "power": null,
+    "price": {
+      "amount": "0.20",
+      "basis": "Scryfall nonfoil USD market snapshot",
+      "captured_at": "2026-08-17",
+      "condition": "illustrative market value; condition not specified",
+      "currency": "USD",
+      "source": "Scryfall API",
+      "source_url": "https://scryfall.com/card/ktk/243/swiftwater-cliffs?utm_source=api"
+    },
+    "rarity": "common",
+    "reference_url": "https://scryfall.com/card/ktk/243/swiftwater-cliffs?utm_source=api",
+    "release_year": 2014,
+    "released_at": "2014-09-26",
+    "set_code": "KTK",
+    "set_name": "Khans of Tarkir",
+    "source_id": "e782d005-a563-4738-978a-73a3465de78f",
+    "subtypes": [],
+    "toughness": null,
+    "type_line": "Land",
+    "types": [
+      "Land"
+    ]
+  }
+]

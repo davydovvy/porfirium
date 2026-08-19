@@ -1,8 +1,8 @@
 # Porfirium — Architecture and Delivery Specification
 
-Status: Living implementation specification — core deployment decisions accepted  
-Last updated: 2026-08-16  
-Implementation status: Phases 0, 1, and 2 implemented and accepted; Phase 3 not started
+Status: Living implementation specification — core deployment decisions accepted
+Last updated: 2026-08-19
+Implementation status: Phases 0–4 implemented and accepted
 
 ## 1. Purpose
 

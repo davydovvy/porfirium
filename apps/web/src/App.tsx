@@ -108,6 +108,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
         const event = JSON.parse(data.slice(6)) as StreamEvent
         if (event.type === 'assistant.delta') setStreamText((value) => value + event.payload.delta)
         if (event.type === 'agent.status') setProgress((value) => [...value, event.payload.label])
+        if (event.type.startsWith('tool.')) setProgress((value) => [...value, event.payload.label])
         if (event.type === 'turn.failed') setError(`${event.payload.message} Reference: ${event.payload.correlation_id}`)
         if (['turn.completed', 'turn.failed', 'turn.cancelled'].includes(event.type)) {
           setTurn((current) => current ? { ...current, state: event.type.slice(5) } : current)
@@ -157,12 +158,12 @@ export function App({ authenticated }: { authenticated: boolean }) {
   }
 
   if (!authenticated) return (
-    <main className="landing"><nav><span className="brand">PORFIRIUM</span><span className="status">Phase 3</span></nav>
+    <main className="landing"><nav><span className="brand">PORFIRIUM</span><span className="status">Phase 4</span></nav>
       <section className="hero"><p className="eyebrow">A durable, observable AI workspace</p>
         <h1>One place to talk,<br /><em>build, and inspect.</em></h1>
         <p className="lede">Run direct conversations or durable agents through your private, local-first workspace.</p>
         <button onClick={() => keycloak.login()}>Sign in with Keycloak <span>↗</span></button></section>
-      <footer><span>Identity protected</span><span>Temporal durable</span><span>Phase 3 / 5</span></footer></main>
+      <footer><span>Identity protected</span><span>Temporal durable</span><span>Phase 4 / 5</span></footer></main>
   )
 
   const busy = turn && ['accepted', 'running'].includes(turn.state)
@@ -179,7 +180,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
         <div><strong>{identity?.display_name ?? 'Loading identity'}</strong><small>{identity?.username}</small></div>
         <button className="logout" aria-label="Sign out" onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>↗</button></div>
     </aside>
-    <section className="workspace"><header><span className="dot" /> {active?.mode === 'agent' ? 'Agent' : 'Direct LLM'} <span className="model">{active?.mode === 'agent' ? 'Temporal · Agent v1' : 'Yandex · default'}</span><span className="phase">PHASE 3</span></header>
+    <section className="workspace"><header><span className="dot" /> {active?.mode === 'agent' ? 'Agent' : 'Direct LLM'} <span className="model">{active?.mode === 'agent' ? 'Temporal · Tool Agent v1' : 'Yandex · default'}</span><span className="phase">PHASE 4</span></header>
       {!active ? <div className="empty-state"><div className="orb"><span /></div><p className="eyebrow">Direct channel ready</p>
         <h1>Welcome, {identity?.display_name ?? 'traveler'}.</h1><p>Create a direct conversation or a durable Agent run.</p>
         <button className="primary" onClick={() => createConversation().catch((reason) => setError(reason.message))}>Start a conversation</button></div>

@@ -1,6 +1,17 @@
 # Porfirium
 
-Porfirium is a local-first agent and LLM demonstration platform. The repository contains the completed Phases 0–2 plus the user-testable Phase 3 durable Agent increment.
+Porfirium is a local-first agent and LLM demonstration platform. Phases 0–4 are implemented and accepted; Phase 4 adds policy-controlled MCP tools to the durable Agent.
+
+## Phase 4 quick start
+
+With the standalone Keycloak prerequisite running and `portal.local` mapped to `127.0.0.1`:
+
+```bash
+./scripts/phase4/start.sh
+./scripts/phase4/verify.sh
+```
+
+Open `https://portal.local:8444`, select `Agent`, and ask for the current time in an IANA timezone or for information from the bundled MTG catalog. Tool activity is persisted and replayed in the conversation view. See [the Phase 4 runbook](docs/phase4/RUNBOOK.md) for verification, inspection, recovery, and security boundaries.
 
 ## Phase 3 quick start
 
@@ -74,4 +85,4 @@ Stop without deleting persistent state:
 
 See [the Phase 0 runbook](docs/phase0/RUNBOOK.md) for verification and recovery details. Product architecture and later phases are defined in [SPECIFICATION.md](SPECIFICATION.md).
 
-Phase evidence is recorded in [Phase 0 results](docs/phase0/RESULTS.md), [Phase 1 results](docs/phase1/RESULTS.md), [Phase 2 results](docs/phase2/RESULTS.md), and [Phase 3 results](docs/phase3/RESULTS.md). Phases 0–3 are implemented and accepted; Phase 4 has not started.
+Phase evidence is recorded in [Phase 0 results](docs/phase0/RESULTS.md), [Phase 1 results](docs/phase1/RESULTS.md), [Phase 2 results](docs/phase2/RESULTS.md), [Phase 3 results](docs/phase3/RESULTS.md), and [Phase 4 results](docs/phase4/RESULTS.md). Phases 0–4 are implemented and accepted.

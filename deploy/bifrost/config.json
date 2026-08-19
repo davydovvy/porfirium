@@ -49,6 +49,26 @@
         "is_ping_available": true,
         "allow_on_all_virtual_keys": true,
         "tools_to_execute": ["echo", "platform_info"]
+      },
+      {
+        "client_id": "demo_time",
+        "name": "demo_time",
+        "connection_type": "http",
+        "connection_string": "http://demo-time-mcp:8092/mcp/",
+        "auth_type": "none",
+        "is_ping_available": true,
+        "allow_on_all_virtual_keys": true,
+        "tools_to_execute": ["get_current_time", "convert_time"]
+      },
+      {
+        "client_id": "demo_mtg_catalog",
+        "name": "demo_mtg_catalog",
+        "connection_type": "http",
+        "connection_string": "http://demo-mtg-catalog-mcp:8093/mcp/",
+        "auth_type": "none",
+        "is_ping_available": true,
+        "allow_on_all_virtual_keys": true,
+        "tools_to_execute": ["search_cards", "get_card", "compare_cards", "list_sets"]
       }
     ],
     "tool_manager_config": {
@@ -70,6 +90,7 @@
             "collector_url": "http://langfuse-web:3000/api/public/otel/v1/traces",
             "trace_type": "genai_extension",
             "protocol": "http",
+            "group_traces_by_session": true,
             "headers": {
               "Authorization": "env.LANGFUSE_AUTH",
               "x-langfuse-ingestion-version": "4"

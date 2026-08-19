@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from temporalio.client import Client
 
-from .agent import AgentWorkflowV1, workflow_id
+from .agent import ToolAgentWorkflowV2, workflow_id
 from .auth import CurrentIdentity, Identity
 from .chat import append_event, cancel_turn, event_stream, start_turn
 from .config import settings
@@ -111,7 +111,7 @@ async def me(identity: CurrentIdentity, session: Session) -> dict[str, object]:
         "display_name": identity.display_name,
         "email": identity.email,
         "roles": identity.roles,
-        "capabilities": {"chat": True, "agent": True, "tools": False},
+        "capabilities": {"chat": True, "agent": True, "tools": True},
     }
 
 
@@ -239,7 +239,7 @@ async def create_turn(
                 settings.temporal_address, namespace=settings.temporal_namespace
             )
             await temporal.start_workflow(
-                AgentWorkflowV1.run,
+                ToolAgentWorkflowV2.run,
                 str(turn.id),
                 id=turn.workflow_id,
                 task_queue=settings.temporal_task_queue,

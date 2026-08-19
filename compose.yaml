@@ -66,6 +66,8 @@ services:
       LLM_MODEL: ${YANDEX_MODEL}
       LLM_TIMEOUT_SECONDS: "120"
       LLM_MAX_OUTPUT_TOKENS: "2048"
+      LANGFUSE_AUTH: ${LANGFUSE_AUTH}
+      LANGFUSE_BASE_URL: http://langfuse-web:3000
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_NAMESPACE: default
       TEMPORAL_TASK_QUEUE: porfirium-agent-v1
@@ -147,6 +149,40 @@ services:
       timeout: 3s
       retries: 12
 
+  demo-time-mcp:
+    build:
+      context: services/time-mcp
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8092/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  demo-mtg-catalog-mcp:
+    build:
+      context: services/mtg-catalog-mcp
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8093/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
   bifrost:
     image: maximhq/bifrost@sha256:ef8e686b3588884066ec3d0e57f3fc15136b11047ad94678adefe5a9573539af
     restart: unless-stopped
@@ -161,6 +197,10 @@ services:
       - "127.0.0.1:8088:8080"
     depends_on:
       diagnostic-mcp:
+        condition: service_healthy
+      demo-time-mcp:
+        condition: service_healthy
+      demo-mtg-catalog-mcp:
         condition: service_healthy
       langfuse-web:
         condition: service_healthy

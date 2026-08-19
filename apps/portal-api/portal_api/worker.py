@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import uuid
 
@@ -6,16 +7,27 @@ import httpx
 from sqlalchemy import select
 from temporalio import activity
 from temporalio.client import Client
+from temporalio.exceptions import ApplicationError
 from temporalio.worker import Worker
 
-from .agent import AgentWorkflowV1
+from .agent import AgentWorkflowV1, ToolAgentWorkflowV2
 from .chat import append_event
 from .config import settings
 from .db import session_factory
-from .models import Message, Turn, now_utc
+from .models import Message, ToolRequest, Turn, now_utc
+from .observability import record_observation
+from .tool_policy import (
+    AGENT_NAME,
+    AGENT_VERSION,
+    POLICY_VERSION,
+    allowed_tool_names,
+    validate_tool_call,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+MAX_TOOL_CALLS_PER_STEP = 2
+MAX_TOOL_RESULT_BYTES = 32_768
 
 
 @activity.defn(name="mark_agent_running")
@@ -83,6 +95,7 @@ async def generate_agent_response(turn_id: str) -> str:
             json=body,
             headers={
                 "x-request-id": correlation_id,
+                "x-bf-session-id": correlation_id,
                 "traceparent": f"00-{correlation_id}-{parent_span_id}-01",
             },
         )
@@ -110,6 +123,355 @@ async def generate_agent_response(turn_id: str) -> str:
     if not text:
         raise ValueError("Model returned no output text")
     return str(text)
+
+
+def _response_text(payload: dict[str, object]) -> str:
+    direct = payload.get("output_text")
+    if direct:
+        return str(direct)
+    return "".join(
+        str(part.get("text", ""))
+        for item in payload.get("output", [])
+        if isinstance(item, dict)
+        for part in item.get("content", [])
+        if isinstance(part, dict) and part.get("type") == "output_text"
+    )
+
+
+@activity.defn(name="generate_agent_step")
+async def generate_agent_step(value: dict) -> dict:
+    identifier = uuid.UUID(str(value["turn_id"]))
+    iteration = int(value["iteration"])
+    await append_event(
+        identifier,
+        "agent.status",
+        {
+            "status": "generating" if iteration == 0 else "synthesizing",
+            "label": "Selecting tools" if iteration == 0 else "Synthesizing tool results",
+        },
+    )
+    async with session_factory() as session:
+        turn = await session.get(Turn, identifier)
+        if turn is None:
+            raise ApplicationError("turn_not_found", non_retryable=True)
+        history = list(
+            (
+                await session.scalars(
+                    select(Message)
+                    .where(Message.conversation_id == turn.conversation_id)
+                    .order_by(Message.created_at, Message.id)
+                )
+            ).all()
+        )
+        completed_tools = list(
+            (
+                await session.scalars(
+                    select(ToolRequest)
+                    .where(
+                        ToolRequest.turn_id == identifier,
+                        ToolRequest.decision == "allowed",
+                        ToolRequest.state == "completed",
+                    )
+                    .order_by(ToolRequest.iteration, ToolRequest.created_at)
+                )
+            ).all()
+        )
+        model_input: list[dict[str, object]] = [
+            {"role": item.role, "content": item.content} for item in history if item.content
+        ]
+        for tool in completed_tools:
+            model_input.extend(
+                [
+                    {
+                        "type": "function_call",
+                        "call_id": tool.tool_call_id,
+                        "name": tool.external_tool_name,
+                        "arguments": json.dumps(tool.arguments, separators=(",", ":")),
+                    },
+                    {
+                        "type": "function_call_output",
+                        "call_id": tool.tool_call_id,
+                        "output": json.dumps(tool.result, separators=(",", ":")),
+                    },
+                ]
+            )
+        body = {
+            "model": f"yandex/{settings.llm_model}",
+            "input": model_input,
+            "instructions": (
+                "You are Porfirium's durable tool assistant. Use the available read-only "
+                "time or MTG catalog tools when they are needed. Never invent tool results. "
+                "Prices are static illustrative snapshots, not live quotes or purchasing advice. "
+                "After tool results arrive, answer clearly and completely."
+            ),
+            "max_output_tokens": settings.llm_max_output_tokens,
+            "tool_choice": "auto",
+            "metadata": {
+                "conversation_id": str(turn.conversation_id),
+                "turn_id": str(turn.id),
+                "user_id": str(turn.owner_id),
+                "correlation_id": turn.correlation_id,
+                "execution": "temporal-tool-agent-v2",
+                "iteration": str(iteration),
+                "policy_version": POLICY_VERSION,
+            },
+        }
+        correlation_id = turn.correlation_id
+    activity.heartbeat(f"calling-model-{iteration}")
+    parent_span_id = uuid.uuid4().hex[:16]
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(settings.llm_timeout_seconds, connect=10)
+    ) as client:
+        response = await client.post(
+            f"{settings.bifrost_url}/v1/responses",
+            json=body,
+            headers={
+                "x-request-id": correlation_id,
+                "x-bf-session-id": correlation_id,
+                "traceparent": f"00-{correlation_id}-{parent_span_id}-01",
+                "x-bf-mcp-include-tools": ",".join(allowed_tool_names()),
+            },
+        )
+        response.raise_for_status()
+        payload = response.json()
+    activity.heartbeat(f"model-complete-{iteration}")
+    calls = [
+        {
+            "model_call_id": str(payload.get("id", "unknown")),
+            "tool_call_id": str(item.get("call_id", item.get("id", ""))),
+            "name": str(item.get("name", "")),
+            "arguments": str(item.get("arguments", "")),
+        }
+        for item in payload.get("output", [])
+        if isinstance(item, dict) and item.get("type") == "function_call"
+    ]
+    record_observation(
+        trace_id=correlation_id,
+        name=f"agent.model.iteration.{iteration}",
+        as_type="generation",
+        input={"iteration": iteration, "available_tools": allowed_tool_names()},
+        output={
+            "response_id": str(payload.get("id", "unknown")),
+            "kind": "tool_calls" if calls else "final_answer",
+            "tool_call_count": len(calls),
+        },
+        metadata={
+            "turn_id": str(identifier),
+            "iteration": iteration,
+            "policy_version": POLICY_VERSION,
+            "execution": "temporal-tool-agent-v2",
+        },
+        model=settings.llm_model,
+    )
+    if calls:
+        if len(calls) > MAX_TOOL_CALLS_PER_STEP or any(not call["tool_call_id"] for call in calls):
+            raise ApplicationError("tool_call_limit_exceeded", non_retryable=True)
+        return {"tool_calls": calls}
+    text = _response_text(payload)
+    if not text:
+        raise ApplicationError("model_returned_no_output", non_retryable=True)
+    return {"final": text}
+
+
+@activity.defn(name="authorize_agent_tool")
+async def authorize_agent_tool(value: dict) -> dict:
+    identifier = uuid.UUID(str(value["turn_id"]))
+    iteration = int(value["iteration"])
+    call = value["call"]
+    if not isinstance(call, dict):
+        raise ApplicationError("tool_call_malformed", non_retryable=True)
+    name = str(call.get("name", ""))
+    raw_arguments = str(call.get("arguments", ""))
+    tool_call_id = str(call.get("tool_call_id", ""))
+    model_call_id = str(call.get("model_call_id", "unknown"))
+    decision = "allowed"
+    reason = "policy_allowlisted_read_only"
+    try:
+        policy, arguments = validate_tool_call(name, raw_arguments)
+    except ValueError as exc:
+        decision = "denied"
+        reason = str(exc)
+        server_name, _, tool_name = name.partition("-")
+        policy = None
+        arguments = {"raw_arguments_rejected": True}
+    async with session_factory() as session:
+        existing = await session.scalar(
+            select(ToolRequest).where(
+                ToolRequest.turn_id == identifier, ToolRequest.tool_call_id == tool_call_id
+            )
+        )
+        if existing:
+            if existing.decision == "denied":
+                raise ApplicationError(existing.decision_reason, non_retryable=True)
+            return {"request_id": str(existing.id), "decision": existing.decision}
+        turn = await session.get(Turn, identifier)
+        if turn is None:
+            raise ApplicationError("turn_not_found", non_retryable=True)
+        request = existing or ToolRequest(
+            turn_id=identifier,
+            owner_id=turn.owner_id,
+            workflow_id=turn.workflow_id or "unknown",
+            model_call_id=model_call_id,
+            tool_call_id=tool_call_id,
+            iteration=iteration,
+            agent_name=AGENT_NAME,
+            agent_version=AGENT_VERSION,
+            policy_version=POLICY_VERSION,
+            server_name=policy.server_name if policy else server_name,
+            tool_name=policy.tool_name if policy else tool_name,
+            external_tool_name=name,
+            schema_version=policy.schema_version if policy else "unknown",
+            arguments=arguments,
+            decision=decision,
+            decision_reason=reason,
+            state="requested" if decision == "allowed" else "denied",
+            correlation_id=turn.correlation_id,
+        )
+        if existing is None:
+            session.add(request)
+        if decision == "denied":
+            request.completed_at = now_utc()
+        await session.commit()
+        request_id = request.id
+    await append_event(
+        identifier,
+        "tool.requested",
+        {
+            "request_id": str(request_id),
+            "tool": name,
+            "decision": decision,
+            "label": f"Requested {name}",
+        },
+    )
+    if decision == "denied":
+        await append_event(
+            identifier,
+            "tool.completed",
+            {
+                "request_id": str(request_id),
+                "tool": name,
+                "status": "denied",
+                "reason": reason,
+                "label": f"Denied {name}",
+            },
+        )
+        raise ApplicationError(reason, non_retryable=True)
+    return {"request_id": str(request_id), "decision": decision}
+
+
+@activity.defn(name="execute_agent_tool")
+async def execute_agent_tool(request_id: str) -> None:
+    request_uuid = uuid.UUID(request_id)
+    async with session_factory() as session:
+        request = await session.get(ToolRequest, request_uuid)
+        if request is None:
+            raise ApplicationError("tool_audit_missing", non_retryable=True)
+        if request.decision != "allowed":
+            raise ApplicationError("tool_not_authorized", non_retryable=True)
+        if request.state in {"executed", "completed"}:
+            return
+        if request.state not in {"requested", "started", "failed"}:
+            raise ApplicationError("tool_state_invalid", non_retryable=True)
+        emit_started = request.state == "requested"
+        request.state = "started"
+        request.started_at = request.started_at or now_utc()
+        request.completed_at = None
+        request.error_code = None
+        identifier = request.turn_id
+        name = request.external_tool_name
+        tool_call_id = request.tool_call_id
+        raw_arguments = json.dumps(request.arguments, separators=(",", ":"))
+        correlation_id = request.correlation_id
+        await session.commit()
+    if emit_started:
+        await append_event(
+            identifier,
+            "tool.started",
+            {"request_id": request_id, "tool": name, "label": f"Running {name}"},
+        )
+    parent_span_id = uuid.uuid4().hex[:16]
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(20, connect=5)) as client:
+            response = await client.post(
+                f"{settings.bifrost_url}/v1/mcp/tool/execute",
+                json={
+                    "id": tool_call_id,
+                    "type": "function",
+                    "function": {"name": name, "arguments": raw_arguments},
+                },
+                headers={
+                    "x-bf-mcp-include-tools": name,
+                    "x-request-id": correlation_id,
+                    "x-bf-session-id": correlation_id,
+                    "traceparent": f"00-{correlation_id}-{parent_span_id}-01",
+                },
+            )
+            response.raise_for_status()
+            raw_result = response.content
+        if len(raw_result) > MAX_TOOL_RESULT_BYTES:
+            raise ApplicationError("tool_result_too_large", non_retryable=True)
+        result = json.loads(raw_result)
+    except Exception as exc:
+        async with session_factory() as session:
+            request = await session.get(ToolRequest, request_uuid)
+            if request:
+                request.state = "failed"
+                request.error_code = (
+                    str(exc) if isinstance(exc, ApplicationError) else "tool_execution_failed"
+                )
+                request.completed_at = now_utc()
+                await session.commit()
+        if isinstance(exc, ApplicationError):
+            raise
+        raise ApplicationError("tool_execution_failed") from exc
+    async with session_factory() as session:
+        request = await session.get(ToolRequest, request_uuid)
+        if request:
+            request.state = "executed"
+            request.result = result
+            await session.commit()
+    record_observation(
+        trace_id=correlation_id,
+        name=f"agent.tool.{name}",
+        as_type="tool",
+        input={"request_id": request_id, "arguments": json.loads(raw_arguments)},
+        output={"request_id": request_id, "result": result},
+        metadata={
+            "turn_id": str(identifier),
+            "request_id": request_id,
+            "tool_call_id": tool_call_id,
+            "external_tool_name": name,
+            "status": "executed",
+        },
+    )
+
+
+@activity.defn(name="record_agent_tool_result")
+async def record_agent_tool_result(request_id: str) -> None:
+    request_uuid = uuid.UUID(request_id)
+    async with session_factory() as session:
+        request = await session.get(ToolRequest, request_uuid)
+        if request is None:
+            raise ApplicationError("tool_audit_missing", non_retryable=True)
+        if request.state == "completed":
+            return
+        if request.state != "executed" or request.result is None:
+            raise ApplicationError("tool_result_not_executed", non_retryable=True)
+        request.state = "completed"
+        request.completed_at = now_utc()
+        identifier = request.turn_id
+        name = request.external_tool_name
+        await session.commit()
+    await append_event(
+        identifier,
+        "tool.completed",
+        {
+            "request_id": request_id,
+            "tool": name,
+            "status": "completed",
+            "label": f"Completed {name}",
+        },
+    )
 
 
 @activity.defn(name="complete_agent_turn")
@@ -175,10 +537,14 @@ async def run() -> None:
     worker = Worker(
         client,
         task_queue=settings.temporal_task_queue,
-        workflows=[AgentWorkflowV1],
+        workflows=[AgentWorkflowV1, ToolAgentWorkflowV2],
         activities=[
             mark_agent_running,
             generate_agent_response,
+            generate_agent_step,
+            authorize_agent_tool,
+            execute_agent_tool,
+            record_agent_tool_result,
             complete_agent_turn,
             fail_agent_turn,
         ],

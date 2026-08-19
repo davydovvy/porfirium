@@ -84,8 +84,9 @@ async def execute_direct_turn(turn_id: uuid.UUID) -> None:
                 json=request_body,
                 headers={
                     "Accept": "text/event-stream",
-                    "x-request-id": turn.correlation_id,
-                    "traceparent": f"00-{turn.correlation_id}-{parent_span_id}-01",
+                "x-request-id": turn.correlation_id,
+                "x-bf-session-id": turn.correlation_id,
+                "traceparent": f"00-{turn.correlation_id}-{parent_span_id}-01",
                 },
             ) as response:
                 response.raise_for_status()
@@ -179,6 +180,7 @@ async def event_stream(turn_id: uuid.UUID, after: int) -> AsyncIterator[str]:
                 ).all()
             )
             turn = await session.get(Turn, turn_id)
+        saw_terminal = False
         for event in events:
             after = event.sequence
             body = {
@@ -190,7 +192,9 @@ async def event_stream(turn_id: uuid.UUID, after: int) -> AsyncIterator[str]:
                 "payload": event.payload,
             }
             yield f"id: {event.sequence}\nevent: {event.event_type}\ndata: {json.dumps(body)}\n\n"
-        if turn is None or (turn.state in {"completed", "failed", "cancelled"} and not events):
+            if event.event_type in {"turn.completed", "turn.failed", "turn.cancelled"}:
+                saw_terminal = True
+        if turn is None or saw_terminal:
             return
         idle_ticks += 1
         if idle_ticks % 20 == 0:

@@ -1,0 +1,17 @@
+{
+  "captured_at": "2026-08-17",
+  "record_count": 100,
+  "records_per_set": 20,
+  "schema_version": "1.0.0",
+  "selection": "first 20 priced paper printings ordered by Scryfall EDHREC rank",
+  "set_codes": [
+    "M11",
+    "ISD",
+    "RTR",
+    "THS",
+    "KTK"
+  ],
+  "sha256": "3be0e68f0b8ea467ba5e2b284e93816ead0362e5033392d153b463745a4f8c58",
+  "source": "Scryfall API",
+  "source_url": "https://scryfall.com/docs/api"
+}

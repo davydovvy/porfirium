@@ -75,6 +75,7 @@ class Turn(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     conversation: Mapped[Conversation] = relationship(back_populates="turns")
     events: Mapped[list["TurnEvent"]] = relationship(back_populates="turn")
+    tool_requests: Mapped[list["ToolRequest"]] = relationship(back_populates="turn")
 
 
 class TurnEvent(Base):
@@ -88,3 +89,38 @@ class TurnEvent(Base):
     payload: Mapped[dict[str, object]] = mapped_column(JSONB, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     turn: Mapped[Turn] = relationship(back_populates="events")
+
+
+class ToolRequest(Base):
+    __tablename__ = "tool_requests"
+    __table_args__ = (
+        UniqueConstraint("turn_id", "tool_call_id", name="uq_tool_request_turn_call"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    turn_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("turns.id"), index=True, nullable=False
+    )
+    owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    workflow_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    model_call_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    tool_call_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    iteration: Mapped[int] = mapped_column(Integer, nullable=False)
+    agent_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    agent_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    policy_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    server_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    tool_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    external_tool_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    schema_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    arguments: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    decision: Mapped[str] = mapped_column(String(32), nullable=False)
+    decision_reason: Mapped[str] = mapped_column(String(64), nullable=False)
+    state: Mapped[str] = mapped_column(String(32), nullable=False)
+    result: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    correlation_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    turn: Mapped[Turn] = relationship(back_populates="tool_requests")
