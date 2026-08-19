@@ -4,6 +4,17 @@ Status: Implemented and accepted
 Scope: MCP tools and server-side tool policy  
 Prerequisite: Phase 3 accepted
 
+## As-built notes
+
+The implementation was accepted on 2026-08-19. The following reviewed changes supersede the corresponding planning assumptions below:
+
+- the catalog contains a dated Scryfall API snapshot with captured nonfoil USD values; it does not generate prices or store quantities;
+- the catalog surface includes `compare_cards(card_ids)` in addition to search, detail, and set listing;
+- V2 retains the existing `porfirium-agent-<turn-id>` workflow-ID format while using the separately named `PorfiriumToolAgentWorkflowV2` definition;
+- `x-bf-session-id` and W3C `traceparent` propagation place the Agent model, MCP, and application observations under the turn correlation ID in Langfuse.
+
+See [RESULTS.md](RESULTS.md) for verification evidence and [RUNBOOK.md](RUNBOOK.md) for current operation. The remainder of this document is the implementation plan and is retained as a decision record.
+
 ## Outcome
 
 Phase 4 turns the durable no-tool Agent increment into a bounded, tool-using agent. An authenticated user can ask for current-time information or query the bundled Magic: The Gathering catalog, observe persisted tool progress in the portal, receive one complete final answer, and inspect the correlated model/tool path. Tool access is decided by application policy on every call; prompting the model cannot expand that access.

@@ -653,6 +653,8 @@ User-testable result: the user can select `Agent`, observe durable status events
 
 ### Phase 4 — MCP tools and policy
 
+Implementation note: delivered and accepted on 2026-08-19. Reproducible evidence and as-built details are recorded in [the Phase 4 results](docs/phase4/RESULTS.md).
+
 - implement/package the two demo MCP servers;
 - register them with Bifrost MCP gateway;
 - implement explicit tool-call validation and execution activities;

@@ -12,7 +12,7 @@ Ensure Keycloak is running, `portal.local` resolves to `127.0.0.1`, and the repo
 
 The first start downloads the pinned Temporal server and UI images and may take several minutes. Startup applies database migration `0003_phase3` automatically.
 
-Startup also verifies Bifrost's persisted `mcp_disable_auto_tool_inject` setting and repairs it to `true` when necessary. This prevents the Phase 0 diagnostic tools from leaking into Phase 3 Agent requests before the Phase 4 policy/execution loop exists.
+Startup also verifies Bifrost's persisted `mcp_disable_auto_tool_inject` setting and repairs it to `true` when necessary. This prevents the Phase 0 diagnostic tools from leaking into the replay-safe Phase 3 Agent workflow. Phase 4 retains this global deny-by-default setting and supplies only its policy-approved tools per request.
 
 ## Use and inspect
 
@@ -59,4 +59,4 @@ Do not run `docker compose down -v` unless permanent deletion of application, Te
 
 ## Phase boundary
 
-Agent v1 deliberately has no tools and performs one model activity. If asked to use tools, it must explain that they are unavailable rather than attempting a call. MCP time/catalog servers, tool validation, read-only execution policy, and tool status events begin in Phase 4.
+This historical runbook exercises Agent workflow V1, which deliberately has no tools and performs one model activity. Phase 4 is now the current Agent path and adds the time/catalog tools, validation, read-only execution policy, and tool-status events while retaining V1 registration for replay compatibility.

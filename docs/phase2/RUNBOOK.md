@@ -52,4 +52,4 @@ Normal stop preserves all application and observability data. Do not use `docker
 
 ## Phase boundary
 
-Phase 2 includes direct mode only. Temporal-backed durable Agent mode begins in Phase 3; MCP tools and policy enforcement begin in Phase 4.
+This historical Phase 2 runbook covers Direct mode only. Temporal-backed Agent mode was delivered in Phase 3, and MCP tools with policy enforcement were delivered in Phase 4; use the later phase runbooks for current operation.

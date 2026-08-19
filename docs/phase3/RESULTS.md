@@ -49,16 +49,16 @@ Approximate live memory usage after the durability test:
 
 ## Known limitations
 
-- Agent v1 is intentionally a single no-tool model call. Tools and policy arrive in Phase 4.
+- Agent V1 remains intentionally a single no-tool model call for replay compatibility. Phase 4 subsequently added the V2 tool workflow.
 - Cancellation is durable at the workflow level, but an already-running HTTP model request may consume upstream work before asynchronous cancellation interrupts the activity.
 - Temporal shares the application PostgreSQL service for this local demo, using separate `temporal` and `temporal_visibility` databases. Production topology remains deferred.
-- The progress vocabulary is fixed to planning, generating, and completed; richer reasoning/tool steps begin in Phase 4.
+- Agent V1's progress vocabulary is fixed to planning, generating, and completed. Phase 4 subsequently added tool and synthesis steps.
 - A dedicated one-click retry affordance and conversation rename UI remain deferred.
 - GitHub Action references remain version-tag pinned pending Phase 5 hardening.
 
 ## Phase boundary
 
-Phase 4 introduces the time and MTG catalog MCP servers, explicit tool-call validation, read-only allowlists, execution activities, tool audit events, and prompt-injection security tests.
+Phase 4 subsequently delivered the time and MTG catalog MCP servers, explicit tool-call validation, read-only allowlists, execution activities, tool audit events, and prompt-injection security tests.
 
 ## Handoff acceptance
 

@@ -23,11 +23,11 @@ Startup builds the independently locked time and MTG catalog MCP services, start
 Sign in as `alise` or `bob` with the local demo password `123456`. Select `Agent`, create a conversation, and try either of these tasks:
 
 - `Use the time tool to give the current time in Europe/Moscow.`
-- `Search the MTG catalog for Cultivate in M11, retrieve its details, and report its static demo price.`
+- `Search the MTG catalog for Cultivate in M11, retrieve its details, and report its dated snapshot price.`
 
 The portal shows ordered tool-request, start, and completion steps followed by one complete assistant answer. Refreshing during a run reconnects to the persisted SSE stream without duplicating steps.
 
-Tool-capable workflow IDs are `porfirium-tool-agent-<turn-id>`. Search for the workflow in Temporal UI. The turn correlation ID is its W3C trace ID and locates the model and tool observations in Langfuse. Tool audit rows remain owner-scoped and are not exposed through a cross-user inspection endpoint.
+Agent workflow IDs are `porfirium-agent-<turn-id>`. New Phase 4 runs use the `PorfiriumToolAgentWorkflowV2` definition; V1 remains registered for replay compatibility with existing histories. Search by workflow ID in Temporal UI. The turn's 32-character correlation ID is also its W3C trace ID and Bifrost session ID, so the Agent model generations, MCP execution, and application observations appear under one Langfuse trace. Tool audit rows remain owner-scoped and are not exposed through a cross-user inspection endpoint.
 
 ## Verify
 
@@ -35,9 +35,9 @@ Tool-capable workflow IDs are `porfirium-tool-agent-<turn-id>`. Search for the w
 ./scripts/phase4/verify.sh
 ```
 
-Verification runs both MCP unit suites, backend lint/tests, frontend lint/test/build, Compose validation, the secret-pattern scan, Bifrost policy validation, and the live Phase 4 smoke. The live smoke exercises a time call across an `agent-worker` restart, a three-tool MTG request, prompt-injection denial, audit/event idempotency, trace correlation, and two-user isolation. It makes paid Yandex requests.
+Verification runs both MCP unit suites, backend lint/tests, frontend lint/test/build, Compose validation, the secret-pattern scan, Bifrost policy validation, and the live Phase 4 smoke. The live smoke exercises a time call across an `agent-worker` restart, a three-tool MTG request, prompt-injection denial, audit/event idempotency, trace correlation, and two-user isolation. Under the expected tool-selection path it makes seven paid Yandex model requests: two for time selection/synthesis, four for the three MTG calls plus synthesis, and one denial response. Provider behavior can alter the number if a request is retried.
 
-The preserved regressions can be repeated separately:
+The preserved behavior regressions can be repeated separately. The Phase 3 smoke submits a no-tool task through the current Agent route and restarts the worker; it does not create a new V1 workflow:
 
 ```bash
 ./scripts/phase3/smoke.sh
@@ -58,6 +58,6 @@ Do not run `docker compose down -v` unless permanent deletion of application, Te
 
 ## Security and phase boundary
 
-Only the reviewed read-only time and bundled catalog tools are available to `tool_assistant_v1`. The application validates exact tool identity, schema, size limits, and policy on every proposed call before execution. Bifrost automatic tool injection/execution remains disabled. Browser bearer tokens and browser-controlled user identifiers are not forwarded to Bifrost or MCP services.
+Only the reviewed read-only time and bundled catalog tools are available to `tool_assistant_v1`. The application validates exact tool identity, schema, size limits, and policy on every proposed call before execution. Bifrost automatic tool injection/execution remains disabled. Browser bearer tokens and browser-controlled user identifiers are not forwarded to Bifrost or MCP services. Catalog prices are dated Scryfall snapshots with source metadata, not live quotes; see [the data provenance notes](../../services/mtg-catalog-mcp/data/README.md).
 
 Side-effecting tools, approval UI, live prices, arbitrary retrieval, delegated user credentials, and broader dependency-failure hardening remain deferred.

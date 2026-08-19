@@ -6,7 +6,7 @@ Status: Implemented and accepted by the user on 2026-08-19.
 ## Delivered
 
 - independently packaged, non-root time and MTG catalog MCP services with locked dependencies, health checks, schemas, and deterministic tests;
-- a checked-in 100-card catalog spanning M11, ISD, RTR, THS, and KTK, with deterministic demo prices and quantities plus provenance/refresh metadata;
+- a checked-in 100-card catalog spanning M11, ISD, RTR, THS, and KTK, with dated Scryfall nonfoil USD snapshots plus provenance, checksum, and refresh metadata;
 - explicit Bifrost MCP client registration while global automatic tool injection remains disabled;
 - versioned `tool_assistant_v1` policy with exact-name lookup, JSON Schema validation, read-only classification, bounded arguments/results, and stable denial reasons;
 - migration `0004_phase4_tool_audit` and idempotent, owner-scoped durable tool decisions and execution records;
@@ -34,14 +34,16 @@ PASS: any model-proposed unauthorized calls were durably denied
 
 The worker was restarted after the time tool authorization was persisted. The same V2 workflow resumed and completed with exactly one completed audit row and final assistant message. The MTG run performed search, detail, and comparison calls in order. A prompt demanding diagnostic, fabricated, and name-confused tools caused no unauthorized execution; any proposed calls were durably denied.
 
+Langfuse was inspected directly after acceptance. A no-tool Agent regression run contained 25 observations with one distinct trace ID equal to its turn correlation ID. The Phase 4 time run placed Bifrost generation/plugin observations, MCP execution, the tool observation, and application observations under the same correlation/trace ID; the Langfuse session ID matched it as well.
+
 Automated checks passed on 2026-08-19: time MCP 6 tests, MTG MCP 5 tests, backend Ruff plus 15 tests, frontend lint plus 1 component test and production build, Compose configuration validation, secret-pattern scan, and Bifrost deny-by-default policy validation.
 
-The Phase 3 durability regression passed across an `agent-worker` restart. The Phase 2 Direct regression passed streaming, idempotency, ordered SSE replay, persistence, cross-user isolation, and correlated Langfuse tracing.
+The Phase 3-style no-tool durability regression passed through the current Agent route across an `agent-worker` restart. This preserves the user-visible Phase 3 behavior but is not a new V1-history replay test. The Phase 2 Direct regression passed streaming, idempotency, ordered SSE replay, persistence, cross-user isolation, and correlated Langfuse tracing.
 
 ## Known limitations
 
 - All Phase 4 tools are reviewed read-only demo tools; side effects and interactive approvals are deferred.
-- Catalog prices and quantities are deterministic synthetic demo data, not live commerce data.
+- Catalog prices are dated Scryfall nonfoil USD snapshots, not live quotes or purchasing advice. Physical condition is unspecified, and the catalog contains no inventory quantity field.
 - MCP services use private service networking without delegated end-user credentials. The workflow contracts reserve an opaque delegated-credential reference for a future audience-restricted token-exchange integration.
 - Cancellation is durable between activities, but already-running upstream HTTP work may finish before asynchronous cancellation takes effect.
 - Broader dependency-failure, load, resource, and demo hardening remains Phase 5 work.

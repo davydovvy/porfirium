@@ -11,7 +11,7 @@ With the standalone Keycloak prerequisite running and `portal.local` mapped to `
 ./scripts/phase4/verify.sh
 ```
 
-Open `https://portal.local:8444`, select `Agent`, and ask for the current time in an IANA timezone or for information from the bundled MTG catalog. Tool activity is persisted and replayed in the conversation view. See [the Phase 4 runbook](docs/phase4/RUNBOOK.md) for verification, inspection, recovery, and security boundaries.
+Open `https://portal.local:8444`, select `Agent`, and ask for the current time in an IANA timezone or for information from the bundled, dated MTG catalog snapshot. Tool activity is persisted and replayed in the conversation view. See [the Phase 4 runbook](docs/phase4/RUNBOOK.md) for verification, inspection, recovery, and security boundaries.
 
 ## Phase 3 quick start
 

@@ -53,7 +53,7 @@ Approximate live memory usage after verification:
 
 ## Phase boundary
 
-Temporal-backed durable Agent mode, agent status streaming, and worker restart recovery begin in Phase 3. MCP demo tools and authorization policy begin in Phase 4.
+At this Phase 2 handoff, Temporal-backed Agent mode was deferred to Phase 3 and MCP tools/policy to Phase 4. Both later increments have since been implemented and accepted.
 
 ## Handoff acceptance
 
