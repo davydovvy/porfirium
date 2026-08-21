@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+
+config:
+  adminAddr: 0.0.0.0:15000
+  readinessAddr: 0.0.0.0:15021
+  statsAddr: 0.0.0.0:15020
+  tracing:
+    otlpEndpoint: http://langfuse-web:3000
+    otlpProtocol: http
+    path: /api/public/otel/v1/traces
+    randomSampling: true
+    clientSampling: true
+
+gateways:
+  default:
+    port: 8090
+
+llm:
+  gateways: default
+  models:
+    - name: default
+      provider:
+        custom:
+          providerOverride: yandex
+          formats:
+            - type: responses
+              path: /v1/responses
+            - type: completions
+              path: /v1/chat/completions
+      params:
+        apiKey: $YANDEX_API_KEY
+        model: $YANDEX_MODEL
+        baseUrl: https://ai.api.cloud.yandex.net
+
+mcp:
+  gateways: default
+  statefulMode: stateless
+  prefixMode: always
+  failureMode: failClosed
+  policies:
+    mcpAuthorization:
+      rules:
+        - 'mcp.tool.target == "diagnostic" && mcp.tool.name in ["echo", "platform_info"]'
+        - 'mcp.tool.target == "time" && mcp.tool.name in ["get_current_time", "convert_time"]'
+        - 'mcp.tool.target == "mtg-catalog" && mcp.tool.name in ["search_cards", "get_card", "compare_cards", "list_sets"]'
+  targets:
+    - name: diagnostic
+      mcp:
+        host: http://diagnostic-mcp:8091/mcp/
+      policies:
+        requestHeaderModifier:
+          set:
+            Host: diagnostic-mcp:8091
+    - name: time
+      mcp:
+        host: http://demo-time-mcp:8092/mcp/
+      policies:
+        requestHeaderModifier:
+          set:
+            Host: demo-time-mcp:8092
+    - name: mtg-catalog
+      mcp:
+        host: http://demo-mtg-catalog-mcp:8093/mcp/
+      policies:
+        requestHeaderModifier:
+          set:
+            Host: demo-mtg-catalog-mcp:8093

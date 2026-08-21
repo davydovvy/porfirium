@@ -19,8 +19,13 @@ mcp = FastMCP(
     transport_security=TransportSecuritySettings(
         allowed_hosts=[
             "diagnostic-mcp:8091",
+            "diagnostic-mcp",
             "127.0.0.1:8091",
+            "127.0.0.1:8089",
+            "127.0.0.1",
+            "agentgateway-spike:8090",
             "localhost:8091",
+            "localhost",
         ]
     ),
 )

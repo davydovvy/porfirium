@@ -3,7 +3,6 @@ import json
 import logging
 import uuid
 
-import httpx
 from sqlalchemy import select
 from temporalio import activity
 from temporalio.client import Client
@@ -14,6 +13,8 @@ from .agent import AgentWorkflowV1, ToolAgentWorkflowV2
 from .chat import append_event
 from .config import settings
 from .db import session_factory
+from .gateways import ModelRequest, ToolCall, create_model_gateway, create_tool_gateway
+from .gateways.contracts import GatewayProtocolError
 from .models import Message, ToolRequest, Turn, now_utc
 from .observability import record_observation
 from .tool_policy import (
@@ -28,6 +29,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 MAX_TOOL_CALLS_PER_STEP = 2
 MAX_TOOL_RESULT_BYTES = 32_768
+model_gateway = create_model_gateway()
+tool_gateway = create_tool_gateway()
 
 
 @activity.defn(name="mark_agent_running")
@@ -64,43 +67,29 @@ async def generate_agent_response(turn_id: str) -> str:
                 )
             ).all()
         )
-        body = {
-            "model": f"yandex/{settings.llm_model}",
-            "input": [
+        model_request = ModelRequest(
+            model=settings.llm_model,
+            input=[
                 {"role": item.role, "content": item.content} for item in history if item.content
             ],
-            "instructions": (
+            correlation_id=turn.correlation_id,
+            instructions=(
                 "You are Porfirium's durable agent. Answer the user clearly and completely. "
                 "Do not claim to use tools; tools are introduced in a later phase."
             ),
-            "max_output_tokens": settings.llm_max_output_tokens,
-            "tools": [],
-            "tool_choice": "none",
-            "metadata": {
+            max_output_tokens=settings.llm_max_output_tokens,
+            tool_choice="none",
+            metadata={
                 "conversation_id": str(turn.conversation_id),
                 "turn_id": str(turn.id),
                 "user_id": str(turn.owner_id),
                 "correlation_id": turn.correlation_id,
                 "execution": "temporal-agent-v1",
             },
-        }
+        )
         correlation_id = turn.correlation_id
     activity.heartbeat("calling-model")
-    parent_span_id = uuid.uuid4().hex[:16]
-    async with httpx.AsyncClient(
-        timeout=httpx.Timeout(settings.llm_timeout_seconds, connect=10)
-    ) as client:
-        response = await client.post(
-            f"{settings.bifrost_url}/v1/responses",
-            json=body,
-            headers={
-                "x-request-id": correlation_id,
-                "x-bf-session-id": correlation_id,
-                "traceparent": f"00-{correlation_id}-{parent_span_id}-01",
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
+    payload = dict((await model_gateway.respond(model_request)).payload)
     activity.heartbeat("model-complete")
     if any(item.get("type") == "function_call" for item in payload.get("output", [])):
         logger.warning(
@@ -195,18 +184,20 @@ async def generate_agent_step(value: dict) -> dict:
                     },
                 ]
             )
-        body = {
-            "model": f"yandex/{settings.llm_model}",
-            "input": model_input,
-            "instructions": (
+        model_request = ModelRequest(
+            model=settings.llm_model,
+            input=model_input,
+            correlation_id=turn.correlation_id,
+            instructions=(
                 "You are Porfirium's durable tool assistant. Use the available read-only "
                 "time or MTG catalog tools when they are needed. Never invent tool results. "
                 "Prices are static illustrative snapshots, not live quotes or purchasing advice. "
                 "After tool results arrive, answer clearly and completely."
             ),
-            "max_output_tokens": settings.llm_max_output_tokens,
-            "tool_choice": "auto",
-            "metadata": {
+            max_output_tokens=settings.llm_max_output_tokens,
+            tools=allowed_tool_names(),
+            tool_choice="auto",
+            metadata={
                 "conversation_id": str(turn.conversation_id),
                 "turn_id": str(turn.id),
                 "user_id": str(turn.owner_id),
@@ -215,25 +206,10 @@ async def generate_agent_step(value: dict) -> dict:
                 "iteration": str(iteration),
                 "policy_version": POLICY_VERSION,
             },
-        }
+        )
         correlation_id = turn.correlation_id
     activity.heartbeat(f"calling-model-{iteration}")
-    parent_span_id = uuid.uuid4().hex[:16]
-    async with httpx.AsyncClient(
-        timeout=httpx.Timeout(settings.llm_timeout_seconds, connect=10)
-    ) as client:
-        response = await client.post(
-            f"{settings.bifrost_url}/v1/responses",
-            json=body,
-            headers={
-                "x-request-id": correlation_id,
-                "x-bf-session-id": correlation_id,
-                "traceparent": f"00-{correlation_id}-{parent_span_id}-01",
-                "x-bf-mcp-include-tools": ",".join(allowed_tool_names()),
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
+    payload = dict((await model_gateway.respond(model_request)).payload)
     activity.heartbeat(f"model-complete-{iteration}")
     calls = [
         {
@@ -389,28 +365,20 @@ async def execute_agent_tool(request_id: str) -> None:
             "tool.started",
             {"request_id": request_id, "tool": name, "label": f"Running {name}"},
         )
-    parent_span_id = uuid.uuid4().hex[:16]
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(20, connect=5)) as client:
-            response = await client.post(
-                f"{settings.bifrost_url}/v1/mcp/tool/execute",
-                json={
-                    "id": tool_call_id,
-                    "type": "function",
-                    "function": {"name": name, "arguments": raw_arguments},
-                },
-                headers={
-                    "x-bf-mcp-include-tools": name,
-                    "x-request-id": correlation_id,
-                    "x-bf-session-id": correlation_id,
-                    "traceparent": f"00-{correlation_id}-{parent_span_id}-01",
-                },
-            )
-            response.raise_for_status()
-            raw_result = response.content
-        if len(raw_result) > MAX_TOOL_RESULT_BYTES:
-            raise ApplicationError("tool_result_too_large", non_retryable=True)
-        result = json.loads(raw_result)
+        result = dict(
+            (
+                await tool_gateway.call_tool(
+                    ToolCall(
+                        call_id=tool_call_id,
+                        name=name,
+                        arguments=json.loads(raw_arguments),
+                        correlation_id=correlation_id,
+                        max_result_bytes=MAX_TOOL_RESULT_BYTES,
+                    )
+                )
+            ).payload
+        )
     except Exception as exc:
         async with session_factory() as session:
             request = await session.get(ToolRequest, request_uuid)
@@ -421,6 +389,8 @@ async def execute_agent_tool(request_id: str) -> None:
                 )
                 request.completed_at = now_utc()
                 await session.commit()
+        if isinstance(exc, GatewayProtocolError) and str(exc) == "tool_result_too_large":
+            raise ApplicationError("tool_result_too_large", non_retryable=True) from exc
         if isinstance(exc, ApplicationError):
             raise
         raise ApplicationError("tool_execution_failed") from exc

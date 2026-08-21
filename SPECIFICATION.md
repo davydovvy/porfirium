@@ -1,8 +1,14 @@
 # Porfirium — Architecture and Delivery Specification
 
-Status: Living implementation specification — core deployment decisions accepted
-Last updated: 2026-08-19
-Implementation status: Phases 0–4 implemented and accepted
+Status: Implemented Phase 0–4 baseline; planned architecture transition linked below
+Last updated: 2026-08-21
+Implementation status: Phases 0–4 and transition Increments 0–1 implemented and accepted
+
+> **Planned successor architecture:** The staged replacement of both Bifrost gateway roles with Agentgateway, together with the introduction of independently publishable and immutable agent versions, is defined in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md). This specification continues to describe the implemented Phase 0–4 baseline until each transition milestone is accepted. Historical phase evidence and accepted behavior remain the migration regression contract.
+
+Transition acceptance evidence is recorded in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md). Increment 0, the complete live Bifrost-era migration regression baseline, passed and was accepted on 2026-08-21.
+
+Increment 1, the vendor-neutral model/tool gateway seam with Bifrost adapters, passed the same complete live regression gate and was accepted on 2026-08-21. Increment 2, the pinned side-by-side Agentgateway/Yandex compatibility spike, also passed on 2026-08-21. Increment 3, the MCP cutover behind the vendor-neutral tool gateway, is next; Bifrost remains the active provider until that gate passes.
 
 ## 1. Purpose
 
@@ -701,9 +707,12 @@ DATABASE_URL
 TEMPORAL_ADDRESS
 TEMPORAL_NAMESPACE
 TEMPORAL_TASK_QUEUE
-BIFROST_LLM_BASE_URL
-BIFROST_MCP_BASE_URL
-BIFROST_SERVICE_KEY
+MODEL_GATEWAY_PROVIDER=bifrost
+MODEL_GATEWAY_URL=http://bifrost:8080
+TOOL_GATEWAY_PROVIDER=bifrost
+TOOL_GATEWAY_URL=http://bifrost:8080
+TOOL_GATEWAY_TIMEOUT_SECONDS
+BIFROST_MODEL_PREFIX=yandex/
 YANDEX_OPENAI_BASE_URL=https://ai.api.cloud.yandex.net/v1
 YANDEX_API_KEY
 YANDEX_MODEL=gpt://<folder-id>/deepseek-v4-flash/latest

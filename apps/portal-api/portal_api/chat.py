@@ -4,15 +4,16 @@ import logging
 import uuid
 from collections.abc import AsyncIterator
 
-import httpx
 from sqlalchemy import func, select
 
 from .config import settings
 from .db import session_factory
+from .gateways import ModelRequest, create_model_gateway
 from .models import Message, Turn, TurnEvent, now_utc
 
 logger = logging.getLogger(__name__)
 running_turns: dict[uuid.UUID, asyncio.Task[None]] = {}
+model_gateway = create_model_gateway()
 
 
 async def append_event(turn_id: uuid.UUID, event_type: str, payload: dict[str, object]) -> None:
@@ -60,47 +61,25 @@ async def execute_direct_turn(turn_id: uuid.UUID) -> None:
                 )
             )
             await session.commit()
-            request_body = {
-                "model": f"yandex/{settings.llm_model}",
-                "input": [
+            request = ModelRequest(
+                model=settings.llm_model,
+                input=[
                     {"role": item.role, "content": item.content} for item in history if item.content
                 ],
-                "max_output_tokens": settings.llm_max_output_tokens,
-                "stream": True,
-                "metadata": {
+                correlation_id=turn.correlation_id,
+                max_output_tokens=settings.llm_max_output_tokens,
+                metadata={
                     "conversation_id": str(turn.conversation_id),
                     "turn_id": str(turn.id),
                     "user_id": str(turn.owner_id),
                     "correlation_id": turn.correlation_id,
                 },
-            }
+            )
 
-        timeout = httpx.Timeout(settings.llm_timeout_seconds, connect=10)
-        parent_span_id = uuid.uuid4().hex[:16]
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            async with client.stream(
-                "POST",
-                f"{settings.bifrost_url}/v1/responses",
-                json=request_body,
-                headers={
-                    "Accept": "text/event-stream",
-                "x-request-id": turn.correlation_id,
-                "x-bf-session-id": turn.correlation_id,
-                "traceparent": f"00-{turn.correlation_id}-{parent_span_id}-01",
-                },
-            ) as response:
-                response.raise_for_status()
-                async for line in response.aiter_lines():
-                    if not line.startswith("data:"):
-                        continue
-                    raw = line.removeprefix("data:").strip()
-                    if not raw or raw == "[DONE]":
-                        continue
-                    upstream = json.loads(raw)
-                    if upstream.get("type") == "response.output_text.delta":
-                        delta = str(upstream.get("delta", ""))
-                        text += delta
-                        await append_event(turn_id, "assistant.delta", {"delta": delta})
+        async for upstream in model_gateway.stream(request):
+            if upstream.type == "response.output_text.delta":
+                text += upstream.delta
+                await append_event(turn_id, "assistant.delta", {"delta": upstream.delta})
 
         async with session_factory() as session:
             turn = await session.get(Turn, turn_id)

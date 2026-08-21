@@ -31,7 +31,10 @@ services:
       OIDC_AUDIENCE: genai-demo-api
       OIDC_REQUIRED_ROLE: genai-user
       OIDC_CA_FILE: /certs/keycloak-root-ca.pem
-      BIFROST_URL: http://bifrost:8080
+      MODEL_GATEWAY_PROVIDER: bifrost
+      MODEL_GATEWAY_URL: http://bifrost:8080
+      TOOL_GATEWAY_PROVIDER: bifrost
+      TOOL_GATEWAY_URL: http://bifrost:8080
       LLM_MODEL: ${YANDEX_MODEL}
       LLM_TIMEOUT_SECONDS: "120"
       LLM_MAX_OUTPUT_TOKENS: "2048"
@@ -62,7 +65,10 @@ services:
     command: [".venv/bin/python", "-m", "portal_api.worker"]
     environment:
       DATABASE_URL: postgresql+asyncpg://genai:${APPLICATION_POSTGRES_PASSWORD}@application-postgres:5432/genai
-      BIFROST_URL: http://bifrost:8080
+      MODEL_GATEWAY_PROVIDER: bifrost
+      MODEL_GATEWAY_URL: http://bifrost:8080
+      TOOL_GATEWAY_PROVIDER: bifrost
+      TOOL_GATEWAY_URL: http://bifrost:8080
       LLM_MODEL: ${YANDEX_MODEL}
       LLM_TIMEOUT_SECONDS: "120"
       LLM_MAX_OUTPUT_TOKENS: "2048"
@@ -210,6 +216,44 @@ services:
       timeout: 5s
       retries: 18
       start_period: 20s
+
+  agentgateway-spike:
+    image: cr.agentgateway.dev/agentgateway@sha256:771afaf093065477fa296eb90dcb618a0300165f12a32f80bbdd1427fab900ec
+    restart: unless-stopped
+    command: ["-f", "/config/config.yaml"]
+    environment:
+      YANDEX_API_KEY: ${YANDEX_API_KEY}
+      YANDEX_MODEL: ${YANDEX_MODEL}
+      LANGFUSE_AUTH: ${LANGFUSE_AUTH}
+      OTEL_EXPORTER_OTLP_HEADERS: 'Authorization="${LANGFUSE_AUTH}"'
+    volumes:
+      - ./deploy/agentgateway/config.yaml:/config/config.yaml:ro
+    ports:
+      - "127.0.0.1:8089:8090"
+      - "127.0.0.1:15001:15000"
+      - "127.0.0.1:15021:15021"
+    depends_on:
+      diagnostic-mcp:
+        condition: service_healthy
+      demo-time-mcp:
+        condition: service_healthy
+      demo-mtg-catalog-mcp:
+        condition: service_healthy
+      langfuse-web:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "/app/agentgateway", "--version"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
   langfuse-worker:
     image: langfuse/langfuse-worker@sha256:138a5b510cd76262a2abb02af1ddc563105013fdc9a62e63ccce526140ad05ba

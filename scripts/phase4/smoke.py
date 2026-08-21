@@ -113,6 +113,18 @@ def stream_events(
     return events
 
 
+def wait_for_terminal_events(
+    events_url: str, access_token: str, *, attempts: int = 30
+) -> list[dict[str, object]]:
+    events: list[dict[str, object]] = []
+    for _ in range(attempts):
+        events = stream_events(events_url, access_token)
+        if events and events[-1]["type"] in {"turn.completed", "turn.failed", "turn.cancelled"}:
+            return events
+        time.sleep(0.2)
+    raise AssertionError(f"Turn did not reach a terminal event: {events}")
+
+
 def main() -> None:
     access_token = token("alise")
     _, conversation = request(
@@ -230,6 +242,39 @@ def main() -> None:
         "PASS: conversation, turn, and tool-request identifiers remained owner-isolated",
         flush=True,
     )
+
+    _, cancelled_conversation = request(
+        "/api/v1/conversations",
+        access_token,
+        method="POST",
+        body={"title": "Phase 4 owner cancellation smoke", "mode": "agent"},
+    )
+    _, cancellable_turn = request(
+        f"/api/v1/conversations/{cancelled_conversation['id']}/turns",
+        access_token,
+        method="POST",
+        body={
+            "content": "Use the time tool to get the current time in UTC.",
+            "idempotency_key": f"phase4-cancel-{uuid.uuid4()}",
+        },
+    )
+    _, cancelled_turn = request(
+        f"/api/v1/turns/{cancellable_turn['turn_id']}/cancel",
+        access_token,
+        method="POST",
+    )
+    assert cancelled_turn["state"] == "cancelled", cancelled_turn
+    cancellation_events = wait_for_terminal_events(cancellable_turn["events_url"], access_token)
+    cancellation_types = [event["type"] for event in cancellation_events]
+    assert cancellation_types[0] == "turn.accepted", cancellation_events
+    assert cancellation_types[-1] == "turn.cancelled", cancellation_events
+    assert "turn.completed" not in cancellation_types, cancellation_events
+    _, cancelled_projection = request(
+        f"/api/v1/turns/{cancellable_turn['turn_id']}", access_token
+    )
+    assert cancelled_projection["state"] == "cancelled", cancelled_projection
+    print("PASS: the owner durably cancelled an accepted Agent turn", flush=True)
+    print("PASS: cancellation produced a terminal replayable event", flush=True)
 
     _, catalog_conversation = request(
         "/api/v1/conversations",

@@ -2,6 +2,16 @@
 
 Porfirium is a local-first agent and LLM demonstration platform. Phases 0–4 are implemented and accepted; Phase 4 adds policy-controlled MCP tools to the durable Agent.
 
+## Planned architecture transition
+
+The next architecture transition replaces both Bifrost gateway roles with Agentgateway and introduces independently developed, immutable agent packages that can be published from the filesystem or authored declaratively in the portal. The staged plan, compatibility gates, target component boundaries, versioning model, and rollback rules are documented in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md).
+
+Transition Increments 0–2 are complete and accepted. The frozen Phase 0–4 migration contract passed before and after introducing vendor-neutral gateway ports, and pinned Agentgateway 1.4.0 passed the side-by-side Yandex, MCP, authorization, tracing, and recovery spike. Rerun the gates with `./scripts/migration-baseline/verify.sh` and `./scripts/agentgateway-spike/verify.sh`. Cumulative evidence is tracked in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md). The next target is the MCP cutover behind `AgentgatewayToolGateway`; Bifrost remains active until that cutover is separately accepted.
+
+Increment 3 changes MCP routing only: implement and test the Agentgateway tool adapter, canary it with `TOOL_GATEWAY_PROVIDER=agentgateway`, pass both live gates, and then change the MCP default. Model traffic stays on Bifrost, and `TOOL_GATEWAY_PROVIDER=bifrost` remains the immediate rollback until Bifrost retirement in Increment 5.
+
+The quick starts and phase documents below describe the currently implemented Bifrost-based baseline until the relevant transition milestones are completed.
+
 ## Phase 4 quick start
 
 With the standalone Keycloak prerequisite running and `portal.local` mapped to `127.0.0.1`:

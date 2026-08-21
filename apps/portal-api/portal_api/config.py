@@ -12,7 +12,18 @@ class Settings:
     oidc_required_role: str = os.getenv("OIDC_REQUIRED_ROLE", "genai-user")
     oidc_ca_file: str | None = os.getenv("OIDC_CA_FILE")
     oidc_jwks_url: str | None = os.getenv("OIDC_JWKS_URL")
-    bifrost_url: str = os.getenv("BIFROST_URL", "http://bifrost:8080")
+    model_gateway_provider: str = os.getenv("MODEL_GATEWAY_PROVIDER", "bifrost")
+    model_gateway_url: str = os.getenv(
+        "MODEL_GATEWAY_URL", os.getenv("BIFROST_URL", "http://bifrost:8080")
+    )
+    tool_gateway_provider: str = os.getenv("TOOL_GATEWAY_PROVIDER", "bifrost")
+    tool_gateway_url: str = os.getenv(
+        "TOOL_GATEWAY_URL", os.getenv("BIFROST_URL", "http://bifrost:8080")
+    )
+    tool_gateway_timeout_seconds: float = float(
+        os.getenv("TOOL_GATEWAY_TIMEOUT_SECONDS", "20")
+    )
+    bifrost_model_prefix: str = os.getenv("BIFROST_MODEL_PREFIX", "yandex/")
     llm_model: str = os.getenv("LLM_MODEL", "")
     llm_timeout_seconds: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "120"))
     llm_max_output_tokens: int = int(os.getenv("LLM_MAX_OUTPUT_TOKENS", "2048"))

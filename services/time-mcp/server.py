@@ -21,7 +21,16 @@ mcp = FastMCP(
     json_response=True,
     streamable_http_path="/",
     transport_security=TransportSecuritySettings(
-        allowed_hosts=["demo-time-mcp:8092", "127.0.0.1:8092", "localhost:8092"]
+        allowed_hosts=[
+            "demo-time-mcp:8092",
+            "demo-time-mcp",
+            "127.0.0.1:8092",
+            "127.0.0.1:8089",
+            "127.0.0.1",
+            "agentgateway-spike:8090",
+            "localhost:8092",
+            "localhost",
+        ]
     ),
 )
 

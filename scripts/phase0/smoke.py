@@ -5,7 +5,9 @@ import base64
 import json
 import os
 import ssl
+import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -108,6 +110,33 @@ def check(name: str, action) -> object:
     return result
 
 
+def wait_for(name: str, action, predicate, *, attempts: int = 30) -> object:
+    last_error: Exception | None = None
+    for _ in range(attempts):
+        try:
+            result = action()
+            if predicate(result):
+                print(f"PASS {name}")
+                return result
+        except Exception as exc:
+            last_error = exc
+        time.sleep(1)
+    if last_error:
+        raise last_error
+    raise AssertionError(f"Timed out waiting for {name}")
+
+
+def diagnostic_client_connected(payload: object) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    return any(
+        item.get("config", {}).get("name") == "phase0_diagnostic"
+        and item.get("state") == "connected"
+        for item in payload.get("clients", [])
+        if isinstance(item, dict)
+    )
+
+
 def main() -> int:
     local_env = read_env(ROOT / ".env")
 
@@ -167,6 +196,40 @@ def main() -> int:
         ),
     )
     assert "phase0-mcp-ok" in json.dumps(tool_result)
+
+    check(
+        "diagnostic MCP server restart requested",
+        lambda: subprocess.run(
+            ["docker", "compose", "restart", "diagnostic-mcp"],
+            cwd=ROOT,
+            check=True,
+            stdout=subprocess.DEVNULL,
+        ),
+    )
+    wait_for(
+        "Bifrost reconnected to restarted diagnostic MCP server",
+        lambda: request_json("http://127.0.0.1:8088/api/mcp/clients", timeout=10),
+        diagnostic_client_connected,
+    )
+    check(
+        "Bifrost restart requested",
+        lambda: subprocess.run(
+            ["docker", "compose", "restart", "bifrost"],
+            cwd=ROOT,
+            check=True,
+            stdout=subprocess.DEVNULL,
+        ),
+    )
+    wait_for(
+        "Bifrost health after restart",
+        lambda: request_json("http://127.0.0.1:8088/health", timeout=10),
+        lambda payload: isinstance(payload, dict),
+    )
+    wait_for(
+        "Bifrost MCP reconnection after gateway restart",
+        lambda: request_json("http://127.0.0.1:8088/api/mcp/clients", timeout=10),
+        diagnostic_client_connected,
+    )
 
     if os.environ.get("PHASE0_SKIP_YANDEX") == "1":
         print("SKIP Yandex completion/tool-call checks (PHASE0_SKIP_YANDEX=1)")
