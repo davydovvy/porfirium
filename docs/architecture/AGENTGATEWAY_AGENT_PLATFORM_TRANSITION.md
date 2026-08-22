@@ -1,8 +1,8 @@
 # Agentgateway and Versioned Agent Platform Transition Plan
 
-Status: In progress — Increments 0–2 accepted
+Status: In progress — Increments 0–3 accepted
 
-Last updated: 2026-08-21
+Last updated: 2026-08-22
 Starting point: Phases 0–4 implemented and accepted
 
 Acceptance evidence is maintained in [Architecture Transition Results](TRANSITION_RESULTS.md).
@@ -348,7 +348,7 @@ Repeat the paid Phase 0 compatibility checks: non-streaming Responses, semantic 
 
 ### Increment 3 — Cut MCP traffic over
 
-Status: **Next implementation target.** This increment changes only the platform's MCP adapter. Model traffic remains on the accepted Bifrost `ModelGateway` throughout Increment 3.
+Status: **Completed and accepted on 2026-08-22.** Agentgateway is the default MCP provider through `AgentgatewayToolGateway`. Model traffic remains on the accepted Bifrost `ModelGateway`, and `TOOL_GATEWAY_PROVIDER=bifrost` remains the configuration-only rollback.
 
 - Implement standard MCP initialize/session handling, `tools/list`, and `tools/call` in `AgentgatewayToolGateway`.
 - Normalize JSON-RPC errors and tool-result envelopes.
@@ -363,6 +363,8 @@ Status: **Next implementation target.** This increment changes only the platform
 **Exit gate:** focused adapter tests, `./scripts/agentgateway-spike/verify.sh`, and `./scripts/migration-baseline/verify.sh` pass with Agentgateway selected for MCP. Tool discovery, execution, denial, audit, restart recovery, and trace correlation must remain equivalent to the accepted baseline. No Bifrost MCP path is removed in this increment.
 
 ### Increment 4 — Cut LLM traffic over
+
+Status: **Next implementation target.**
 
 - Implement non-streaming and streaming Responses calls in `AgentgatewayModelGateway`.
 - Supply approved tool definitions explicitly in model requests.

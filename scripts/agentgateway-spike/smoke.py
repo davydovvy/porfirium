@@ -26,6 +26,7 @@ EXPECTED_TOOLS = {
 
 
 ROOT = Path(__file__).resolve().parents[2]
+DIRECT_HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 def read_env() -> dict[str, str]:
@@ -43,7 +44,7 @@ def request(path: str, body: object | None = None, *, accept: str = "application
     if data is not None:
         headers["Content-Type"] = "application/json"
     url = path if path.startswith("http://") else f"{GATEWAY}{path}"
-    with urllib.request.urlopen(
+    with DIRECT_HTTP.open(
         urllib.request.Request(
             url, data=data, headers=headers,
             method="POST" if data is not None else "GET",
@@ -111,6 +112,56 @@ def tool_names() -> set[str]:
     return {tool["name"] for tool in mcp("tools/list")["tools"]}
 
 
+def recovered_tool_names() -> set[str]:
+    completed = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "exec",
+            "-T",
+            "diagnostic-mcp",
+            "python",
+            "-c",
+            (
+                "import json,urllib.request;"
+                "body=json.dumps({'jsonrpc':'2.0','id':1,'method':'tools/list','params':{}}).encode();"
+                "request=urllib.request.Request('http://agentgateway-spike:8090/mcp',data=body,"
+                "headers={'Accept':'application/json, text/event-stream','Content-Type':'application/json'});"
+                "raw=urllib.request.urlopen(request,timeout=10).read().decode();"
+                "print(next(line[5:].strip() for line in raw.splitlines() if line.startswith('data:')))"
+            ),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    payload = json.loads(completed.stdout)
+    return {tool["name"] for tool in payload["result"]["tools"]}
+
+
+def application_network_ready() -> bytes:
+    return subprocess.run(
+        [
+            "docker",
+            "compose",
+            "exec",
+            "-T",
+            "diagnostic-mcp",
+            "python",
+            "-c",
+            (
+                "import urllib.request;"
+                "print(urllib.request.urlopen("
+                "'http://agentgateway-spike:15021/healthz/ready',timeout=5).read().decode())"
+            ),
+        ],
+        check=True,
+        capture_output=True,
+        timeout=10,
+    ).stdout.strip()
+
+
 def denied_tool_payload():
     try:
         return mcp_payload("tools/call", {"name": "diagnostic_not_allowed", "arguments": {}})
@@ -129,7 +180,7 @@ def completed(body: dict):
 
 
 def main() -> None:
-    check("Agentgateway readiness", lambda: urllib.request.urlopen(READY, timeout=10).read())
+    check("Agentgateway readiness", lambda: DIRECT_HTTP.open(READY, timeout=10).read())
     assert check("federated MCP inventory", tool_names) == EXPECTED_TOOLS
     echo = check(
         "MCP tools/call",
@@ -222,8 +273,18 @@ def main() -> None:
     subprocess.run(["docker", "compose", "restart", "diagnostic-mcp"], check=True, stdout=subprocess.DEVNULL)
     wait_for("MCP recovery after target restart", tool_names, lambda names: names == EXPECTED_TOOLS)
     subprocess.run(["docker", "compose", "restart", "agentgateway-spike"], check=True, stdout=subprocess.DEVNULL)
-    wait_for("Agentgateway readiness after restart", lambda: urllib.request.urlopen(READY, timeout=5).read(), lambda body: body == b"ready")
-    wait_for("MCP recovery after gateway restart", tool_names, lambda names: names == EXPECTED_TOOLS)
+    wait_for(
+        "Agentgateway readiness after restart",
+        application_network_ready,
+        lambda body: body == b"ready",
+        attempts=90,
+    )
+    wait_for(
+        "MCP recovery after gateway restart",
+        recovered_tool_names,
+        lambda names: names == EXPECTED_TOOLS,
+        attempts=90,
+    )
     print("\nPASS: pinned Agentgateway/Yandex model and MCP compatibility spike")
 
 

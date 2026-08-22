@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ..config import Settings, settings
+from .agentgateway import AgentgatewayToolGateway
 from .bifrost import BifrostModelGateway, BifrostToolGateway
 from .contracts import GatewayConfigurationError, ModelGateway, ToolGateway
 
@@ -18,11 +19,16 @@ def create_model_gateway(configuration: Settings = settings) -> ModelGateway:
 
 
 def create_tool_gateway(configuration: Settings = settings) -> ToolGateway:
-    if configuration.tool_gateway_provider != "bifrost":
-        raise GatewayConfigurationError(
-            f"unsupported_tool_gateway_provider:{configuration.tool_gateway_provider}"
+    if configuration.tool_gateway_provider == "bifrost":
+        return BifrostToolGateway(
+            configuration.tool_gateway_url,
+            timeout_seconds=configuration.tool_gateway_timeout_seconds,
         )
-    return BifrostToolGateway(
-        configuration.tool_gateway_url,
-        timeout_seconds=configuration.tool_gateway_timeout_seconds,
+    if configuration.tool_gateway_provider == "agentgateway":
+        return AgentgatewayToolGateway(
+            configuration.tool_gateway_url,
+            timeout_seconds=configuration.tool_gateway_timeout_seconds,
+        )
+    raise GatewayConfigurationError(
+        f"unsupported_tool_gateway_provider:{configuration.tool_gateway_provider}"
     )

@@ -1,7 +1,7 @@
 # Architecture Transition Results
 
 Status: In progress
-Last updated: 2026-08-21
+Last updated: 2026-08-22
 
 This document records acceptance evidence for the transition from Bifrost to Agentgateway and from the embedded agent implementation to independently publishable, immutable agent versions. The transition scope and exit gates are defined in [Agentgateway and Versioned Agent Platform Transition Plan](AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md).
 
@@ -12,7 +12,7 @@ This document records acceptance evidence for the transition from Bifrost to Age
 | 0 — Freeze accepted behavior | Complete | 2026-08-21 | [Migration Regression Gate](MIGRATION_REGRESSION_GATE.md) |
 | 1 — Vendor-neutral gateway adapters | Complete | 2026-08-21 | Gateway adapter contract suite and complete live migration gate |
 | 2 — Agentgateway/Yandex compatibility spike | Complete | 2026-08-21 | Pinned side-by-side deployment and `scripts/agentgateway-spike/verify.sh` |
-| 3 — MCP cutover | Not started | — | — |
+| 3 — MCP cutover | Complete | 2026-08-22 | Agentgateway adapter suite, spike gate, and default-provider migration gate |
 | 4 — LLM cutover | Not started | — | — |
 | 5 — Bifrost retirement | Not started | — | — |
 | 6 — Versioned agent catalog | Not started | — | — |
@@ -72,15 +72,14 @@ Two integration details discovered by the spike are now explicit configuration c
 - Agentgateway's synthetic upstream MCP initialization uses the bare Compose service authority, so each FastMCP server allowlist includes that exact internal hostname as well as its normal host-and-port forms.
 - Agentgateway interprets OTLP header values as CEL expressions. Compose therefore supplies `OTEL_EXPORTER_OTLP_HEADERS` with the secret value quoted as a CEL string; no Langfuse credential is stored in the tracked YAML.
 
+## Increment 3 acceptance
+
+Increment 3 added `AgentgatewayToolGateway` with standard MCP initialization, initialized notification and session propagation, JSON-RPC/SSE normalization, stable platform-to-gateway tool-name mapping, result bounds, normalized failures, and W3C trace propagation. Focused backend verification passes with 27 tests.
+
+Both required live commands passed on 2026-08-22. The complete migration regression gate ran without provider overrides, with `TOOL_GATEWAY_PROVIDER=agentgateway` and `MODEL_GATEWAY_PROVIDER=bifrost` selected by the committed defaults. It covered Direct and durable Agent behavior, one-tool and multi-tool execution, audit/event persistence, denial, cancellation, user isolation, worker recovery, and Langfuse correlation. The pinned Agentgateway spike passed its MCP, model, authorization, trace, target-restart, and gateway-restart contracts. During repeated local runs, Docker's published localhost port briefly lagged the healthy internal service after restart; the recovery assertion now checks the runtime Compose network directly and confirms the complete eight-tool inventory.
+
+Agentgateway is now the default MCP provider. Bifrost remains deployed for model traffic and as the MCP rollback provider; rollback is configuration-only (`TOOL_GATEWAY_PROVIDER=bifrost`). No Bifrost path was removed.
+
 ## Next acceptance target
 
-Increment 3 is the MCP cutover. Its execution order is:
-
-1. Implement standard MCP framing and `tools/list`/`tools/call` in `AgentgatewayToolGateway`.
-2. Normalize tool identifiers, successful results, JSON-RPC errors, transport failures, and trace propagation into the existing `ToolGateway` contracts.
-3. Add focused coverage for discovery, execution, denial, malformed responses, response bounds, upstream failures, and W3C tracing.
-4. Run an explicit `TOOL_GATEWAY_PROVIDER=agentgateway` application canary while model traffic remains on Bifrost.
-5. Pass the focused suite, `./scripts/agentgateway-spike/verify.sh`, and the complete `./scripts/migration-baseline/verify.sh` gate.
-6. Only then change the default MCP provider to Agentgateway and update the operational documentation.
-
-Bifrost remains deployed as the MCP rollback provider during Increment 3. Rollback is configuration-only (`TOOL_GATEWAY_PROVIDER=bifrost`); Bifrost removal is reserved for Increment 5. LLM cutover is explicitly outside this increment and begins in Increment 4.
+Increment 4 is the LLM cutover. Implement and test `AgentgatewayModelGateway`, run a controlled canary with `MODEL_GATEWAY_PROVIDER=agentgateway`, and pass the complete acceptance suite before changing the model default. Bifrost remains the immediate model rollback until Increment 5.

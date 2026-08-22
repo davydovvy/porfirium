@@ -8,7 +8,7 @@ Implementation status: Phases 0–4 and transition Increments 0–1 implemented 
 
 Transition acceptance evidence is recorded in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md). Increment 0, the complete live Bifrost-era migration regression baseline, passed and was accepted on 2026-08-21.
 
-Increment 1, the vendor-neutral model/tool gateway seam with Bifrost adapters, passed the same complete live regression gate and was accepted on 2026-08-21. Increment 2, the pinned side-by-side Agentgateway/Yandex compatibility spike, also passed on 2026-08-21. Increment 3, the MCP cutover behind the vendor-neutral tool gateway, is next; Bifrost remains the active provider until that gate passes.
+Increment 1, the vendor-neutral model/tool gateway seam with Bifrost adapters, passed the same complete live regression gate and was accepted on 2026-08-21. Increment 2, the pinned side-by-side Agentgateway/Yandex compatibility spike, also passed on 2026-08-21. Increment 3, the MCP cutover behind the vendor-neutral tool gateway, passed on 2026-08-22; Agentgateway is now the default MCP provider while Bifrost remains the model provider and configuration-only MCP rollback. Increment 4, the LLM cutover, is next.
 
 ## 1. Purpose
 

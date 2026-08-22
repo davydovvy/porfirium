@@ -33,8 +33,9 @@ services:
       OIDC_CA_FILE: /certs/keycloak-root-ca.pem
       MODEL_GATEWAY_PROVIDER: bifrost
       MODEL_GATEWAY_URL: http://bifrost:8080
-      TOOL_GATEWAY_PROVIDER: bifrost
-      TOOL_GATEWAY_URL: http://bifrost:8080
+      TOOL_GATEWAY_PROVIDER: ${TOOL_GATEWAY_PROVIDER:-agentgateway}
+      AGENTGATEWAY_URL: http://agentgateway-spike:8090
+      BIFROST_URL: http://bifrost:8080
       LLM_MODEL: ${YANDEX_MODEL}
       LLM_TIMEOUT_SECONDS: "120"
       LLM_MAX_OUTPUT_TOKENS: "2048"
@@ -46,6 +47,8 @@ services:
     volumes:
       - /home/dvy/Projects/KeyCloak/certs/contextforge-demo-root-ca.pem:/certs/keycloak-root-ca.pem:ro
     depends_on:
+      agentgateway-spike:
+        condition: service_healthy
       application-postgres:
         condition: service_healthy
       bifrost:
@@ -67,8 +70,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://genai:${APPLICATION_POSTGRES_PASSWORD}@application-postgres:5432/genai
       MODEL_GATEWAY_PROVIDER: bifrost
       MODEL_GATEWAY_URL: http://bifrost:8080
-      TOOL_GATEWAY_PROVIDER: bifrost
-      TOOL_GATEWAY_URL: http://bifrost:8080
+      TOOL_GATEWAY_PROVIDER: ${TOOL_GATEWAY_PROVIDER:-agentgateway}
+      AGENTGATEWAY_URL: http://agentgateway-spike:8090
+      BIFROST_URL: http://bifrost:8080
       LLM_MODEL: ${YANDEX_MODEL}
       LLM_TIMEOUT_SECONDS: "120"
       LLM_MAX_OUTPUT_TOKENS: "2048"

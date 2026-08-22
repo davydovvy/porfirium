@@ -1,6 +1,13 @@
 import os
 from dataclasses import dataclass
 
+_tool_gateway_provider = os.getenv("TOOL_GATEWAY_PROVIDER", "agentgateway")
+_tool_gateway_default_url = (
+    os.getenv("AGENTGATEWAY_URL", "http://agentgateway-spike:8090")
+    if _tool_gateway_provider == "agentgateway"
+    else os.getenv("BIFROST_URL", "http://bifrost:8080")
+)
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -16,9 +23,9 @@ class Settings:
     model_gateway_url: str = os.getenv(
         "MODEL_GATEWAY_URL", os.getenv("BIFROST_URL", "http://bifrost:8080")
     )
-    tool_gateway_provider: str = os.getenv("TOOL_GATEWAY_PROVIDER", "bifrost")
+    tool_gateway_provider: str = _tool_gateway_provider
     tool_gateway_url: str = os.getenv(
-        "TOOL_GATEWAY_URL", os.getenv("BIFROST_URL", "http://bifrost:8080")
+        "TOOL_GATEWAY_URL", _tool_gateway_default_url
     )
     tool_gateway_timeout_seconds: float = float(
         os.getenv("TOOL_GATEWAY_TIMEOUT_SECONDS", "20")
