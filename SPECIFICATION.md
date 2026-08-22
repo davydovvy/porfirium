@@ -1,8 +1,8 @@
 # Porfirium — Architecture and Delivery Specification
 
-Status: Implemented Phase 0–4 baseline; planned architecture transition linked below
-Last updated: 2026-08-21
-Implementation status: Phases 0–4 and transition Increments 0–1 implemented and accepted
+Status: Implemented Phase 0–4 baseline; architecture transition in progress
+Last updated: 2026-08-22
+Implementation status: Phases 0–4 and transition Increments 0–3 implemented and accepted
 
 > **Planned successor architecture:** The staged replacement of both Bifrost gateway roles with Agentgateway, together with the introduction of independently publishable and immutable agent versions, is defined in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md). This specification continues to describe the implemented Phase 0–4 baseline until each transition milestone is accepted. Historical phase evidence and accepted behavior remain the migration regression contract.
 
@@ -709,8 +709,9 @@ TEMPORAL_NAMESPACE
 TEMPORAL_TASK_QUEUE
 MODEL_GATEWAY_PROVIDER=bifrost
 MODEL_GATEWAY_URL=http://bifrost:8080
-TOOL_GATEWAY_PROVIDER=bifrost
-TOOL_GATEWAY_URL=http://bifrost:8080
+TOOL_GATEWAY_PROVIDER=agentgateway
+AGENTGATEWAY_URL=http://agentgateway-spike:8090
+BIFROST_URL=http://bifrost:8080
 TOOL_GATEWAY_TIMEOUT_SECONDS
 BIFROST_MODEL_PREFIX=yandex/
 YANDEX_OPENAI_BASE_URL=https://ai.api.cloud.yandex.net/v1

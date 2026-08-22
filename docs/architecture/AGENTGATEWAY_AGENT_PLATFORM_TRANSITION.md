@@ -507,7 +507,7 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 
 | Milestone | Included increments | User-visible result |
 |---|---|---|
-| M1 — Gateway seam and proof | 0–2 | No product change; Agentgateway/Yandex compatibility is proven. |
+| M1 — Gateway seam and proof | 0–2 | Complete; Agentgateway/Yandex compatibility is proven. |
 | M2 — Agentgateway production cutover | 3–5 | LLM and MCP traffic use Agentgateway; Bifrost is removed. |
 | M3 — Versioned agent runtime | 6–7 | Conversations select immutable agent versions executed by a generic durable workflow. |
 | M4 — Independent publication | 8–9 | Agents can be published from directories or created declaratively in the portal. |
@@ -515,7 +515,7 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 
 No milestone combines a gateway cutover with a database/catalog or Temporal workflow migration.
 
-Current progress: Increments 0–2 are complete and accepted. Milestone M1 is in progress; Increment 3, the MCP cutover behind `AgentgatewayToolGateway`, is the next implementation target.
+Current progress: Increments 0–3 are complete and accepted. Milestone M1 is complete, and M2 is in progress with MCP traffic now using Agentgateway. Increment 4, the LLM cutover behind `AgentgatewayModelGateway`, is the next implementation target.
 
 ## 15. Deferred decisions
 
