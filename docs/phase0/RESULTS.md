@@ -1,9 +1,9 @@
 # Phase 0 implementation results
 
-> Historical Phase 0 snapshot. Deferred Phase 1 identity and portal work has since been implemented; see `docs/phase1/RESULTS.md`.
+> Historical Phase 0 snapshot. Deferred Phase 1 identity and portal work has since been implemented, and Increment 5 retired this Bifrost topology and its smoke scripts. Commands and present-tense observations below record the accepted 2026-08-15 environment; they are not current operating instructions.
 
 Date: 2026-08-15  
-Status: Complete, runnable, and verified.
+Status: Accepted historical evidence; retired from current runtime.
 
 ## Working results
 

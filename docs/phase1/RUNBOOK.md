@@ -68,4 +68,4 @@ Do not use `docker compose down -v` unless intentionally resetting all project s
 
 ## Phase boundary
 
-Phase 1 intentionally has no chat submission. Direct streaming chat, conversation creation/history, Bifrost calls, and Langfuse application traces arrive in Phase 2. The existing Phase 0 diagnostic services remain available through their original scripts.
+Phase 1 intentionally has no chat submission. Direct streaming chat, conversation creation/history, gateway calls, and Langfuse application traces arrive in Phase 2. For current end-to-end operation, use the Phase 4 runbook; the original Phase 0 Bifrost smoke scripts were retired in transition Increment 5.

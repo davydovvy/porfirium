@@ -5,6 +5,8 @@ Last updated: 2026-08-22
 
 This document records acceptance evidence for the transition from Bifrost to Agentgateway and from the embedded agent implementation to independently publishable, immutable agent versions. The transition scope and exit gates are defined in [Agentgateway and Versioned Agent Platform Transition Plan](AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md).
 
+Increment sections describe the topology as it existed at each acceptance checkpoint. Statements that Bifrost was active or available for rollback are historical and were superseded by Increment 5.
+
 ## Progress
 
 | Increment | Status | Accepted | Evidence |
@@ -78,7 +80,7 @@ Increment 3 added `AgentgatewayToolGateway` with standard MCP initialization, in
 
 Both required live commands passed on 2026-08-22. The complete migration regression gate ran without provider overrides, with `TOOL_GATEWAY_PROVIDER=agentgateway` and `MODEL_GATEWAY_PROVIDER=bifrost` selected by the committed defaults. It covered Direct and durable Agent behavior, one-tool and multi-tool execution, audit/event persistence, denial, cancellation, user isolation, worker recovery, and Langfuse correlation. The pinned Agentgateway spike passed its MCP, model, authorization, trace, target-restart, and gateway-restart contracts. During repeated local runs, Docker's published localhost port briefly lagged the healthy internal service after restart; the recovery assertion now checks the runtime Compose network directly and confirms the complete eight-tool inventory.
 
-Agentgateway is now the default MCP provider. Bifrost remains deployed for model traffic and as the MCP rollback provider; rollback is configuration-only (`TOOL_GATEWAY_PROVIDER=bifrost`). No Bifrost path was removed.
+At the Increment 3 checkpoint, Agentgateway became the default MCP provider while Bifrost remained deployed for model traffic and MCP rollback. No Bifrost path was removed in that increment.
 
 ## Next acceptance target
 
@@ -88,7 +90,7 @@ Increment 6 adds the versioned agent catalog, immutable release/digest rules, ru
 
 Increment 4 added `AgentgatewayModelGateway` with non-streaming and semantic SSE Responses support, explicit policy-approved function definitions, stable model-alias translation, structured output and stateless continuation passthrough, normalized failures, usage preservation, and W3C trace propagation. Focused backend verification passes with 31 tests.
 
-The pinned Agentgateway/Yandex spike passed Responses, semantic streaming, strict JSON Schema, forced function calls, stateless continuation, usage, tracing, and restart recovery. The application canary passed Direct streaming, persistence, idempotency, replay, isolation, and correlated Langfuse `GENERATION`/`SPAN` observations. Durable Agent smoke passed worker recovery, one-tool and ordered multi-tool execution, audit/event persistence, cancellation, owner isolation, and denial of diagnostic, fabricated, and name-confused tools. Agentgateway is now the committed model default; Bifrost remains the configuration-only rollback through `MODEL_GATEWAY_PROVIDER=bifrost` until Increment 5.
+The pinned Agentgateway/Yandex spike passed Responses, semantic streaming, strict JSON Schema, forced function calls, stateless continuation, usage, tracing, and restart recovery. The application canary passed Direct streaming, persistence, idempotency, replay, isolation, and correlated Langfuse `GENERATION`/`SPAN` observations. Durable Agent smoke passed worker recovery, one-tool and ordered multi-tool execution, audit/event persistence, cancellation, owner isolation, and denial of diagnostic, fabricated, and name-confused tools. At the Increment 4 checkpoint, Agentgateway became the committed model default while Bifrost remained the configuration-only rollback pending Increment 5.
 
 ## Increment 5 acceptance
 

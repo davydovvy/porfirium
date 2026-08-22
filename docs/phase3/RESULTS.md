@@ -1,5 +1,7 @@
 # Porfirium Phase 3 implementation results
 
+> Historical acceptance evidence. Transition Increment 5 retired the Bifrost topology referenced below; current operation uses Agentgateway exclusively.
+
 Date: 2026-08-16  
 Status: Implemented and accepted by the user on 2026-08-16.
 

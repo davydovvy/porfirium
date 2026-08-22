@@ -1,6 +1,6 @@
 # Phase 0 diagnostics runbook
 
-> Historical Phase 0 snapshot. Statements about Phase 1 being unimplemented describe the Phase 0 handoff; see `docs/phase1/RUNBOOK.md` for the current portal and identity setup.
+> Historical Phase 0 snapshot. Its Bifrost service, configuration, and smoke scripts were retired in architecture transition Increment 5, so the commands below are retained as evidence and are no longer operational against current `compose.yaml`. Use `docs/phase4/RUNBOOK.md` for current operation.
 
 ## Delivered scope
 

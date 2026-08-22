@@ -6,6 +6,8 @@ Prerequisite: Phase 3 accepted
 
 ## As-built notes
 
+Transition update (2026-08-22): Increments 3–5 subsequently moved both gateway roles to Agentgateway and retired Bifrost. Bifrost-specific design statements below are retained as Phase 4 decision history and do not describe current operation.
+
 The implementation was accepted on 2026-08-19. The following reviewed changes supersede the corresponding planning assumptions below:
 
 - the catalog contains a dated Scryfall API snapshot with captured nonfoil USD values; it does not generate prices or store quantities;

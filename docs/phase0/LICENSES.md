@@ -25,5 +25,5 @@ Notes:
 - The project preference is Apache-2.0 or MIT, not an assertion that all transitive runtime software already meets it.
 - The official low-scale Langfuse topology requires PostgreSQL, ClickHouse, Redis-compatible caching/queues, and S3-compatible object storage.
 - MinIO is accepted for this local demo because it preserves the supported Langfuse topology. Reassess licensing and replacement options before production redistribution or materially changing the deployment model.
-- All external Phase 0 runtime images are pinned by digest in `compose.yaml`; the MCP build base is pinned in its Dockerfile. `scripts/phase0/licenses.sh` reports the locally resolved evidence.
+- Current external runtime images are pinned by digest in `compose.yaml`; historical Phase 0 selections may no longer appear there. The MCP build base is pinned in its Dockerfile, and `scripts/phase0/licenses.sh` reports locally resolved current evidence.
 - Magic: The Gathering card data, rules text, art, symbols, trademarks, and price-source terms require a separate content/IP review; software licenses do not cover that dataset.
