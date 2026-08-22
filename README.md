@@ -4,7 +4,7 @@ Porfirium is a local-first agent and LLM demonstration platform. Phases 0–4 ar
 
 ## Planned architecture transition
 
-The next architecture transition replaces both Bifrost gateway roles with Agentgateway and introduces independently developed, immutable agent packages that can be published from the filesystem or authored declaratively in the portal. The staged plan, compatibility gates, target component boundaries, versioning model, and rollback rules are documented in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md).
+The active architecture transition has moved both gateway roles from Bifrost to Agentgateway and next introduces independently developed, immutable agent packages that can be published from the filesystem or authored declaratively in the portal. The staged plan, compatibility gates, target component boundaries, versioning model, and rollback rules are documented in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md).
 
 Transition Increments 0–4 are complete and accepted. Agentgateway 1.4.0 is now the default model and MCP provider through `AgentgatewayModelGateway` and `AgentgatewayToolGateway`; Bifrost remains deployed as the configuration-only rollback. The frozen Phase 0–4 migration contract passed with Agentgateway selected. Rerun the gates with `./scripts/migration-baseline/verify.sh` and `./scripts/agentgateway-spike/verify.sh`. Cumulative evidence is tracked in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md).
 

@@ -1,5 +1,7 @@
 # Porfirium Phase 3 runbook
 
+> Current transition note (2026-08-22): Agentgateway is the default model and MCP provider. References to Bifrost below describe the accepted Phase 3 baseline or rollback service.
+
 Phase 3 adds a Temporal-backed, no-tool Agent mode while preserving Direct LLM chat. Keycloak remains a separately managed prerequisite.
 
 ## Start
@@ -12,7 +14,7 @@ Ensure Keycloak is running, `portal.local` resolves to `127.0.0.1`, and the repo
 
 The first start downloads the pinned Temporal server and UI images and may take several minutes. Startup applies database migration `0003_phase3` automatically.
 
-Startup also verifies Bifrost's persisted `mcp_disable_auto_tool_inject` setting and repairs it to `true` when necessary. This prevents the Phase 0 diagnostic tools from leaking into the replay-safe Phase 3 Agent workflow. Phase 4 retains this global deny-by-default setting and supplies only its policy-approved tools per request.
+Startup also verifies Bifrost's persisted `mcp_disable_auto_tool_inject` setting and repairs it to `true` when necessary. This preserves a safe rollback path. Current Agentgateway requests receive only application policy-approved tool definitions; the replay-safe Phase 3 workflow explicitly requests no tools.
 
 ## Use and inspect
 
@@ -26,7 +28,7 @@ Sign in as `alise` or `bob` with the local demo password `123456`. The Direct/Ag
 
 Select `Agent`, create a conversation, and submit a task. The portal renders durable status events and then one complete response. Refreshing the browser while a run is active reconnects to its persisted SSE event stream. Long message histories scroll within the workspace; the conversation list scrolls independently while the signed-in user and sign-out button remain pinned at the bottom of the sidebar.
 
-The workflow ID is `porfirium-agent-<turn-id>`. Search for it in Temporal UI. The turn's correlation ID is also its 32-character W3C trace ID and can be used to locate the Bifrost generation path in Langfuse.
+The workflow ID is `porfirium-agent-<turn-id>`. Search for it in Temporal UI. The turn's correlation ID is also its 32-character W3C trace ID and can be used to locate the selected gateway's generation path in Langfuse.
 
 ## Verify
 

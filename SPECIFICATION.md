@@ -2,13 +2,13 @@
 
 Status: Implemented Phase 0–4 baseline; architecture transition in progress
 Last updated: 2026-08-22
-Implementation status: Phases 0–4 and transition Increments 0–3 implemented and accepted
+Implementation status: Phases 0–4 and transition Increments 0–4 implemented and accepted
 
-> **Planned successor architecture:** The staged replacement of both Bifrost gateway roles with Agentgateway, together with the introduction of independently publishable and immutable agent versions, is defined in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md). This specification continues to describe the implemented Phase 0–4 baseline until each transition milestone is accepted. Historical phase evidence and accepted behavior remain the migration regression contract.
+> **Current architecture overlay:** The staged replacement of both Bifrost gateway roles with Agentgateway, together with the introduction of independently publishable and immutable agent versions, is defined in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md). Increments 3 and 4 are accepted, so Agentgateway is now the default MCP and model provider. Bifrost-specific sections below describe the accepted Phase 0–4 baseline and remain regression evidence; they are not the current routing default.
 
 Transition acceptance evidence is recorded in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md). Increment 0, the complete live Bifrost-era migration regression baseline, passed and was accepted on 2026-08-21.
 
-Increment 1, the vendor-neutral model/tool gateway seam with Bifrost adapters, passed the same complete live regression gate and was accepted on 2026-08-21. Increment 2, the pinned side-by-side Agentgateway/Yandex compatibility spike, also passed on 2026-08-21. Increment 3, the MCP cutover behind the vendor-neutral tool gateway, passed on 2026-08-22; Agentgateway is now the default MCP provider while Bifrost remains the model provider and configuration-only MCP rollback. Increment 4, the LLM cutover, is next.
+Increment 1, the vendor-neutral model/tool gateway seam with Bifrost adapters, passed the same complete live regression gate and was accepted on 2026-08-21. Increment 2, the pinned side-by-side Agentgateway/Yandex compatibility spike, also passed on 2026-08-21. Increments 3 and 4, the MCP and LLM cutovers behind those vendor-neutral gateways, passed on 2026-08-22. Agentgateway is now the default for both roles; Bifrost remains the configuration-only rollback until Increment 5 retirement.
 
 ## 1. Purpose
 
@@ -707,11 +707,11 @@ DATABASE_URL
 TEMPORAL_ADDRESS
 TEMPORAL_NAMESPACE
 TEMPORAL_TASK_QUEUE
-MODEL_GATEWAY_PROVIDER=bifrost
-MODEL_GATEWAY_URL=http://bifrost:8080
+MODEL_GATEWAY_PROVIDER=agentgateway
 TOOL_GATEWAY_PROVIDER=agentgateway
 AGENTGATEWAY_URL=http://agentgateway-spike:8090
 BIFROST_URL=http://bifrost:8080
+# Set either gateway provider to bifrost for role-specific rollback.
 TOOL_GATEWAY_TIMEOUT_SECONDS
 BIFROST_MODEL_PREFIX=yandex/
 YANDEX_OPENAI_BASE_URL=https://ai.api.cloud.yandex.net/v1

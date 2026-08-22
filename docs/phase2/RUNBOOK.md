@@ -1,6 +1,8 @@
 # Phase 2 runbook
 
-Phase 2 adds persistent Direct LLM conversations, Yandex Responses API streaming through Bifrost, replayable application SSE events, cancellation, and correlated Langfuse gateway traces.
+> Current transition note (2026-08-22): Agentgateway is the default model and MCP provider. References to Bifrost below describe the accepted Phase 2 baseline or rollback service.
+
+Phase 2 adds persistent Direct LLM conversations, Yandex Responses API streaming through the selected model gateway, replayable application SSE events, cancellation, and correlated Langfuse gateway traces.
 
 ## Start and use
 
@@ -22,7 +24,7 @@ docker compose exec -T application-postgres \
   'select correlation_id from turns order by created_at desc limit 1'
 ```
 
-Paste that value into the Langfuse trace/observation search. The correlated trace contains the Bifrost `/v1/responses` root, Yandex generation, and gateway plugin spans. Ingestion can take a few seconds after the response completes.
+Paste that value into the Langfuse trace/observation search. With the current default, the correlated trace contains the Agentgateway LLM generation and the application Direct-turn span. Ingestion can take a few seconds after the response completes.
 
 ## Verify and inspect
 
@@ -31,7 +33,7 @@ Paste that value into the Langfuse trace/observation search. The correlated trac
 ./scripts/phase2/status.sh
 ```
 
-The live smoke test creates a real direct conversation, checks semantic streaming through Bifrost, idempotency, ordered event replay, persisted history, and two-user isolation.
+The live smoke test creates a real direct conversation, checks semantic streaming through the selected model gateway, idempotency, ordered event replay, persisted history, and two-user isolation.
 
 ## Stop and recover
 
