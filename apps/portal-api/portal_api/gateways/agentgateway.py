@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import json
 import uuid
-from collections.abc import Mapping
+from collections.abc import AsyncIterator, Mapping
 
 import httpx
 
 from .contracts import (
     GatewayProtocolError,
     GatewayUpstreamError,
+    ModelRequest,
+    ModelResponse,
+    ModelStreamEvent,
     ToolCall,
     ToolDefinition,
     ToolResult,
@@ -33,6 +36,111 @@ def _trace_headers(correlation_id: str) -> dict[str, str]:
         "traceparent": f"00-{correlation_id}-{uuid.uuid4().hex[:16]}-01",
         "x-request-id": correlation_id,
     }
+
+
+class AgentgatewayModelGateway:
+    """OpenAI Responses adapter for Agentgateway's model endpoint."""
+
+    def __init__(
+        self,
+        base_url: str,
+        *,
+        timeout_seconds: float,
+        model_alias: str = "default",
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
+        self._base_url = base_url.rstrip("/")
+        self._timeout = httpx.Timeout(timeout_seconds, connect=10)
+        self._model_alias = model_alias
+        self._transport = transport
+
+    def _body(self, request: ModelRequest, *, stream: bool) -> dict[str, object]:
+        body: dict[str, object] = {
+            "model": self._model_alias,
+            "input": request.input,
+            "metadata": dict(request.metadata),
+        }
+        if stream:
+            body["stream"] = True
+        if request.instructions is not None:
+            body["instructions"] = request.instructions
+        if request.max_output_tokens is not None:
+            body["max_output_tokens"] = request.max_output_tokens
+        if request.tool_choice is not None:
+            body["tool_choice"] = request.tool_choice
+            if request.tool_choice == "none":
+                body["tools"] = []
+        if request.tool_definitions:
+            body["tools"] = [
+                {
+                    "type": "function",
+                    "name": definition.name,
+                    "description": definition.description,
+                    "parameters": dict(definition.input_schema),
+                    "strict": True,
+                }
+                for definition in request.tool_definitions
+            ]
+        elif request.tools and request.tool_choice != "none":
+            raise GatewayProtocolError("model_tool_definitions_missing")
+        if request.text is not None:
+            body["text"] = dict(request.text)
+        return body
+
+    async def respond(self, request: ModelRequest) -> ModelResponse:
+        try:
+            async with httpx.AsyncClient(
+                timeout=self._timeout, transport=self._transport
+            ) as client:
+                response = await client.post(
+                    f"{self._base_url}/v1/responses",
+                    json=self._body(request, stream=False),
+                    headers=_trace_headers(request.correlation_id),
+                )
+                response.raise_for_status()
+            payload = response.json()
+        except httpx.HTTPError as exc:
+            raise GatewayUpstreamError("model_gateway_request_failed") from exc
+        except json.JSONDecodeError as exc:
+            raise GatewayProtocolError("model_response_invalid_json") from exc
+        if not isinstance(payload, dict):
+            raise GatewayProtocolError("model_response_not_object")
+        return ModelResponse(payload=payload)
+
+    async def stream(self, request: ModelRequest) -> AsyncIterator[ModelStreamEvent]:
+        try:
+            async with httpx.AsyncClient(
+                timeout=self._timeout, transport=self._transport
+            ) as client:
+                async with client.stream(
+                    "POST",
+                    f"{self._base_url}/v1/responses",
+                    json=self._body(request, stream=True),
+                    headers={
+                        "Accept": "text/event-stream",
+                        **_trace_headers(request.correlation_id),
+                    },
+                ) as response:
+                    response.raise_for_status()
+                    async for line in response.aiter_lines():
+                        if not line.startswith("data:"):
+                            continue
+                        raw = line.removeprefix("data:").strip()
+                        if not raw or raw == "[DONE]":
+                            continue
+                        try:
+                            payload = json.loads(raw)
+                        except json.JSONDecodeError as exc:
+                            raise GatewayProtocolError(
+                                "model_stream_event_invalid_json"
+                            ) from exc
+                        if not isinstance(payload, dict) or not isinstance(
+                            payload.get("type"), str
+                        ):
+                            raise GatewayProtocolError("model_stream_event_invalid")
+                        yield ModelStreamEvent(type=payload["type"], payload=payload)
+        except httpx.HTTPError as exc:
+            raise GatewayUpstreamError("model_gateway_stream_failed") from exc
 
 
 class AgentgatewayToolGateway:

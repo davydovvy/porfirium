@@ -3,7 +3,7 @@
 Date: 2026-08-19  
 Status: Implemented and accepted by the user on 2026-08-19.
 
-> Transition update (2026-08-22): accepted architecture transition Increment 3 moved current MCP execution from Bifrost to Agentgateway without changing the Phase 4 behavior recorded here. Bifrost remains the model provider and MCP rollback until later transition increments.
+> Transition update (2026-08-22): accepted architecture transition Increments 3 and 4 moved current MCP and model execution from Bifrost to Agentgateway without changing the Phase 4 behavior recorded here. Bifrost remains the configuration-only rollback until retirement.
 
 ## Delivered
 

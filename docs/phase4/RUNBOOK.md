@@ -2,7 +2,7 @@
 
 Phase 4 adds a bounded, policy-controlled tool loop to the durable Agent while preserving Direct mode and the replay-safe Phase 3 no-tool workflow.
 
-Current transition note: Agentgateway is now the default MCP provider following accepted transition Increment 3. Bifrost remains the model provider and the configuration-only MCP rollback. The Phase 4 behavior and security boundaries below are unchanged.
+Current transition note: Agentgateway is now the default MCP and model provider following accepted transition Increments 3 and 4. Bifrost remains the configuration-only rollback until retirement. The Phase 4 behavior and security boundaries below are unchanged.
 
 ## Start
 

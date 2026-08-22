@@ -21,6 +21,7 @@ from .tool_policy import (
     AGENT_NAME,
     AGENT_VERSION,
     POLICY_VERSION,
+    allowed_tool_definitions,
     allowed_tool_names,
     validate_tool_call,
 )
@@ -196,6 +197,7 @@ async def generate_agent_step(value: dict) -> dict:
             ),
             max_output_tokens=settings.llm_max_output_tokens,
             tools=allowed_tool_names(),
+            tool_definitions=allowed_tool_definitions(),
             tool_choice="auto",
             metadata={
                 "conversation_id": str(turn.conversation_id),

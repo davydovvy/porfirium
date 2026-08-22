@@ -133,6 +133,19 @@ def allowed_tool_names() -> tuple[str, ...]:
     return tuple(TOOLS)
 
 
+def allowed_tool_definitions():
+    from .gateways.contracts import ToolDefinition
+
+    return tuple(
+        ToolDefinition(
+            name=item.external_name,
+            description=f"Read-only {item.tool_name.replace('_', ' ')} operation.",
+            input_schema=item.arguments_schema,
+        )
+        for item in TOOLS.values()
+    )
+
+
 def validate_tool_call(name: str, raw_arguments: str) -> tuple[ToolPolicy, dict[str, object]]:
     policy = TOOLS.get(name)
     if policy is None:

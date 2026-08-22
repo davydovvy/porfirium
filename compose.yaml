@@ -31,14 +31,15 @@ services:
       OIDC_AUDIENCE: genai-demo-api
       OIDC_REQUIRED_ROLE: genai-user
       OIDC_CA_FILE: /certs/keycloak-root-ca.pem
-      MODEL_GATEWAY_PROVIDER: bifrost
-      MODEL_GATEWAY_URL: http://bifrost:8080
+      MODEL_GATEWAY_PROVIDER: ${MODEL_GATEWAY_PROVIDER:-agentgateway}
       TOOL_GATEWAY_PROVIDER: ${TOOL_GATEWAY_PROVIDER:-agentgateway}
       AGENTGATEWAY_URL: http://agentgateway-spike:8090
       BIFROST_URL: http://bifrost:8080
       LLM_MODEL: ${YANDEX_MODEL}
       LLM_TIMEOUT_SECONDS: "120"
       LLM_MAX_OUTPUT_TOKENS: "2048"
+      LANGFUSE_AUTH: ${LANGFUSE_AUTH}
+      LANGFUSE_BASE_URL: http://langfuse-web:3000
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_NAMESPACE: default
       TEMPORAL_TASK_QUEUE: porfirium-agent-v1
@@ -68,8 +69,7 @@ services:
     command: [".venv/bin/python", "-m", "portal_api.worker"]
     environment:
       DATABASE_URL: postgresql+asyncpg://genai:${APPLICATION_POSTGRES_PASSWORD}@application-postgres:5432/genai
-      MODEL_GATEWAY_PROVIDER: bifrost
-      MODEL_GATEWAY_URL: http://bifrost:8080
+      MODEL_GATEWAY_PROVIDER: ${MODEL_GATEWAY_PROVIDER:-agentgateway}
       TOOL_GATEWAY_PROVIDER: ${TOOL_GATEWAY_PROVIDER:-agentgateway}
       AGENTGATEWAY_URL: http://agentgateway-spike:8090
       BIFROST_URL: http://bifrost:8080

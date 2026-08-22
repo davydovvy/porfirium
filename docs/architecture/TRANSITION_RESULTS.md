@@ -13,7 +13,7 @@ This document records acceptance evidence for the transition from Bifrost to Age
 | 1 — Vendor-neutral gateway adapters | Complete | 2026-08-21 | Gateway adapter contract suite and complete live migration gate |
 | 2 — Agentgateway/Yandex compatibility spike | Complete | 2026-08-21 | Pinned side-by-side deployment and `scripts/agentgateway-spike/verify.sh` |
 | 3 — MCP cutover | Complete | 2026-08-22 | Agentgateway adapter suite, spike gate, and default-provider migration gate |
-| 4 — LLM cutover | Not started | — | — |
+| 4 — LLM cutover | Complete | 2026-08-22 | Agentgateway model adapter suite, spike gate, and complete application canary |
 | 5 — Bifrost retirement | Not started | — | — |
 | 6 — Versioned agent catalog | Not started | — | — |
 | 7 — Generic Temporal workflow | Not started | — | — |
@@ -82,4 +82,10 @@ Agentgateway is now the default MCP provider. Bifrost remains deployed for model
 
 ## Next acceptance target
 
-Increment 4 is the LLM cutover. Implement and test `AgentgatewayModelGateway`, run a controlled canary with `MODEL_GATEWAY_PROVIDER=agentgateway`, and pass the complete acceptance suite before changing the model default. Bifrost remains the immediate model rollback until Increment 5.
+Increment 5 is Bifrost retirement. Remove Bifrost from current operational paths only after the clean-checkout and complete application gates pass without it; persistent volume removal remains a separate explicit destructive operation.
+
+## Increment 4 acceptance
+
+Increment 4 added `AgentgatewayModelGateway` with non-streaming and semantic SSE Responses support, explicit policy-approved function definitions, stable model-alias translation, structured output and stateless continuation passthrough, normalized failures, usage preservation, and W3C trace propagation. Focused backend verification passes with 31 tests.
+
+The pinned Agentgateway/Yandex spike passed Responses, semantic streaming, strict JSON Schema, forced function calls, stateless continuation, usage, tracing, and restart recovery. The application canary passed Direct streaming, persistence, idempotency, replay, isolation, and correlated Langfuse `GENERATION`/`SPAN` observations. Durable Agent smoke passed worker recovery, one-tool and ordered multi-tool execution, audit/event persistence, cancellation, owner isolation, and denial of diagnostic, fabricated, and name-confused tools. Agentgateway is now the committed model default; Bifrost remains the configuration-only rollback through `MODEL_GATEWAY_PROVIDER=bifrost` until Increment 5.

@@ -1,6 +1,6 @@
 # Agentgateway and Versioned Agent Platform Transition Plan
 
-Status: In progress — Increments 0–3 accepted
+Status: In progress — Increments 0–4 accepted
 
 Last updated: 2026-08-22
 Starting point: Phases 0–4 implemented and accepted
@@ -364,7 +364,7 @@ Status: **Completed and accepted on 2026-08-22.** Agentgateway is the default MC
 
 ### Increment 4 — Cut LLM traffic over
 
-Status: **Next implementation target.**
+Status: **Completed and accepted on 2026-08-22.** Agentgateway is the default model provider through `AgentgatewayModelGateway`; `MODEL_GATEWAY_PROVIDER=bifrost` remains the configuration-only rollback.
 
 - Implement non-streaming and streaming Responses calls in `AgentgatewayModelGateway`.
 - Supply approved tool definitions explicitly in model requests.
@@ -515,7 +515,7 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 
 No milestone combines a gateway cutover with a database/catalog or Temporal workflow migration.
 
-Current progress: Increments 0–3 are complete and accepted. Milestone M1 is complete, and M2 is in progress with MCP traffic now using Agentgateway. Increment 4, the LLM cutover behind `AgentgatewayModelGateway`, is the next implementation target.
+Current progress: Increments 0–4 are complete and accepted. Milestones M1 and M2 are complete, with model and MCP traffic now using Agentgateway. Increment 5, Bifrost retirement, is the next implementation target.
 
 ## 15. Deferred decisions
 

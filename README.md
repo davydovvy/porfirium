@@ -6,11 +6,11 @@ Porfirium is a local-first agent and LLM demonstration platform. Phases 0–4 ar
 
 The next architecture transition replaces both Bifrost gateway roles with Agentgateway and introduces independently developed, immutable agent packages that can be published from the filesystem or authored declaratively in the portal. The staged plan, compatibility gates, target component boundaries, versioning model, and rollback rules are documented in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md).
 
-Transition Increments 0–3 are complete and accepted. Agentgateway 1.4.0 is now the default MCP provider through `AgentgatewayToolGateway`; Bifrost remains the model provider and the configuration-only MCP rollback. The frozen Phase 0–4 migration contract passed with this split-provider configuration. Rerun the gates with `./scripts/migration-baseline/verify.sh` and `./scripts/agentgateway-spike/verify.sh`. Cumulative evidence is tracked in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md).
+Transition Increments 0–4 are complete and accepted. Agentgateway 1.4.0 is now the default model and MCP provider through `AgentgatewayModelGateway` and `AgentgatewayToolGateway`; Bifrost remains deployed as the configuration-only rollback. The frozen Phase 0–4 migration contract passed with Agentgateway selected. Rerun the gates with `./scripts/migration-baseline/verify.sh` and `./scripts/agentgateway-spike/verify.sh`. Cumulative evidence is tracked in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md).
 
-The next target is Increment 4: implement `AgentgatewayModelGateway`, canary it with `MODEL_GATEWAY_PROVIDER=agentgateway`, and retain Bifrost for immediate model rollback. To roll MCP traffic back during this transition, set `TOOL_GATEWAY_PROVIDER=bifrost`.
+The next target is Increment 5: retire Bifrost from current operational paths. Until that increment is accepted, model rollback is `MODEL_GATEWAY_PROVIDER=bifrost` and MCP rollback is `TOOL_GATEWAY_PROVIDER=bifrost`.
 
-The quick starts and phase documents below retain the accepted Phase 0–4 behavior while current Agent tool traffic uses Agentgateway and model traffic uses Bifrost.
+The quick starts and phase documents below retain the accepted Phase 0–4 behavior while current model and Agent tool traffic use Agentgateway.
 
 ## Phase 4 quick start
 

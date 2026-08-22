@@ -7,7 +7,10 @@ import httpx
 import pytest
 
 from portal_api.config import settings
-from portal_api.gateways.agentgateway import AgentgatewayToolGateway
+from portal_api.gateways.agentgateway import (
+    AgentgatewayModelGateway,
+    AgentgatewayToolGateway,
+)
 from portal_api.gateways.bifrost import BifrostModelGateway, BifrostToolGateway
 from portal_api.gateways.contracts import (
     GatewayConfigurationError,
@@ -15,6 +18,7 @@ from portal_api.gateways.contracts import (
     GatewayUpstreamError,
     ModelRequest,
     ToolCall,
+    ToolDefinition,
 )
 from portal_api.gateways.factory import create_model_gateway, create_tool_gateway
 
@@ -102,6 +106,148 @@ async def test_bifrost_model_adapter_normalizes_semantic_sse() -> None:
         "response.output_text.delta",
     ]
     assert events[-1].delta == "hello"
+
+
+@pytest.mark.asyncio
+async def test_agentgateway_model_adapter_supplies_tools_and_trace_context() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["headers"] = dict(request.headers)
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "id": "response-1",
+                "status": "completed",
+                "output": [
+                    {
+                        "type": "function_call",
+                        "call_id": "call-1",
+                        "name": "demo_time-get_current_time",
+                        "arguments": '{"timezone":"UTC"}',
+                    }
+                ],
+                "usage": {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15},
+            },
+        )
+
+    gateway = AgentgatewayModelGateway(
+        "http://agentgateway-spike:8090/",
+        timeout_seconds=30,
+        transport=httpx.MockTransport(handler),
+    )
+    response = await gateway.respond(
+        ModelRequest(
+            model="concrete-yandex-model-id",
+            input="What time is it?",
+            correlation_id=TRACE_ID,
+            instructions="Use the time tool.",
+            max_output_tokens=128,
+            tools=("demo_time-get_current_time",),
+            tool_definitions=(
+                ToolDefinition(
+                    name="demo_time-get_current_time",
+                    description="Return the current time.",
+                    input_schema={
+                        "type": "object",
+                        "properties": {"timezone": {"type": "string"}},
+                        "required": ["timezone"],
+                        "additionalProperties": False,
+                    },
+                ),
+            ),
+            tool_choice="auto",
+            metadata={"turn_id": "turn-1"},
+        )
+    )
+
+    assert response.payload["status"] == "completed"
+    assert captured["url"] == "http://agentgateway-spike:8090/v1/responses"
+    assert captured["body"] == {
+        "model": "default",
+        "input": "What time is it?",
+        "metadata": {"turn_id": "turn-1"},
+        "instructions": "Use the time tool.",
+        "max_output_tokens": 128,
+        "tool_choice": "auto",
+        "tools": [
+            {
+                "type": "function",
+                "name": "demo_time-get_current_time",
+                "description": "Return the current time.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"timezone": {"type": "string"}},
+                    "required": ["timezone"],
+                    "additionalProperties": False,
+                },
+                "strict": True,
+            }
+        ],
+    }
+    headers = captured["headers"]
+    assert isinstance(headers, dict)
+    assert headers["x-request-id"] == TRACE_ID
+    assert str(headers["traceparent"]).startswith(f"00-{TRACE_ID}-")
+    assert "x-bf-session-id" not in headers
+    assert "x-bf-mcp-include-tools" not in headers
+
+
+@pytest.mark.asyncio
+async def test_agentgateway_model_adapter_normalizes_semantic_sse() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.headers["accept"] == "text/event-stream"
+        assert json.loads(request.content)["stream"] is True
+        return httpx.Response(
+            200,
+            headers={"Content-Type": "text/event-stream"},
+            content=(
+                'event: response.created\n'
+                'data: {"type":"response.created"}\n\n'
+                'event: response.output_text.delta\n'
+                'data: {"type":"response.output_text.delta","delta":"hello"}\n\n'
+                "data: [DONE]\n\n"
+            ),
+        )
+
+    gateway = AgentgatewayModelGateway(
+        "http://agentgateway-spike:8090",
+        timeout_seconds=30,
+        transport=httpx.MockTransport(handler),
+    )
+    events = [
+        event
+        async for event in gateway.stream(
+            ModelRequest(model="default", input="hello", correlation_id=TRACE_ID)
+        )
+    ]
+
+    assert [event.type for event in events] == [
+        "response.created",
+        "response.output_text.delta",
+    ]
+    assert events[-1].delta == "hello"
+
+
+@pytest.mark.asyncio
+async def test_agentgateway_model_adapter_requires_explicit_tool_definitions() -> None:
+    gateway = AgentgatewayModelGateway(
+        "http://agentgateway-spike:8090",
+        timeout_seconds=30,
+        transport=httpx.MockTransport(lambda _request: httpx.Response(200, json={})),
+    )
+    with pytest.raises(GatewayProtocolError, match="model_tool_definitions_missing"):
+        await gateway.respond(
+            ModelRequest(
+                model="default",
+                input="hello",
+                correlation_id=TRACE_ID,
+                tools=("demo_time-get_current_time",),
+                tool_choice="auto",
+            )
+        )
 
 
 @pytest.mark.asyncio
@@ -322,6 +468,17 @@ def test_agentgateway_tool_factory_selection() -> None:
         )
     )
     assert isinstance(gateway, AgentgatewayToolGateway)
+
+
+def test_agentgateway_model_factory_selection() -> None:
+    gateway = create_model_gateway(
+        replace(
+            settings,
+            model_gateway_provider="agentgateway",
+            model_gateway_url="http://agentgateway-spike:8090",
+        )
+    )
+    assert isinstance(gateway, AgentgatewayModelGateway)
 
 
 def test_gateway_factories_fail_closed_for_unknown_providers() -> None:

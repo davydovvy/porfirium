@@ -1,6 +1,12 @@
 import os
 from dataclasses import dataclass
 
+_model_gateway_provider = os.getenv("MODEL_GATEWAY_PROVIDER", "agentgateway")
+_model_gateway_default_url = (
+    os.getenv("AGENTGATEWAY_URL", "http://agentgateway-spike:8090")
+    if _model_gateway_provider == "agentgateway"
+    else os.getenv("BIFROST_URL", "http://bifrost:8080")
+)
 _tool_gateway_provider = os.getenv("TOOL_GATEWAY_PROVIDER", "agentgateway")
 _tool_gateway_default_url = (
     os.getenv("AGENTGATEWAY_URL", "http://agentgateway-spike:8090")
@@ -19,9 +25,9 @@ class Settings:
     oidc_required_role: str = os.getenv("OIDC_REQUIRED_ROLE", "genai-user")
     oidc_ca_file: str | None = os.getenv("OIDC_CA_FILE")
     oidc_jwks_url: str | None = os.getenv("OIDC_JWKS_URL")
-    model_gateway_provider: str = os.getenv("MODEL_GATEWAY_PROVIDER", "bifrost")
+    model_gateway_provider: str = _model_gateway_provider
     model_gateway_url: str = os.getenv(
-        "MODEL_GATEWAY_URL", os.getenv("BIFROST_URL", "http://bifrost:8080")
+        "MODEL_GATEWAY_URL", _model_gateway_default_url
     )
     tool_gateway_provider: str = _tool_gateway_provider
     tool_gateway_url: str = os.getenv(
@@ -31,6 +37,7 @@ class Settings:
         os.getenv("TOOL_GATEWAY_TIMEOUT_SECONDS", "20")
     )
     bifrost_model_prefix: str = os.getenv("BIFROST_MODEL_PREFIX", "yandex/")
+    agentgateway_model_alias: str = os.getenv("AGENTGATEWAY_MODEL_ALIAS", "default")
     llm_model: str = os.getenv("LLM_MODEL", "")
     llm_timeout_seconds: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "120"))
     llm_max_output_tokens: int = int(os.getenv("LLM_MAX_OUTPUT_TOKENS", "2048"))

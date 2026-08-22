@@ -61,17 +61,18 @@ def trace_observations(trace_id: str) -> list[dict[str, object]]:
     for _ in range(20):
         with urllib.request.urlopen(
             urllib.request.Request(
-                "http://127.0.0.1:3000/api/public/observations?limit=100",
+                "http://127.0.0.1:3000/api/public/observations?"
+                + urllib.parse.urlencode({"traceId": trace_id, "limit": 100}),
                 headers={"Authorization": f"Basic {basic}"},
             ),
             timeout=20,
         ) as response:
             payload = json.load(response)
         matches = [item for item in payload.get("data", []) if item.get("traceId") == trace_id]
-        if matches:
+        if {item.get("type") for item in matches}.issuperset({"GENERATION", "SPAN"}):
             return matches
         time.sleep(0.5)
-    return []
+    return matches
 
 
 def main() -> None:
@@ -106,10 +107,10 @@ def main() -> None:
         raise AssertionError("Cross-user conversation read succeeded")
     except urllib.error.HTTPError as error:
         assert error.code == 404
-    print("PASS: direct Yandex response streamed through Bifrost")
+    print("PASS: direct Yandex response streamed through the selected model gateway")
     print("PASS: idempotent turn submission and ordered SSE replay")
     print("PASS: persistent history and cross-user isolation")
-    print("PASS: turn correlation ID locates the complete Bifrost trace in Langfuse")
+    print("PASS: turn correlation ID locates the complete model trace in Langfuse")
 
 
 if __name__ == "__main__":

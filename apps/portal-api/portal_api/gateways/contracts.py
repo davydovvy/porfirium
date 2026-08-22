@@ -22,6 +22,13 @@ class GatewayUpstreamError(GatewayError):
 
 
 @dataclass(frozen=True)
+class ToolDefinition:
+    name: str
+    description: str
+    input_schema: Mapping[str, object]
+
+
+@dataclass(frozen=True)
 class ModelRequest:
     model: str
     input: object
@@ -29,6 +36,7 @@ class ModelRequest:
     instructions: str | None = None
     max_output_tokens: int | None = None
     tools: tuple[str, ...] = ()
+    tool_definitions: tuple[ToolDefinition, ...] = ()
     tool_choice: object | None = None
     metadata: Mapping[str, object] = field(default_factory=dict)
     text: Mapping[str, object] | None = None
@@ -47,13 +55,6 @@ class ModelStreamEvent:
     @property
     def delta(self) -> str:
         return str(self.payload.get("delta", ""))
-
-
-@dataclass(frozen=True)
-class ToolDefinition:
-    name: str
-    description: str
-    input_schema: Mapping[str, object]
 
 
 @dataclass(frozen=True)

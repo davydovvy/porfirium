@@ -10,6 +10,7 @@ from .config import settings
 from .db import session_factory
 from .gateways import ModelRequest, create_model_gateway
 from .models import Message, Turn, TurnEvent, now_utc
+from .observability import record_observation
 
 logger = logging.getLogger(__name__)
 running_turns: dict[uuid.UUID, asyncio.Task[None]] = {}
@@ -75,11 +76,27 @@ async def execute_direct_turn(turn_id: uuid.UUID) -> None:
                     "correlation_id": turn.correlation_id,
                 },
             )
+            correlation_id = turn.correlation_id
+            conversation_id = turn.conversation_id
 
+        completed_payload: dict[str, object] = {}
         async for upstream in model_gateway.stream(request):
             if upstream.type == "response.output_text.delta":
                 text += upstream.delta
                 await append_event(turn_id, "assistant.delta", {"delta": upstream.delta})
+            elif upstream.type == "response.completed":
+                completed_payload = dict(upstream.payload)
+
+        response = completed_payload.get("response", completed_payload)
+        usage = response.get("usage", {}) if isinstance(response, dict) else {}
+        record_observation(
+            trace_id=correlation_id,
+            name="direct.turn",
+            as_type="span",
+            input={"conversation_id": str(conversation_id), "mode": "direct"},
+            output={"text": text, "usage": usage},
+            metadata={"turn_id": str(turn_id), "provider": settings.model_gateway_provider},
+        )
 
         async with session_factory() as session:
             turn = await session.get(Turn, turn_id)
