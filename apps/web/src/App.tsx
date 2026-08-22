@@ -190,7 +190,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
           {busy && active.mode === 'agent' && <div className="agent-progress"><small>WORKFLOW PROGRESS</small>{progress.length ? progress.map((item, index) => <p key={`${item}-${index}`}>✓ {item}</p>) : <p>○ Waiting for worker</p>}</div>}
           {error && <div className="error">{error}</div>}</div>
         <form className="composer" onSubmit={submit}><textarea aria-label="Message" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={active.mode === 'agent' ? 'Give the durable agent a task…' : 'Message the Yandex model…'} disabled={Boolean(busy)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} />
-          {busy ? <button type="button" className="cancel" onClick={() => cancel().catch((reason) => setError(reason.message))}>Stop</button> : <button type="submit" disabled={!draft.trim()}>Send ↗</button>}<small>{active.mode === 'agent' ? 'Temporal preserves this run across worker restarts.' : 'Responses stream through Bifrost and persist locally.'}</small></form></>}
+          {busy ? <button type="button" className="cancel" onClick={() => cancel().catch((reason) => setError(reason.message))}>Stop</button> : <button type="submit" disabled={!draft.trim()}>Send ↗</button>}<small>{active.mode === 'agent' ? 'Temporal preserves this run across worker restarts.' : 'Responses stream through Agentgateway and persist locally.'}</small></form></>}
     </section>
   </main>
 }

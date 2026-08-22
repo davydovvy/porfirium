@@ -1,7 +1,9 @@
 # Migration Regression Gate
 
-Status: Implemented; accepted for transition Increments 0–1
-Last updated: 2026-08-21
+Status: Implemented; accepted through transition Increment 5
+Last updated: 2026-08-22
+
+> Increment 5 retired Bifrost. The command below now runs the pinned Agentgateway compatibility gate followed by the Direct, durable Agent, and tool-policy smoke suites. Bifrost-specific evidence below records the original frozen baseline.
 
 ## Acceptance result
 
@@ -19,7 +21,7 @@ The complete command passed again on 2026-08-21 after Increment 1 introduced ven
 
 This gate freezes the accepted Phase 0–4 behavior before the Agentgateway and versioned-agent transition. It is the shared go/no-go suite for gateway adapter extraction, Agentgateway compatibility, gateway cutover, and the later generic agent runtime.
 
-Run it against the current Bifrost baseline first and retain the result as comparison evidence. Every transition increment that changes a covered boundary must pass the same behavior through its selected implementation.
+The original Bifrost result is retained as comparison evidence. Every transition increment that changes a covered boundary must pass the same behavior through its selected implementation.
 
 ## Preconditions
 
@@ -41,14 +43,14 @@ Start the baseline stack with:
 ./scripts/migration-baseline/verify.sh
 ```
 
-The live gate intentionally makes paid Yandex requests. It also restarts the diagnostic MCP server, Bifrost, and the Agent worker to prove recovery. Do not run it against an environment where these controlled service restarts would disrupt other users.
+The live gate intentionally makes paid Yandex requests. It also restarts the diagnostic MCP server, Agentgateway, and the Agent worker to prove recovery. Do not run it against an environment where these controlled service restarts would disrupt other users.
 
 ## Coverage
 
 | Required behavior | Verification source |
 |---|---|
-| Responses request, semantic SSE, strict JSON Schema, forced function call, stateless continuation, and usage-compatible response | Phase 0 smoke |
-| Bifrost health, MCP discovery/execution, diagnostic MCP restart recovery, and gateway restart/reconnection | Phase 0 smoke |
+| Responses request, semantic SSE, strict JSON Schema, forced function call, stateless continuation, and usage-compatible response | Agentgateway compatibility smoke |
+| Agentgateway health, MCP discovery/execution, diagnostic MCP restart recovery, and gateway restart/reconnection | Agentgateway compatibility smoke |
 | Direct portal streaming, idempotency, ordered replay, persistence, cross-user isolation, and Langfuse correlation | Phase 2 smoke |
 | Normal no-tool Agent response and Temporal worker restart recovery | Phase 3 smoke |
 | One-tool and ordered multi-tool Agent runs, audit persistence, and model/tool trace correlation | Phase 4 smoke |
@@ -66,7 +68,7 @@ The live gate intentionally makes paid Yandex requests. It also restarts the dia
 - No denied tool reaches `tool.started`.
 - Restarted services reconnect without manual repair.
 - A turn correlation ID resolves the required observations in Langfuse.
-- The final line is `PASS: complete Bifrost-era migration regression baseline`.
+- The final line is `PASS: complete Agentgateway migration regression gate`.
 
 ## Accepted runs
 
@@ -74,6 +76,7 @@ The live gate intentionally makes paid Yandex requests. It also restarts the dia
 |---|---|---|
 | 2026-08-21 | Increment 0 baseline freeze | Passed |
 | 2026-08-21 | Increment 1 vendor-neutral gateway seam | Passed |
+| 2026-08-22 | Increment 5 Bifrost-free Agentgateway topology | Passed |
 
 ## Failure handling
 

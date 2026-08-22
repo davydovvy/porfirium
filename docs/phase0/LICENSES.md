@@ -2,11 +2,14 @@
 
 > Historical Phase 0 inventory. It remains evidence for that increment and is not a current Phase 1 SBOM or full dependency review.
 
+> Current gateway update (2026-08-22): Agentgateway 1.4.0 is pinned by digest in `compose.yaml` and is Apache-2.0 licensed. Bifrost is retained in the table only as historical Phase 0 evidence and is no longer a runtime image.
+
 Status: Historical runtime inventory. MinIO exception accepted for the local demo on 2026-08-16; verify pinned image SBOMs again before production distribution.
 
 | Component | Phase 0 selection | License | Policy status |
 |---|---|---|---|
-| Bifrost | v1.6.11 image digest pinned in `compose.yaml` | Apache-2.0 | Preferred |
+| Agentgateway | v1.4.0 image digest pinned in `compose.yaml` | Apache-2.0 | Preferred; current gateway |
+| Bifrost | v1.6.11 retired image | Apache-2.0 | Historical Phase 0 selection |
 | Diagnostic MCP server | Project code | Apache-2.0 (planned repository license) | Preferred |
 | Python MCP SDK | Locked in `services/diagnostic-mcp/uv.lock` | MIT | Preferred |
 | Langfuse core | 3.225.2, web/worker digests pinned in `compose.yaml` | MIT core | Preferred; enterprise features excluded |

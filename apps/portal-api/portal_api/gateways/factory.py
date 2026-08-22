@@ -2,39 +2,19 @@ from __future__ import annotations
 
 from ..config import Settings, settings
 from .agentgateway import AgentgatewayModelGateway, AgentgatewayToolGateway
-from .bifrost import BifrostModelGateway, BifrostToolGateway
-from .contracts import GatewayConfigurationError, ModelGateway, ToolGateway
+from .contracts import ModelGateway, ToolGateway
 
 
 def create_model_gateway(configuration: Settings = settings) -> ModelGateway:
-    if configuration.model_gateway_provider == "bifrost":
-        return BifrostModelGateway(
-            configuration.model_gateway_url,
-            timeout_seconds=configuration.llm_timeout_seconds,
-            model_prefix=configuration.bifrost_model_prefix,
-        )
-    if configuration.model_gateway_provider == "agentgateway":
-        return AgentgatewayModelGateway(
-            configuration.model_gateway_url,
-            timeout_seconds=configuration.llm_timeout_seconds,
-            model_alias=configuration.agentgateway_model_alias,
-        )
-    raise GatewayConfigurationError(
-        f"unsupported_model_gateway_provider:{configuration.model_gateway_provider}"
+    return AgentgatewayModelGateway(
+        configuration.model_gateway_url,
+        timeout_seconds=configuration.llm_timeout_seconds,
+        model_alias=configuration.agentgateway_model_alias,
     )
 
 
 def create_tool_gateway(configuration: Settings = settings) -> ToolGateway:
-    if configuration.tool_gateway_provider == "bifrost":
-        return BifrostToolGateway(
-            configuration.tool_gateway_url,
-            timeout_seconds=configuration.tool_gateway_timeout_seconds,
-        )
-    if configuration.tool_gateway_provider == "agentgateway":
-        return AgentgatewayToolGateway(
-            configuration.tool_gateway_url,
-            timeout_seconds=configuration.tool_gateway_timeout_seconds,
-        )
-    raise GatewayConfigurationError(
-        f"unsupported_tool_gateway_provider:{configuration.tool_gateway_provider}"
+    return AgentgatewayToolGateway(
+        configuration.tool_gateway_url,
+        timeout_seconds=configuration.tool_gateway_timeout_seconds,
     )

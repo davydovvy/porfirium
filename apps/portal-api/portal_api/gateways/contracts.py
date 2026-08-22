@@ -9,10 +9,6 @@ class GatewayError(RuntimeError):
     """Normalized failure raised by a gateway adapter."""
 
 
-class GatewayConfigurationError(GatewayError):
-    """The selected gateway provider or its configuration is invalid."""
-
-
 class GatewayProtocolError(GatewayError):
     """The gateway returned a response that violates the platform contract."""
 

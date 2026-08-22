@@ -1,7 +1,7 @@
 [project]
 name = "genai-platform-diagnostic-mcp"
 version = "0.1.0"
-description = "Read-only MCP server used to validate the Phase 0 Bifrost path"
+description = "Read-only MCP server used to validate the gateway path"
 requires-python = ">=3.12"
 dependencies = [
   "mcp>=1.20,<2",
@@ -11,4 +11,3 @@ dependencies = [
 
 [tool.uv]
 package = false
-

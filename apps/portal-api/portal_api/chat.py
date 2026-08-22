@@ -95,7 +95,7 @@ async def execute_direct_turn(turn_id: uuid.UUID) -> None:
             as_type="span",
             input={"conversation_id": str(conversation_id), "mode": "direct"},
             output={"text": text, "usage": usage},
-            metadata={"turn_id": str(turn_id), "provider": settings.model_gateway_provider},
+            metadata={"turn_id": str(turn_id), "provider": "agentgateway"},
         )
 
         async with session_factory() as session:

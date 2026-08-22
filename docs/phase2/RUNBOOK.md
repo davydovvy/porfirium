@@ -1,6 +1,6 @@
 # Phase 2 runbook
 
-> Current transition note (2026-08-22): Agentgateway is the default model and MCP provider. References to Bifrost below describe the accepted Phase 2 baseline or rollback service.
+> Current transition note (2026-08-22): Agentgateway is the sole model and MCP provider. The Phase 2 results document preserves the retired Bifrost-era acceptance evidence.
 
 Phase 2 adds persistent Direct LLM conversations, Yandex Responses API streaming through the selected model gateway, replayable application SSE events, cancellation, and correlated Langfuse gateway traces.
 
@@ -45,7 +45,7 @@ The live smoke test creates a real direct conversation, checks semantic streamin
 Inspect failures with:
 
 ```bash
-docker compose logs --tail=200 portal portal-api bifrost langfuse-web
+docker compose logs --tail=200 portal portal-api agentgateway langfuse-web
 ```
 
 If startup reports that ports `3000`, `8088`, or `8091` are already allocated, inspect `docker ps` for an older Phase 0 Compose project. Stop only the exact conflicting legacy containers; do not remove their volumes. The Phase 2 and legacy Phase 0 Langfuse deployments may use separate preserved data sets.

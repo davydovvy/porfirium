@@ -1,6 +1,6 @@
 # Agentgateway and Versioned Agent Platform Transition Plan
 
-Status: In progress — Increments 0–4 accepted
+Status: In progress — Increments 0–5 accepted
 
 Last updated: 2026-08-22
 Starting point: Phases 0–4 implemented and accepted
@@ -379,6 +379,8 @@ Use controlled synthetic canaries rather than duplicating ordinary user prompts 
 
 ### Increment 5 — Retire Bifrost
 
+Status: **Completed and accepted on 2026-08-22.** Current operation, application adapters, Compose, and verification no longer contain Bifrost; the old unreferenced local volume was deliberately not deleted.
+
 - Remove the Bifrost service, configuration, dependencies, environment variables, scripts, and documentation references from current operational paths.
 - Replace Bifrost health and discovery checks with Agentgateway checks.
 - Update image/license evidence and the runbook.
@@ -508,14 +510,14 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 | Milestone | Included increments | User-visible result |
 |---|---|---|
 | M1 — Gateway seam and proof | 0–2 | Complete; Agentgateway/Yandex compatibility is proven. |
-| M2 — Agentgateway production cutover | 3–5 | In progress; LLM and MCP traffic use Agentgateway, with Bifrost retirement remaining. |
+| M2 — Agentgateway production cutover | 3–5 | Complete; LLM and MCP traffic use Agentgateway and Bifrost is removed. |
 | M3 — Versioned agent runtime | 6–7 | Conversations select immutable agent versions executed by a generic durable workflow. |
 | M4 — Independent publication | 8–9 | Agents can be published from directories or created declaratively in the portal. |
 | M5 — Executable-code isolation | 10 | Independently supplied code runs in a constrained runner boundary. |
 
 No milestone combines a gateway cutover with a database/catalog or Temporal workflow migration.
 
-Current progress: Increments 0–4 are complete and accepted. Milestone M1 is complete and M2 is in progress, with model and MCP traffic now using Agentgateway. Increment 5, Bifrost retirement, is the next implementation target.
+Current progress: Increments 0–5 and Milestones M1–M2 are complete and accepted. Increment 6, the versioned agent catalog, is the next implementation target.
 
 ## 15. Deferred decisions
 

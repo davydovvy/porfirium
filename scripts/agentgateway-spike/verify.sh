@@ -11,5 +11,5 @@ docker run --rm --entrypoint /app/agentgateway \
   --env-file "$repo_dir/.env" \
   -v "$repo_dir/deploy/agentgateway/config.yaml:/config/config.yaml:ro" \
   "$image" -f /config/config.yaml --validate-only
-docker compose up -d --build diagnostic-mcp demo-time-mcp demo-mtg-catalog-mcp agentgateway-spike
+docker compose up -d --build diagnostic-mcp demo-time-mcp demo-mtg-catalog-mcp agentgateway
 python3 -u scripts/agentgateway-spike/smoke.py

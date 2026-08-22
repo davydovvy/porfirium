@@ -27,7 +27,7 @@ mcp = FastMCP(
             "127.0.0.1:8092",
             "127.0.0.1:8089",
             "127.0.0.1",
-            "agentgateway-spike:8090",
+            "agentgateway:8090",
             "localhost:8092",
             "localhost",
         ]

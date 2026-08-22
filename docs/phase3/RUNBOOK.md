@@ -1,6 +1,6 @@
 # Porfirium Phase 3 runbook
 
-> Current transition note (2026-08-22): Agentgateway is the default model and MCP provider. References to Bifrost below describe the accepted Phase 3 baseline or rollback service.
+> Current transition note (2026-08-22): Agentgateway is the sole model and MCP provider. The Phase 3 results document preserves the retired Bifrost-era acceptance evidence.
 
 Phase 3 adds a Temporal-backed, no-tool Agent mode while preserving Direct LLM chat. Keycloak remains a separately managed prerequisite.
 
@@ -14,13 +14,13 @@ Ensure Keycloak is running, `portal.local` resolves to `127.0.0.1`, and the repo
 
 The first start downloads the pinned Temporal server and UI images and may take several minutes. Startup applies database migration `0003_phase3` automatically.
 
-Startup also verifies Bifrost's persisted `mcp_disable_auto_tool_inject` setting and repairs it to `true` when necessary. This preserves a safe rollback path. Current Agentgateway requests receive only application policy-approved tool definitions; the replay-safe Phase 3 workflow explicitly requests no tools.
+Agentgateway requests receive only application policy-approved tool definitions; the replay-safe Phase 3 workflow explicitly requests no tools.
 
 ## Use and inspect
 
 - Portal: <https://portal.local:8444>
 - Temporal UI: <http://localhost:8080>
-- Bifrost: <http://localhost:8088>
+- Agentgateway: <http://localhost:8089>
 - Langfuse: <http://localhost:3000>
 - Keycloak: <https://keycloak.local:8443>
 
@@ -57,7 +57,7 @@ docker compose logs --tail=100 temporal agent-worker portal-api
 
 If Temporal is unhealthy, inspect `docker compose logs temporal`. If the worker is unavailable, restart it with `docker compose restart agent-worker`; accepted workflows remain queued. If the API is unhealthy after an upgrade, inspect `docker compose logs portal-api` for migration errors.
 
-Do not run `docker compose down -v` unless permanent deletion of application, Temporal, Bifrost, and Langfuse state is intended.
+Do not run `docker compose down -v` unless permanent deletion of application, Temporal, Agentgateway, and Langfuse state is intended.
 
 ## Phase boundary
 

@@ -125,7 +125,7 @@ def recovered_tool_names() -> set[str]:
             (
                 "import json,urllib.request;"
                 "body=json.dumps({'jsonrpc':'2.0','id':1,'method':'tools/list','params':{}}).encode();"
-                "request=urllib.request.Request('http://agentgateway-spike:8090/mcp',data=body,"
+                "request=urllib.request.Request('http://agentgateway:8090/mcp',data=body,"
                 "headers={'Accept':'application/json, text/event-stream','Content-Type':'application/json'});"
                 "raw=urllib.request.urlopen(request,timeout=10).read().decode();"
                 "print(next(line[5:].strip() for line in raw.splitlines() if line.startswith('data:')))"
@@ -153,7 +153,7 @@ def application_network_ready() -> bytes:
             (
                 "import urllib.request;"
                 "print(urllib.request.urlopen("
-                "'http://agentgateway-spike:15021/healthz/ready',timeout=5).read().decode())"
+                "'http://agentgateway:15021/healthz/ready',timeout=5).read().decode())"
             ),
         ],
         check=True,
@@ -272,7 +272,7 @@ def main() -> None:
 
     subprocess.run(["docker", "compose", "restart", "diagnostic-mcp"], check=True, stdout=subprocess.DEVNULL)
     wait_for("MCP recovery after target restart", tool_names, lambda names: names == EXPECTED_TOOLS)
-    subprocess.run(["docker", "compose", "restart", "agentgateway-spike"], check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(["docker", "compose", "restart", "agentgateway"], check=True, stdout=subprocess.DEVNULL)
     wait_for(
         "Agentgateway readiness after restart",
         application_network_ready,

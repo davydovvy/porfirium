@@ -31,10 +31,7 @@ services:
       OIDC_AUDIENCE: genai-demo-api
       OIDC_REQUIRED_ROLE: genai-user
       OIDC_CA_FILE: /certs/keycloak-root-ca.pem
-      MODEL_GATEWAY_PROVIDER: ${MODEL_GATEWAY_PROVIDER:-agentgateway}
-      TOOL_GATEWAY_PROVIDER: ${TOOL_GATEWAY_PROVIDER:-agentgateway}
-      AGENTGATEWAY_URL: http://agentgateway-spike:8090
-      BIFROST_URL: http://bifrost:8080
+      AGENTGATEWAY_URL: http://agentgateway:8090
       LLM_MODEL: ${YANDEX_MODEL}
       LLM_TIMEOUT_SECONDS: "120"
       LLM_MAX_OUTPUT_TOKENS: "2048"
@@ -48,11 +45,9 @@ services:
     volumes:
       - /home/dvy/Projects/KeyCloak/certs/contextforge-demo-root-ca.pem:/certs/keycloak-root-ca.pem:ro
     depends_on:
-      agentgateway-spike:
+      agentgateway:
         condition: service_healthy
       application-postgres:
-        condition: service_healthy
-      bifrost:
         condition: service_healthy
       temporal:
         condition: service_healthy
@@ -69,10 +64,7 @@ services:
     command: [".venv/bin/python", "-m", "portal_api.worker"]
     environment:
       DATABASE_URL: postgresql+asyncpg://genai:${APPLICATION_POSTGRES_PASSWORD}@application-postgres:5432/genai
-      MODEL_GATEWAY_PROVIDER: ${MODEL_GATEWAY_PROVIDER:-agentgateway}
-      TOOL_GATEWAY_PROVIDER: ${TOOL_GATEWAY_PROVIDER:-agentgateway}
-      AGENTGATEWAY_URL: http://agentgateway-spike:8090
-      BIFROST_URL: http://bifrost:8080
+      AGENTGATEWAY_URL: http://agentgateway:8090
       LLM_MODEL: ${YANDEX_MODEL}
       LLM_TIMEOUT_SECONDS: "120"
       LLM_MAX_OUTPUT_TOKENS: "2048"
@@ -85,8 +77,6 @@ services:
       portal-api:
         condition: service_healthy
       temporal:
-        condition: service_healthy
-      bifrost:
         condition: service_healthy
 
   temporal:
@@ -193,35 +183,7 @@ services:
       timeout: 3s
       retries: 12
 
-  bifrost:
-    image: maximhq/bifrost@sha256:ef8e686b3588884066ec3d0e57f3fc15136b11047ad94678adefe5a9573539af
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      APP_PORT: "8080"
-    volumes:
-      - ./deploy/bifrost/config.json:/app/data/config.json:ro
-      - bifrost_data:/app/data
-    ports:
-      - "127.0.0.1:8088:8080"
-    depends_on:
-      diagnostic-mcp:
-        condition: service_healthy
-      demo-time-mcp:
-        condition: service_healthy
-      demo-mtg-catalog-mcp:
-        condition: service_healthy
-      langfuse-web:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 18
-      start_period: 20s
-
-  agentgateway-spike:
+  agentgateway:
     image: cr.agentgateway.dev/agentgateway@sha256:771afaf093065477fa296eb90dcb618a0300165f12a32f80bbdd1427fab900ec
     restart: unless-stopped
     command: ["-f", "/config/config.yaml"]
@@ -395,7 +357,6 @@ volumes:
   application_postgres_data:
   portal_caddy_data:
   portal_caddy_config:
-  bifrost_data:
   langfuse_postgres_data:
   langfuse_clickhouse_data:
   langfuse_clickhouse_logs:
