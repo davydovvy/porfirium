@@ -1,6 +1,6 @@
 # Agentgateway and Versioned Agent Platform Transition Plan
 
-Status: In progress — Increments 0–7 and Milestones M1–M3 accepted; Increment 8 not started
+Status: In progress — Increments 0–7 and Milestones M1–M3 accepted; Increment 8 implemented, acceptance pending
 
 Last updated: 2026-08-23
 Starting point: Phases 0–4 implemented and accepted
@@ -430,12 +430,17 @@ Status: **Completed and accepted on 2026-08-23.** See [Increment 7 results](INCR
 
 ### Increment 8 — Add filesystem/CLI publication
 
+Focused implementation plan: [Increment 8 — Filesystem and CLI publication plan](INCREMENT8_PLAN.md).
+
+Status: **Implemented on 2026-08-23; awaiting user acceptance.** See
+[Increment 8 results](INCREMENT8_RESULTS.md).
+
 Provide commands equivalent to:
 
 ```text
-porfirium agents validate agents/tool-assistant/1.1.0
-porfirium agents publish agents/tool-assistant/1.1.0
-porfirium agents status tool-assistant:1.1.0
+porfirium agents validate agents/tool-assistant/1.3.0
+porfirium agents publish agents/tool-assistant/1.3.0
+porfirium agents status tool-assistant:1.3.0
 ```
 
 An optional local scanner may detect candidates, but it must publish only complete, validated staging directories. The runner must use the immutable artifact, not a mutable bind mount.
@@ -537,7 +542,7 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 
 No milestone combines a gateway cutover with a database/catalog or Temporal workflow migration.
 
-Current progress: Increments 0–7 and Milestones M1–M3 are complete and accepted. Increment 6.5 retired the legacy runtime; Increment 7 runs immutable declarative releases through the generic workflow with Agent admission reopened. The versioned `tool-assistant:1.2.0` correction was accepted through the portal. Increment 8 has not started.
+Current progress: Increments 0–7 and Milestones M1–M3 are complete and accepted. Increment 6.5 retired the legacy runtime; Increment 7 runs immutable declarative releases through the generic workflow with Agent admission reopened. The versioned `tool-assistant:1.2.0` correction was accepted through the portal. Increment 8 filesystem/CLI publication is implemented and awaiting user acceptance.
 
 ## 15. Deferred decisions
 

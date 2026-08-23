@@ -6,13 +6,15 @@ Porfirium is a local-first agent and LLM demonstration platform. Phases 0–4 ar
 
 The active architecture transition has moved both gateway roles from Bifrost to Agentgateway and now introduces independently developed, immutable agent packages that can be published from the filesystem or authored declaratively in the portal. The staged plan, compatibility gates, target component boundaries, versioning model, and rollback rules are documented in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md).
 
-Transition Increments 0–7 and Milestones M1–M3 are complete and accepted. Agentgateway 1.4.0 is the sole model and MCP provider through `AgentgatewayModelGateway` and `AgentgatewayToolGateway`; Bifrost has been removed from runtime, configuration, and current verification paths. Every accepted Agent turn is pinned to an immutable version and self-contained run snapshot. Rerun the gates with `./scripts/migration-baseline/verify.sh`, `./scripts/agentgateway-spike/verify.sh`, and `./scripts/increment7/verify.sh`. Cumulative evidence is tracked in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md).
+Transition Increments 0–7 and Milestones M1–M3 are complete and accepted. Increment 8 filesystem/CLI publication is implemented and awaiting user acceptance. Agentgateway 1.4.0 is the sole model and MCP provider through `AgentgatewayModelGateway` and `AgentgatewayToolGateway`; Bifrost has been removed from runtime, configuration, and current verification paths. Every accepted Agent turn is pinned to an immutable version and self-contained run snapshot. Rerun the current gates with `./scripts/phase4/verify.sh`, `./scripts/increment7/verify.sh`, and `./scripts/increment8/verify.sh`. Cumulative evidence is tracked in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md).
 
 Increment 7 is accepted. The platform-owned `AgentRunWorkflow` executes immutable declarative run snapshots on the sole `porfirium-agent-runtime-v1` queue; the bundled `tool-assistant:1.2.0` release is the default generic release with a corrected versioned MTG set-search contract, while `1.0.0` and `1.1.0` remain immutable historical data. See the [Increment 7 plan](docs/architecture/INCREMENT7_PLAN.md) and [acceptance results](docs/architecture/INCREMENT7_RESULTS.md).
 
+Increment 8 adds independent declarative publication from version directories. The filesystem-published `tool-assistant:1.3.0` canary is available for explicit selection; publication does not change the default or existing conversations. See the [Increment 8 results](docs/architecture/INCREMENT8_RESULTS.md) and [filesystem publication runbook](docs/architecture/INCREMENT8_RUNBOOK.md).
+
 The quick starts and phase documents below retain the accepted Phase 0–4 behavior while current model and Agent tool traffic use Agentgateway.
 
-## Increment 7 generic runtime start
+## Current runtime and filesystem publication
 
 With the standalone Keycloak prerequisite running and `portal.local` mapped to `127.0.0.1`:
 
@@ -22,6 +24,17 @@ With the standalone Keycloak prerequisite running and `portal.local` mapped to `
 ```
 
 Open `https://portal.local:8444`. Direct and Agent modes are available. Agent conversations use the selected immutable declarative release and the generic Temporal worker; inspect it with `docker compose logs agent-worker` and the Temporal UI at `http://localhost:8080`. See [the Phase 4 runbook](docs/phase4/RUNBOOK.md) for operation, verification, recovery, and rollback, and the [architecture glossary](docs/architecture/GLOSSARY.md) for platform terminology.
+
+Validate the Increment 8 canary offline, then inspect its live publication:
+
+```bash
+cd apps/portal-api
+.venv/bin/porfirium agents validate ../../agents/tool-assistant/1.3.0 --json
+cd ../..
+docker compose exec portal-api .venv/bin/porfirium agents status tool-assistant:1.3.0 --json
+```
+
+Use the Increment 8 runbook before publishing another version.
 
 ## Phase 3 quick start
 

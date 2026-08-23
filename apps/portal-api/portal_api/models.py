@@ -1,7 +1,16 @@
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -119,10 +128,22 @@ class AgentVersion(Base):
     agent_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agents.id"), index=True)
     version: Mapped[str] = mapped_column(String(32), nullable=False)
     digest: Mapped[str] = mapped_column(String(71), unique=True, nullable=False)
+    artifact_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agent_artifacts.id"))
     manifest: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
     model_alias_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("model_aliases.id"))
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class AgentArtifact(Base):
+    __tablename__ = "agent_artifacts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    digest: Mapped[str] = mapped_column(String(71), unique=True, nullable=False)
+    media_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    content: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    size_bytes: Mapped[int] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
 class AgentDraft(Base):

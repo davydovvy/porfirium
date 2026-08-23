@@ -45,6 +45,7 @@ services:
       - "keycloak.local:host-gateway"
     volumes:
       - /home/dvy/Projects/KeyCloak/certs/contextforge-demo-root-ca.pem:/certs/keycloak-root-ca.pem:ro
+      - ./agents:/agents:ro
     depends_on:
       agentgateway:
         condition: service_healthy

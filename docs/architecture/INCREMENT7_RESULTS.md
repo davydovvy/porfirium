@@ -61,8 +61,9 @@ return exactly their 20 in-set records and that the RTR code no longer matches u
 
 The user then exercised a new `tool-assistant:1.2.0` conversation in the portal, confirmed the
 corrected progress, failure handling, bounded final synthesis, and RTR set search, and reported
-that everything works. Increment 7 and Milestone M3 were accepted on 2026-08-23. Increment 8
-remains unstarted.
+that everything works. Increment 7 and Milestone M3 were accepted on 2026-08-23. Increment 8 was
+subsequently implemented; its evidence is recorded separately in
+[Increment 8 results](INCREMENT8_RESULTS.md).
 
 ## Operation and rollback
 

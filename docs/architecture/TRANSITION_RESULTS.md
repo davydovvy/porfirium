@@ -84,7 +84,9 @@ At the Increment 3 checkpoint, Agentgateway became the default MCP provider whil
 
 ## Current acceptance target
 
-Increment 6 was accepted on 2026-08-23 after the selected, pinned `tool-assistant:1.0.0` release preserved existing Agent behavior. Increment 6.5 subsequently retired the drained legacy runtime. Increment 7 and Milestone M3 were accepted on 2026-08-23: immutable declarative releases execute from self-contained snapshots through `AgentRunWorkflow` on `porfirium-agent-runtime-v1`. The accepted `tool-assistant:1.2.0` follow-up versions the corrected MTG set-search schema without mutating `1.1.0` grants or snapshots. See [Increment 6 results](INCREMENT6_RESULTS.md), [Increment 6.5 results](INCREMENT6_5_RESULTS.md), and [Increment 7 results](INCREMENT7_RESULTS.md). Increment 8 has not started.
+Increment 6 was accepted on 2026-08-23 after the selected, pinned `tool-assistant:1.0.0` release preserved existing Agent behavior. Increment 6.5 subsequently retired the drained legacy runtime. Increment 7 and Milestone M3 were accepted on 2026-08-23: immutable declarative releases execute from self-contained snapshots through `AgentRunWorkflow` on `porfirium-agent-runtime-v1`. The accepted `tool-assistant:1.2.0` follow-up versions the corrected MTG set-search schema without mutating `1.1.0` grants or snapshots. See [Increment 6 results](INCREMENT6_RESULTS.md), [Increment 6.5 results](INCREMENT6_5_RESULTS.md), and [Increment 7 results](INCREMENT7_RESULTS.md).
+
+Increment 8 is implemented and awaiting user acceptance. Filesystem candidates now pass strict offline and platform validation before atomic publication as immutable canonical artifacts. The independently published `tool-assistant:1.3.0` canary completed a live Yandex/time-tool run through the unchanged generic workflow, and identical publication retry returned the original release and publication identities. See the [Increment 8 plan](INCREMENT8_PLAN.md), [runbook](INCREMENT8_RUNBOOK.md), and [results](INCREMENT8_RESULTS.md).
 
 ## Increment 4 acceptance
 

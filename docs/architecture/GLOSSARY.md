@@ -28,6 +28,18 @@ The validated JSON description of an agent version: identity, runtime type, work
 
 A `sha256:` identifier calculated from the canonical JSON representation of a manifest. It detects any change to the release definition and is stored with publications and run snapshots.
 
+## Agent artifact
+
+The immutable canonical UTF-8 JSON bytes produced from a validated declarative manifest. The
+artifact digest must equal the agent-version digest. Once published, runtime execution depends
+on the database release and pinned run snapshot, never the filesystem candidate directory.
+
+## Agent publication
+
+The atomic operation and audit record that validate a candidate, resolve its enabled model alias
+and exact reviewed tool grants, store its immutable artifact, and make its version selectable.
+Publishing does not change an agent default, upgrade a conversation, or start a run.
+
 ## Pinned run snapshot
 
 An immutable copy of the resolved execution contract created when an Agent turn is accepted. It contains the exact agent-version ID and digest, manifest, resolved model information, and granted tool identities used by that turn.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import stat
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
@@ -109,6 +110,7 @@ MANIFEST_V2_SCHEMA: dict[str, object] = {
 
 # Kept as a public compatibility name for callers which import it.
 MANIFEST_SCHEMA = {"oneOf": [MANIFEST_V1_SCHEMA, MANIFEST_V2_SCHEMA]}
+MAX_MANIFEST_BYTES = 32_768
 
 
 def canonical_manifest(manifest: dict[str, object]) -> bytes:
@@ -141,3 +143,43 @@ def load_manifest(path: Path) -> tuple[dict[str, object], str]:
         raise ValueError("manifest_invalid:manifest:must be an object")
     digest = validate_manifest(manifest, expected_path=path.parent)
     return manifest, digest
+
+
+def _reject_duplicate_key(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    value: dict[str, object] = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError(f"candidate_invalid:duplicate_key:{key}")
+        value[key] = item
+    return value
+
+
+def load_candidate(directory: Path) -> tuple[dict[str, object], bytes, str]:
+    """Load one complete declarative filesystem candidate without following symlinks."""
+    if directory.is_symlink() or not directory.is_dir():
+        raise ValueError("candidate_invalid:directory")
+    entries = list(directory.iterdir())
+    if {entry.name for entry in entries} != {"manifest.json"}:
+        raise ValueError("candidate_invalid:package_shape")
+    path = entries[0]
+    mode = path.lstat().st_mode
+    if stat.S_ISLNK(mode) or not stat.S_ISREG(mode):
+        raise ValueError("candidate_invalid:manifest_file")
+    if path.stat().st_size > MAX_MANIFEST_BYTES:
+        raise ValueError("candidate_invalid:manifest_too_large")
+    try:
+        manifest = json.loads(
+            path.read_bytes().decode("utf-8", errors="strict"),
+            object_pairs_hook=_reject_duplicate_key,
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("candidate_invalid:json") from error
+    if not isinstance(manifest, dict):
+        raise ValueError("candidate_invalid:manifest_object")
+    digest = validate_manifest(manifest, expected_path=directory)
+    if manifest["schema_version"] != 2:
+        raise ValueError("candidate_invalid:runtime_not_publishable")
+    artifact = canonical_manifest(manifest)
+    if len(artifact) > MAX_MANIFEST_BYTES:
+        raise ValueError("candidate_invalid:manifest_too_large")
+    return manifest, artifact, digest

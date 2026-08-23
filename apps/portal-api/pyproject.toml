@@ -16,6 +16,9 @@ dependencies = [
   "uvicorn[standard]==0.35.0",
 ]
 
+[project.scripts]
+porfirium = "portal_api.cli:main"
+
 [build-system]
 requires = ["hatchling==1.27.0"]
 build-backend = "hatchling.build"

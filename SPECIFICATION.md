@@ -2,7 +2,7 @@
 
 Status: Implemented Phase 0–4 baseline; architecture transition in progress
 Last updated: 2026-08-23
-Implementation status: Phases 0–4, transition Increments 0–7, and Milestones M1–M3 accepted; Increment 8 not started
+Implementation status: Phases 0–4, transition Increments 0–7, and Milestones M1–M3 accepted; Increment 8 implemented, acceptance pending
 
 > **Current architecture overlay:** The staged replacement of both Bifrost gateway roles with Agentgateway, together with immutable versioned agents, is defined in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md). Agentgateway is the sole MCP and model provider, Bifrost is retired, and Increment 7 supplies the platform-owned generic `AgentRunWorkflow` on `porfirium-agent-runtime-v1`. Bifrost- and legacy-workflow-specific sections below describe accepted historical baselines.
 
