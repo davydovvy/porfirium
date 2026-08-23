@@ -6,9 +6,9 @@ Porfirium is a local-first agent and LLM demonstration platform. Phases 0–4 ar
 
 The active architecture transition has moved both gateway roles from Bifrost to Agentgateway and now introduces independently developed, immutable agent packages that can be published from the filesystem or authored declaratively in the portal. The staged plan, compatibility gates, target component boundaries, versioning model, and rollback rules are documented in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md).
 
-Transition Increments 0–5 are complete and accepted. Agentgateway 1.4.0 is the sole model and MCP provider through `AgentgatewayModelGateway` and `AgentgatewayToolGateway`; Bifrost has been removed from runtime, configuration, and current verification paths. Rerun the gates with `./scripts/migration-baseline/verify.sh` and `./scripts/agentgateway-spike/verify.sh`. Cumulative evidence is tracked in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md).
+Transition Increments 0–6 are complete and accepted. Agentgateway 1.4.0 is the sole model and MCP provider through `AgentgatewayModelGateway` and `AgentgatewayToolGateway`; Bifrost has been removed from runtime, configuration, and current verification paths. The published `tool-assistant:1.0.0` release is selectable in the portal, and every accepted Agent turn is pinned to an immutable version and run snapshot. Rerun the gates with `./scripts/migration-baseline/verify.sh` and `./scripts/agentgateway-spike/verify.sh`. Cumulative evidence is tracked in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md), and Increment 6 evidence is recorded in [Increment 6 Results](docs/architecture/INCREMENT6_RESULTS.md).
 
-The next target is Increment 6: add the immutable, versioned agent catalog and package the existing `tool_assistant_v1` behavior as its first published release.
+The next target is Increment 7: execute pinned releases through a generic, version-neutral Temporal workflow while retaining the legacy workflows for open-history compatibility. This completes Milestone M3, the versioned agent runtime.
 
 The quick starts and phase documents below retain the accepted Phase 0–4 behavior while current model and Agent tool traffic use Agentgateway.
 
@@ -21,7 +21,7 @@ With the standalone Keycloak prerequisite running and `portal.local` mapped to `
 ./scripts/phase4/verify.sh
 ```
 
-Open `https://portal.local:8444`, select `Agent`, and ask for the current time in an IANA timezone or for information from the bundled, dated MTG catalog snapshot. Tool activity is persisted and replayed in the conversation view. See [the Phase 4 runbook](docs/phase4/RUNBOOK.md) for verification, inspection, recovery, and security boundaries.
+Open `https://portal.local:8444`, select `Agent`, choose **Tool Assistant · 1.0.0**, and ask for the current time in an IANA timezone or for information from the bundled, dated MTG catalog snapshot. Tool activity is persisted and replayed in the conversation view. See [the Phase 4 runbook](docs/phase4/RUNBOOK.md) for verification, inspection, recovery, and security boundaries. Project-specific terms such as *turn* and *pinned run snapshot* are defined in the [architecture glossary](docs/architecture/GLOSSARY.md).
 
 ## Phase 3 quick start
 

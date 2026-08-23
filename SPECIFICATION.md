@@ -168,7 +168,7 @@ Conversations and messages persist across ordinary container and host restarts u
 
 ### AD-15: Simple initial mode selection with extensible catalogs — Accepted
 
-The first UI asks the user to choose only `Direct LLM` or `Agent`. Direct mode uses the configured default model and agent mode uses the configured default agent. The capabilities API and stored turn metadata are designed so a later release can expose a model selector for direct chat and an agent selector populated from the available-agent catalog without changing the conversation model.
+The UI first asks the user to choose `Direct LLM` or `Agent`. Direct mode uses the configured default model. Agent mode exposes published versions from the available-agent catalog and records the selected immutable version on the conversation; omitting a version resolves the server-side default for compatibility. A future release may expose a model selector for Direct mode without changing the conversation model.
 
 ### AD-16: Future skills must eventually cover both trust levels — Accepted, details deferred
 
@@ -420,11 +420,14 @@ Data policy:
 Application PostgreSQL logical schema:
 
 - `users`: internal ID, Keycloak subject, timestamps;
-- `conversations`: owner, title, mode defaults, timestamps;
+- `conversations`: owner, title, mode, selected published agent version, timestamps;
 - `messages`: role, bounded content, status, sequence, metadata;
-- `turns`: mode, agent/model alias, status, idempotency key, correlation IDs;
+- `turns`: mode, pinned run-snapshot reference, status, idempotency key, correlation IDs;
 - `turn_events`: ordered replayable UI events with monotonic sequence;
-- `agent_runs`: Temporal namespace/workflow/run references and projection;
+- `agents` and `agent_versions`: stable identities and immutable published manifests/digests;
+- `agent_drafts` and `agent_publications`: authoring state and publication provenance;
+- `model_aliases`, `tool_catalog`, and `agent_tool_grants`: resolvable dependencies and explicit version grants;
+- `agent_run_snapshots`: immutable execution configuration captured when an Agent turn is accepted;
 - `tool_requests`: server/tool, arguments policy metadata, decision, result reference;
 - `audit_events`: security-relevant actions and outcome.
 

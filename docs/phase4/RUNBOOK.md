@@ -2,7 +2,7 @@
 
 Phase 4 adds a bounded, policy-controlled tool loop to the durable Agent while preserving Direct mode and the replay-safe Phase 3 no-tool workflow.
 
-Current transition note: Agentgateway is the sole MCP and model provider following accepted transition Increments 3–5. The Phase 4 behavior and security boundaries below are unchanged.
+Current transition note: Agentgateway is the sole MCP and model provider following accepted transition Increments 3–5. Accepted Increment 6 packages the Phase 4 tool assistant as immutable `tool-assistant:1.0.0`; the Phase 4 behavior and security boundaries below are unchanged.
 
 ## Start
 
@@ -12,7 +12,7 @@ Ensure the standalone Keycloak project is running, `portal.local` resolves to `1
 ./scripts/phase4/start.sh
 ```
 
-Startup builds the independently locked time and MTG catalog MCP services, starts Agentgateway and the existing platform services, applies migration `0004_phase4_tool_audit`, and starts the portal API and both Temporal workflow versions. Agentgateway handles MCP and model traffic.
+Startup builds the independently locked time and MTG catalog MCP services, starts Agentgateway and the existing platform services, applies migrations through `0006_agent_immutable`, and starts the portal API and both legacy Temporal workflow versions. Agentgateway handles MCP and model traffic.
 
 ## Use and inspect
 
@@ -22,14 +22,14 @@ Startup builds the independently locked time and MTG catalog MCP services, start
 - Langfuse: <http://localhost:3000>
 - Keycloak: <https://keycloak.local:8443>
 
-Sign in as `alise` or `bob` with the local demo password `123456`. Select `Agent`, create a conversation, and try either of these tasks:
+Sign in as `alise` or `bob` with the local demo password `123456`. Select `Agent`, choose **Tool Assistant · 1.0.0**, create a conversation, and try either of these tasks:
 
 - `Use the time tool to give the current time in Europe/Moscow.`
 - `Search the MTG catalog for Cultivate in M11, retrieve its details, and report its dated snapshot price.`
 
 The portal shows ordered tool-request, start, and completion steps followed by one complete assistant answer. Refreshing during a run reconnects to the persisted SSE stream without duplicating steps.
 
-Agent workflow IDs are `porfirium-agent-<turn-id>`. New Phase 4 runs use the `PorfiriumToolAgentWorkflowV2` definition; V1 remains registered for replay compatibility with existing histories. Search by workflow ID in Temporal UI. The turn's 32-character correlation ID is its W3C trace ID; standard trace context is propagated through Agentgateway for model and MCP execution, so model generations, tool execution, and application observations appear under one Langfuse trace. Tool audit rows remain owner-scoped and are not exposed through a cross-user inspection endpoint.
+Agent workflow IDs are `porfirium-agent-<turn-id>`. Current runs remain on the `PorfiriumToolAgentWorkflowV2` definition until Increment 7 introduces the generic workflow; V1 remains registered for replay compatibility with existing histories. At acceptance, each Agent turn stores an immutable snapshot of the selected version's digest, manifest, resolved model alias, and granted tools. Search by workflow ID in Temporal UI. The turn's 32-character correlation ID is its W3C trace ID; standard trace context is propagated through Agentgateway for model and MCP execution, so model generations, tool execution, and application observations appear under one Langfuse trace. Tool audit rows remain owner-scoped and are not exposed through a cross-user inspection endpoint.
 
 ## Verify
 
