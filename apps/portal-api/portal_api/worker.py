@@ -15,11 +15,9 @@ from .config import settings
 from .db import session_factory
 from .gateways import ModelRequest, ToolCall, create_model_gateway, create_tool_gateway
 from .gateways.contracts import GatewayProtocolError
-from .models import Message, ToolRequest, Turn, now_utc
+from .models import AgentRunSnapshot, Message, ToolRequest, Turn, now_utc
 from .observability import record_observation
 from .tool_policy import (
-    AGENT_NAME,
-    AGENT_VERSION,
     POLICY_VERSION,
     allowed_tool_definitions,
     allowed_tool_names,
@@ -32,6 +30,26 @@ MAX_TOOL_CALLS_PER_STEP = 2
 MAX_TOOL_RESULT_BYTES = 32_768
 model_gateway = create_model_gateway()
 tool_gateway = create_tool_gateway()
+
+
+async def _run_contract(session, turn: Turn) -> tuple[dict[str, object], set[str]]:
+    snapshot = await session.get(AgentRunSnapshot, turn.agent_run_snapshot_id)
+    if snapshot is None:
+        raise ApplicationError("agent_run_snapshot_missing", non_retryable=True)
+    contract = snapshot.snapshot
+    manifest = contract.get("manifest")
+    tools = contract.get("tools")
+    if not isinstance(manifest, dict) or not isinstance(tools, list):
+        raise ApplicationError("agent_run_snapshot_invalid", non_retryable=True)
+    granted = {
+        str(tool["stable_name"])
+        for tool in tools
+        if isinstance(tool, dict) and isinstance(tool.get("stable_name"), str)
+    }
+    declared = manifest.get("tools")
+    if not isinstance(declared, list) or set(map(str, declared)) != granted:
+        raise ApplicationError("agent_run_snapshot_grants_mismatch", non_retryable=True)
+    return contract, granted
 
 
 @activity.defn(name="mark_agent_running")
@@ -144,6 +162,9 @@ async def generate_agent_step(value: dict) -> dict:
         turn = await session.get(Turn, identifier)
         if turn is None:
             raise ApplicationError("turn_not_found", non_retryable=True)
+        contract, granted_tools = await _run_contract(session, turn)
+        manifest = contract["manifest"]
+        assert isinstance(manifest, dict)
         history = list(
             (
                 await session.scalars(
@@ -189,15 +210,10 @@ async def generate_agent_step(value: dict) -> dict:
             model=settings.llm_model,
             input=model_input,
             correlation_id=turn.correlation_id,
-            instructions=(
-                "You are Porfirium's durable tool assistant. Use the available read-only "
-                "time or MTG catalog tools when they are needed. Never invent tool results. "
-                "Prices are static illustrative snapshots, not live quotes or purchasing advice. "
-                "After tool results arrive, answer clearly and completely."
-            ),
+            instructions=str(manifest["instructions"]),
             max_output_tokens=settings.llm_max_output_tokens,
-            tools=allowed_tool_names(),
-            tool_definitions=allowed_tool_definitions(),
+            tools=allowed_tool_names(granted_tools),
+            tool_definitions=allowed_tool_definitions(granted_tools),
             tool_choice="auto",
             metadata={
                 "conversation_id": str(turn.conversation_id),
@@ -207,6 +223,8 @@ async def generate_agent_step(value: dict) -> dict:
                 "execution": "temporal-tool-agent-v2",
                 "iteration": str(iteration),
                 "policy_version": POLICY_VERSION,
+                "agent_version_id": str(contract["agent_version_id"]),
+                "agent_digest": str(contract["digest"]),
             },
         )
         correlation_id = turn.correlation_id
@@ -227,7 +245,7 @@ async def generate_agent_step(value: dict) -> dict:
         trace_id=correlation_id,
         name=f"agent.model.iteration.{iteration}",
         as_type="generation",
-        input={"iteration": iteration, "available_tools": allowed_tool_names()},
+        input={"iteration": iteration, "available_tools": allowed_tool_names(granted_tools)},
         output={
             "response_id": str(payload.get("id", "unknown")),
             "kind": "tool_calls" if calls else "final_answer",
@@ -238,6 +256,7 @@ async def generate_agent_step(value: dict) -> dict:
             "iteration": iteration,
             "policy_version": POLICY_VERSION,
             "execution": "temporal-tool-agent-v2",
+            "agent_digest": str(contract["digest"]),
         },
         model=settings.llm_model,
     )
@@ -285,6 +304,16 @@ async def authorize_agent_tool(value: dict) -> dict:
         turn = await session.get(Turn, identifier)
         if turn is None:
             raise ApplicationError("turn_not_found", non_retryable=True)
+        contract, granted_tools = await _run_contract(session, turn)
+        if name not in granted_tools:
+            decision = "denied"
+            reason = "tool_not_granted_to_agent_version"
+            policy = None
+            arguments = {"raw_arguments_rejected": True}
+        manifest = contract["manifest"]
+        assert isinstance(manifest, dict)
+        agent_manifest = manifest["agent"]
+        assert isinstance(agent_manifest, dict)
         request = existing or ToolRequest(
             turn_id=identifier,
             owner_id=turn.owner_id,
@@ -292,8 +321,8 @@ async def authorize_agent_tool(value: dict) -> dict:
             model_call_id=model_call_id,
             tool_call_id=tool_call_id,
             iteration=iteration,
-            agent_name=AGENT_NAME,
-            agent_version=AGENT_VERSION,
+            agent_name=str(agent_manifest["id"]),
+            agent_version=str(agent_manifest["version"]),
             policy_version=POLICY_VERSION,
             server_name=policy.server_name if policy else server_name,
             tool_name=policy.tool_name if policy else tool_name,

@@ -1,7 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -32,6 +32,9 @@ class Conversation(Base):
     owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String(200), default="New conversation")
     mode: Mapped[str] = mapped_column(String(32), default="direct")
+    agent_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agent_versions.id"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     owner: Mapped[User] = relationship(back_populates="conversations")
@@ -71,11 +74,116 @@ class Turn(Base):
     correlation_id: Mapped[str] = mapped_column(String(64), nullable=False)
     error_code: Mapped[str | None] = mapped_column(String(64))
     workflow_id: Mapped[str | None] = mapped_column(String(255), unique=True)
+    agent_run_snapshot_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agent_run_snapshots.id"), unique=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     conversation: Mapped[Conversation] = relationship(back_populates="turns")
     events: Mapped[list["TurnEvent"]] = relationship(back_populates="turn")
     tool_requests: Mapped[list["ToolRequest"]] = relationship(back_populates="turn")
+
+
+class Agent(Base):
+    __tablename__ = "agents"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    slug: Mapped[str] = mapped_column(String(63), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    default_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agent_versions.id", use_alter=True, name="fk_agents_default_version")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class ModelAlias(Base):
+    __tablename__ = "model_aliases"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    alias: Mapped[str] = mapped_column(String(63), unique=True, nullable=False)
+    provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    model: Mapped[str] = mapped_column(String(255), nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class AgentVersion(Base):
+    __tablename__ = "agent_versions"
+    __table_args__ = (
+        UniqueConstraint("agent_id", "version", name="uq_agent_version_number"),
+        UniqueConstraint("agent_id", "digest", name="uq_agent_version_digest"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agents.id"), index=True)
+    version: Mapped[str] = mapped_column(String(32), nullable=False)
+    digest: Mapped[str] = mapped_column(String(71), unique=True, nullable=False)
+    manifest: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    model_alias_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("model_aliases.id"))
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class AgentDraft(Base):
+    __tablename__ = "agent_drafts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("agents.id"), index=True)
+    author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    manifest: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    state: Mapped[str] = mapped_column(String(32), nullable=False)
+    validation: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class AgentPublication(Base):
+    __tablename__ = "agent_publications"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agent_versions.id"), index=True)
+    draft_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("agent_drafts.id"))
+    publisher_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
+    provenance: Mapped[str] = mapped_column(String(32), nullable=False)
+    digest: Mapped[str] = mapped_column(String(71), nullable=False)
+    validation: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class ToolCatalogEntry(Base):
+    __tablename__ = "tool_catalog"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    stable_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    server_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    tool_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    schema_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    input_schema: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    read_only: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class AgentToolGrant(Base):
+    __tablename__ = "agent_tool_grants"
+    __table_args__ = (
+        UniqueConstraint("agent_version_id", "tool_id", name="uq_agent_version_tool_grant"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agent_versions.id"), index=True)
+    tool_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tool_catalog.id"), index=True)
+    policy_version: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class AgentRunSnapshot(Base):
+    __tablename__ = "agent_run_snapshots"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agent_versions.id"), index=True)
+    digest: Mapped[str] = mapped_column(String(71), nullable=False)
+    snapshot: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
 class TurnEvent(Base):

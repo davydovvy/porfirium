@@ -14,7 +14,19 @@ from .auth import CurrentIdentity, Identity
 from .chat import append_event, cancel_turn, event_stream, start_turn
 from .config import settings
 from .db import get_session
-from .models import Conversation, Message, Turn, User, now_utc
+from .models import (
+    Agent,
+    AgentRunSnapshot,
+    AgentToolGrant,
+    AgentVersion,
+    Conversation,
+    Message,
+    ModelAlias,
+    ToolCatalogEntry,
+    Turn,
+    User,
+    now_utc,
+)
 
 app = FastAPI(title="Porfirium Portal API", version="0.3.0")
 Session = Annotated[AsyncSession, Depends(get_session)]
@@ -23,6 +35,7 @@ Session = Annotated[AsyncSession, Depends(get_session)]
 class ConversationCreate(BaseModel):
     title: str = Field(default="New conversation", min_length=1, max_length=200)
     mode: Literal["direct", "agent"] = "direct"
+    agent_version_id: uuid.UUID | None = None
 
 
 class ConversationPatch(BaseModel):
@@ -62,6 +75,7 @@ def conversation_json(item: Conversation) -> dict[str, object]:
         "id": str(item.id),
         "title": item.title,
         "mode": item.mode,
+        "agent_version_id": str(item.agent_version_id) if item.agent_version_id else None,
         "created_at": item.created_at.isoformat(),
         "updated_at": item.updated_at.isoformat(),
     }
@@ -75,6 +89,9 @@ def turn_json(item: Turn) -> dict[str, object]:
         "state": item.state,
         "correlation_id": item.correlation_id,
         "error_code": item.error_code,
+        "agent_run_snapshot_id": (
+            str(item.agent_run_snapshot_id) if item.agent_run_snapshot_id else None
+        ),
         "events_url": f"/api/v1/turns/{item.id}/events",
     }
 
@@ -127,6 +144,89 @@ async def capabilities(identity: CurrentIdentity) -> dict[str, object]:
     }
 
 
+def agent_version_json(agent: Agent, version: AgentVersion) -> dict[str, object]:
+    return {
+        "id": str(agent.id),
+        "slug": agent.slug,
+        "name": agent.name,
+        "description": agent.description,
+        "version": {
+            "id": str(version.id),
+            "version": version.version,
+            "digest": version.digest,
+            "status": version.status,
+            "manifest": version.manifest,
+            "published_at": version.published_at.isoformat(),
+        },
+    }
+
+
+@app.get("/api/v1/agents")
+async def agents(identity: CurrentIdentity, session: Session) -> list[dict[str, object]]:
+    rows = (
+        await session.execute(
+            select(Agent, AgentVersion)
+            .join(AgentVersion, Agent.default_version_id == AgentVersion.id)
+            .where(AgentVersion.status == "published")
+            .order_by(Agent.name)
+        )
+    ).all()
+    return [agent_version_json(agent, version) for agent, version in rows]
+
+
+@app.get("/api/v1/agents/{agent_slug}")
+async def get_agent(
+    agent_slug: str, identity: CurrentIdentity, session: Session
+) -> dict[str, object]:
+    row = (
+        await session.execute(
+            select(Agent, AgentVersion)
+            .join(AgentVersion, Agent.default_version_id == AgentVersion.id)
+            .where(Agent.slug == agent_slug, AgentVersion.status == "published")
+        )
+    ).one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return agent_version_json(*row)
+
+
+@app.get("/api/v1/agents/{agent_slug}/versions")
+async def agent_versions(
+    agent_slug: str, identity: CurrentIdentity, session: Session
+) -> list[dict[str, object]]:
+    agent = await session.scalar(select(Agent).where(Agent.slug == agent_slug))
+    if agent is None:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    versions = (
+        await session.scalars(
+            select(AgentVersion)
+            .where(AgentVersion.agent_id == agent.id, AgentVersion.status == "published")
+            .order_by(AgentVersion.published_at.desc())
+        )
+    ).all()
+    return [agent_version_json(agent, version)["version"] for version in versions]
+
+
+@app.get("/api/v1/agents/{agent_slug}/versions/{version_number}")
+async def get_agent_version(
+    agent_slug: str, version_number: str, identity: CurrentIdentity, session: Session
+) -> dict[str, object]:
+    row = (
+        await session.execute(
+            select(Agent, AgentVersion)
+            .join(AgentVersion, AgentVersion.agent_id == Agent.id)
+            .where(
+                Agent.slug == agent_slug,
+                AgentVersion.version == version_number,
+                AgentVersion.status == "published",
+            )
+        )
+    ).one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Agent version not found")
+    return agent_version_json(*row)["version"]
+
+
 @app.get("/api/v1/conversations")
 async def conversations(identity: CurrentIdentity, session: Session) -> list[dict[str, object]]:
     user = await ensure_user(identity, session)
@@ -145,7 +245,33 @@ async def create_conversation(
     body: ConversationCreate, identity: CurrentIdentity, session: Session
 ) -> dict[str, object]:
     user = await ensure_user(identity, session)
-    item = Conversation(owner_id=user.id, title=body.title.strip(), mode=body.mode)
+    agent_version_id = None
+    if body.mode == "direct" and body.agent_version_id is not None:
+        raise HTTPException(status_code=422, detail="Direct conversations cannot select an agent")
+    if body.mode == "agent":
+        if body.agent_version_id is None:
+            agent_version_id = await session.scalar(
+                select(Agent.default_version_id)
+                .join(AgentVersion, Agent.default_version_id == AgentVersion.id)
+                .where(AgentVersion.status == "published")
+                .order_by(Agent.created_at)
+                .limit(1)
+            )
+        else:
+            agent_version_id = await session.scalar(
+                select(AgentVersion.id).where(
+                    AgentVersion.id == body.agent_version_id,
+                    AgentVersion.status == "published",
+                )
+            )
+        if agent_version_id is None:
+            raise HTTPException(status_code=422, detail="Published agent version not found")
+    item = Conversation(
+        owner_id=user.id,
+        title=body.title.strip(),
+        mode=body.mode,
+        agent_version_id=agent_version_id,
+    )
     session.add(item)
     await session.commit()
     await session.refresh(item)
@@ -206,6 +332,47 @@ async def create_turn(
     )
     if existing:
         return turn_json(existing)
+    run_snapshot = None
+    if conversation.mode == "agent":
+        version = await session.get(AgentVersion, conversation.agent_version_id)
+        if version is None or version.status != "published":
+            raise HTTPException(status_code=409, detail="Conversation agent version is unavailable")
+        model_alias = await session.get(ModelAlias, version.model_alias_id)
+        granted_tools = (
+            await session.scalars(
+                select(ToolCatalogEntry)
+                .join(AgentToolGrant, AgentToolGrant.tool_id == ToolCatalogEntry.id)
+                .where(
+                    AgentToolGrant.agent_version_id == version.id,
+                    ToolCatalogEntry.enabled.is_(True),
+                )
+                .order_by(ToolCatalogEntry.stable_name)
+            )
+        ).all()
+        run_snapshot = AgentRunSnapshot(
+            agent_version_id=version.id,
+            digest=version.digest,
+            snapshot={
+                "agent_version_id": str(version.id),
+                "digest": version.digest,
+                "manifest": version.manifest,
+                "model": {
+                    "alias": model_alias.alias,
+                    "provider": model_alias.provider,
+                    "model": model_alias.model,
+                },
+                "tools": [
+                    {
+                        "stable_name": tool.stable_name,
+                        "schema_version": tool.schema_version,
+                        "read_only": tool.read_only,
+                    }
+                    for tool in granted_tools
+                ],
+            },
+        )
+        session.add(run_snapshot)
+        await session.flush()
     turn_id = uuid.uuid4()
     turn = Turn(
         id=turn_id,
@@ -216,6 +383,7 @@ async def create_turn(
         state="accepted",
         correlation_id=turn_id.hex,
         workflow_id=workflow_id(turn_id) if conversation.mode == "agent" else None,
+        agent_run_snapshot_id=run_snapshot.id if run_snapshot else None,
     )
     session.add(turn)
     await session.flush()
@@ -232,7 +400,16 @@ async def create_turn(
         conversation.title = body.content.strip()[:80]
     conversation.updated_at = now_utc()
     await session.commit()
-    await append_event(turn.id, "turn.accepted", {"mode": conversation.mode})
+    accepted_payload: dict[str, object] = {"mode": conversation.mode}
+    if run_snapshot:
+        accepted_payload.update(
+            {
+                "agent_version_id": str(run_snapshot.agent_version_id),
+                "agent_digest": run_snapshot.digest,
+                "agent_run_snapshot_id": str(run_snapshot.id),
+            }
+        )
+    await append_event(turn.id, "turn.accepted", accepted_payload)
     if conversation.mode == "agent":
         try:
             temporal = await Client.connect(

@@ -3,7 +3,8 @@ import { apiFetch, keycloak } from './auth'
 
 type Identity = { id: string; username: string; display_name: string; roles: string[] }
 type Mode = 'direct' | 'agent'
-type Conversation = { id: string; title: string; mode: Mode; messages?: Message[]; active_turn?: Turn | null }
+type Conversation = { id: string; title: string; mode: Mode; agent_version_id?: string | null; messages?: Message[]; active_turn?: Turn | null }
+type Agent = { id: string; slug: string; name: string; description: string; version: { id: string; version: string; digest: string } }
 type Message = { id: string; turn_id?: string; role: 'user' | 'assistant'; content: string; status: string }
 type Turn = { turn_id: string; state: string; events_url: string; correlation_id: string }
 type StreamEvent = { sequence: number; type: string; payload: Record<string, string> }
@@ -26,6 +27,8 @@ export function App({ authenticated }: { authenticated: boolean }) {
   const [streamText, setStreamText] = useState('')
   const [progress, setProgress] = useState<string[]>([])
   const [newMode, setNewMode] = useState<Mode>('direct')
+  const [agents, setAgents] = useState<Agent[]>([])
+  const [selectedAgentVersion, setSelectedAgentVersion] = useState('')
   const [error, setError] = useState<string | null>(null)
   const streamAbort = useRef<AbortController | null>(null)
 
@@ -49,9 +52,11 @@ export function App({ authenticated }: { authenticated: boolean }) {
 
   useEffect(() => {
     if (!authenticated) return
-    Promise.all([json<Identity>('/api/v1/me'), loadConversations()])
-      .then(([me, items]) => {
+    Promise.all([json<Identity>('/api/v1/me'), loadConversations(), json<Agent[]>('/api/v1/agents')])
+      .then(([me, items, catalog]) => {
         setIdentity(me)
+        setAgents(catalog)
+        setSelectedAgentVersion(catalog[0]?.version.id ?? '')
         const routeId = window.location.pathname.match(/^\/chat\/([^/]+)$/)?.[1]
         if (routeId) openConversation(routeId).catch((reason: Error) => setError(reason.message))
         else if (items[0]) openConversation(items[0].id).catch((reason: Error) => setError(reason.message))
@@ -62,7 +67,10 @@ export function App({ authenticated }: { authenticated: boolean }) {
   async function createConversation(mode: Mode = newMode) {
     const item = await json<Conversation>('/api/v1/conversations', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: 'New conversation', mode }),
+      body: JSON.stringify({
+        title: 'New conversation', mode,
+        agent_version_id: mode === 'agent' ? selectedAgentVersion || undefined : undefined,
+      }),
     })
     setConversations((current) => [item, ...current])
     setActive({ ...item, messages: [] })
@@ -174,13 +182,18 @@ export function App({ authenticated }: { authenticated: boolean }) {
         <button className={newMode === 'agent' ? 'active' : ''} onClick={() => selectMode('agent')}>Agent</button>
       </div>
       <button className="new-chat" onClick={() => createConversation().catch((reason) => setError(reason.message))}>＋ New {newMode} conversation</button>
+      {newMode === 'agent' && <label className="agent-selector">Agent version
+        <select aria-label="Agent version" value={selectedAgentVersion} onChange={(event) => setSelectedAgentVersion(event.target.value)}>
+          {agents.map((agent) => <option key={agent.version.id} value={agent.version.id}>{agent.name} · {agent.version.version}</option>)}
+        </select>
+      </label>}
       <div className="conversation-list">{conversations.filter((item) => item.mode === newMode).map((item) =>
         <button className={active?.id === item.id ? 'selected' : ''} key={item.id} onClick={() => openConversation(item.id).catch((reason) => setError(reason.message))}>{item.title}</button>)}</div>
       <div className="profile"><div className="avatar">{identity?.display_name?.[0] ?? '…'}</div>
         <div><strong>{identity?.display_name ?? 'Loading identity'}</strong><small>{identity?.username}</small></div>
         <button className="logout" aria-label="Sign out" onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>↗</button></div>
     </aside>
-    <section className="workspace"><header><span className="dot" /> {active?.mode === 'agent' ? 'Agent' : 'Direct LLM'} <span className="model">{active?.mode === 'agent' ? 'Temporal · Tool Agent v1' : 'Yandex · default'}</span><span className="phase">PHASE 4</span></header>
+    <section className="workspace"><header><span className="dot" /> {active?.mode === 'agent' ? 'Agent' : 'Direct LLM'} <span className="model">{active?.mode === 'agent' ? `Temporal · ${agents.find((agent) => agent.version.id === active.agent_version_id)?.name ?? 'Tool Agent'} ${agents.find((agent) => agent.version.id === active.agent_version_id)?.version.version ?? 'v1'}` : 'Yandex · default'}</span><span className="phase">INCREMENT 6</span></header>
       {!active ? <div className="empty-state"><div className="orb"><span /></div><p className="eyebrow">Direct channel ready</p>
         <h1>Welcome, {identity?.display_name ?? 'traveler'}.</h1><p>Create a direct conversation or a durable Agent run.</p>
         <button className="primary" onClick={() => createConversation().catch((reason) => setError(reason.message))}>Start a conversation</button></div>

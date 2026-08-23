@@ -129,11 +129,11 @@ TOOLS = {
 }
 
 
-def allowed_tool_names() -> tuple[str, ...]:
-    return tuple(TOOLS)
+def allowed_tool_names(granted: set[str] | None = None) -> tuple[str, ...]:
+    return tuple(name for name in TOOLS if granted is None or name in granted)
 
 
-def allowed_tool_definitions():
+def allowed_tool_definitions(granted: set[str] | None = None):
     from .gateways.contracts import ToolDefinition
 
     return tuple(
@@ -143,6 +143,7 @@ def allowed_tool_definitions():
             input_schema=item.arguments_schema,
         )
         for item in TOOLS.values()
+        if granted is None or item.external_name in granted
     )
 
 

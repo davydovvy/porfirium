@@ -390,6 +390,8 @@ Status: **Completed and accepted on 2026-08-22.** Current operation, application
 
 ### Increment 6 — Add the versioned agent catalog
 
+Status: **Completed and accepted on 2026-08-23.** The bundled `tool-assistant:1.0.0` release now pins immutable run snapshots and preserves the Phase 4 behavior under the complete live verification suite.
+
 - Add catalog, draft, publication, model-alias, tool-catalog, grant, and run-snapshot migrations.
 - Implement manifest validation and immutable version/digest rules.
 - Package the existing `tool_assistant_v1` behavior as the first published agent.
@@ -517,7 +519,7 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 
 No milestone combines a gateway cutover with a database/catalog or Temporal workflow migration.
 
-Current progress: Increments 0–5 and Milestones M1–M2 are complete and accepted. Increment 6, the versioned agent catalog, is the next implementation target.
+Current progress: Increments 0–6 and Milestones M1–M2 are complete and accepted. Increment 7, the generic Temporal workflow, is the next implementation target and completes Milestone M3.
 
 ## 15. Deferred decisions
 

@@ -84,7 +84,7 @@ At the Increment 3 checkpoint, Agentgateway became the default MCP provider whil
 
 ## Next acceptance target
 
-Increment 6 adds the versioned agent catalog, immutable release/digest rules, run pinning, and the first packaged `tool_assistant_v1` release.
+Increment 6 was accepted on 2026-08-23 after the selected, pinned `tool-assistant:1.0.0` release preserved existing Agent behavior. See [Increment 6 results](INCREMENT6_RESULTS.md). Increment 7, the generic Temporal workflow, is the next implementation target.
 
 ## Increment 4 acceptance
 
