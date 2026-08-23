@@ -5,7 +5,8 @@ import { progressLabel, terminalTurnError, type ProgressEvent } from './progress
 type Identity = { id: string; username: string; display_name: string; roles: string[] }
 type Mode = 'direct' | 'agent'
 type Conversation = { id: string; title: string; mode: Mode; agent_version_id?: string | null; messages?: Message[]; active_turn?: Turn | null; latest_turn?: Turn | null }
-type Agent = { id: string; slug: string; name: string; description: string; version: { id: string; version: string; digest: string } }
+type AgentVersion = { id: string; version: string; digest: string }
+type Agent = { id: string; slug: string; name: string; description: string; version: AgentVersion }
 type Message = { id: string; turn_id?: string; role: 'user' | 'assistant'; content: string; status: string }
 type Turn = { turn_id: string; state: string; events_url: string; correlation_id: string; error_code?: string | null }
 type StreamEvent = ProgressEvent
@@ -19,6 +20,16 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(typeof detail === 'object' && detail?.message ? detail.message : detail ?? `Request failed (${response.status})`)
   }
   return response.json()
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export async function loadAgentCatalog(): Promise<{ agents: Agent[]; defaultVersionId: string }> {
+  const defaults = await json<Agent[]>('/api/v1/agents')
+  const versions = await Promise.all(defaults.map(async (agent) => {
+    const published = await json<AgentVersion[]>(`/api/v1/agents/${agent.slug}/versions`)
+    return published.map((version) => ({ ...agent, version }))
+  }))
+  return { agents: versions.flat(), defaultVersionId: defaults[0]?.version.id ?? '' }
 }
 
 export function App({ authenticated }: { authenticated: boolean }) {
@@ -57,12 +68,12 @@ export function App({ authenticated }: { authenticated: boolean }) {
 
   useEffect(() => {
     if (!authenticated) return
-    Promise.all([json<Identity>('/api/v1/me'), loadConversations(), json<Agent[]>('/api/v1/agents'), json<Capabilities>('/api/v1/capabilities')])
+    Promise.all([json<Identity>('/api/v1/me'), loadConversations(), loadAgentCatalog(), json<Capabilities>('/api/v1/capabilities')])
       .then(([me, items, catalog, available]) => {
         setIdentity(me)
-        setAgents(catalog)
+        setAgents(catalog.agents)
         setCapabilities(available)
-        setSelectedAgentVersion(catalog[0]?.version.id ?? '')
+        setSelectedAgentVersion(catalog.defaultVersionId)
         const routeId = window.location.pathname.match(/^\/chat\/([^/]+)$/)?.[1]
         if (routeId) openConversation(routeId).catch((reason: Error) => setError(reason.message))
         else if (items[0]) openConversation(items[0].id).catch((reason: Error) => setError(reason.message))
