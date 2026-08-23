@@ -1,8 +1,8 @@
 # Agentgateway and Versioned Agent Platform Transition Plan
 
-Status: In progress — Increments 0–5 accepted
+Status: In progress — Increments 0–7 implemented; Increment 7 acceptance pending
 
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 Starting point: Phases 0–4 implemented and accepted
 
 Acceptance evidence is maintained in [Architecture Transition Results](TRANSITION_RESULTS.md).
@@ -400,15 +400,33 @@ Status: **Completed and accepted on 2026-08-23.** The bundled `tool-assistant:1.
 
 **Exit gate:** existing Agent behavior runs through a pinned catalog version without changing its visible behavior.
 
+### Increment 6.5 — Retire the legacy Temporal runtime
+
+Focused implementation plan: [Increment 6.5 — Legacy Temporal runtime retirement plan](INCREMENT6_5_LEGACY_RUNTIME_RETIREMENT_PLAN.md).
+
+Status: **Implemented on 2026-08-23.** Its bounded maintenance interval ended when Increment 7 reopened generic-runtime admission. See [Increment 6.5 results](INCREMENT6_5_RESULTS.md).
+
+- Close admission for new Agent turns before changing the execution plane.
+- Reconcile and drain all open V1/V2 workflows and active application turns.
+- Remove the legacy worker, `porfirium-agent-v1` queue configuration, and production start/registration paths.
+- Preserve completed histories, immutable releases, snapshots, events, and audits without a live compatibility poller.
+- Keep Direct mode and read-only historical Agent views available during the bounded maintenance interval.
+
+**Exit gate:** no open legacy execution or active Agent turn remains; no deployed worker polls the legacy queue; Agent admission fails cleanly without partial persistence; the remaining platform and historical data pass retirement verification.
+
 ### Increment 7 — Introduce the generic Temporal workflow
+
+Focused implementation plan: [Increment 7 — Generic versioned agent runtime plan](INCREMENT7_PLAN.md).
+
+Status: **Implemented on 2026-08-23; final live acceptance pending.** See [Increment 7 results](INCREMENT7_RESULTS.md).
 
 - Add `AgentRunWorkflow` and version-neutral activities.
 - Move prompts, limits, model selection, and tool grants out of worker constants into the pinned release/snapshots.
-- Start new runs on a new task queue.
-- Keep the legacy worker and workflow registrations available for open executions.
+- Start all new Agent runs on the generic runtime task queue.
+- Re-enable Agent admission only after the generic worker is healthy.
 - Use Temporal-compatible workflow/worker versioning for future changes.
 
-**Exit gate:** old and new workflows can finish concurrently; two agent versions can run concurrently; an active run survives worker restart and publication of a newer agent version.
+**Exit gate:** two agent versions can run through the generic workflow; an active run survives worker restart and publication of a newer agent version; no legacy worker or queue is reintroduced.
 
 ### Increment 8 — Add filesystem/CLI publication
 
@@ -475,7 +493,7 @@ Conversation creation accepts either Direct mode plus a model alias, or Agent mo
 - LLM and MCP providers use separate feature switches so either cutover can be reverted independently.
 - Database migrations are additive until all old application versions are retired.
 - New writes populate both legacy and new projection fields only for a bounded compatibility period.
-- Legacy Temporal workflow/activity registrations remain deployed until no open execution requires them.
+- Legacy Temporal workflow/activity registrations remain deployed until a reconciled drain proves that no open execution requires them; Increment 6.5 then removes their live workers and queues before the generic runtime is introduced.
 - A failed publication never updates the active/default agent version.
 - Deprecation prevents new selection but does not delete artifacts required by historical runs.
 - Gateway rollback never changes the run's agent or policy snapshot.
@@ -519,7 +537,7 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 
 No milestone combines a gateway cutover with a database/catalog or Temporal workflow migration.
 
-Current progress: Increments 0–6 and Milestones M1–M2 are complete and accepted. Increment 7, the generic Temporal workflow, is the next implementation target and completes Milestone M3.
+Current progress: Increments 0–6 and Milestones M1–M2 are complete and accepted. Increment 6.5 retired the legacy runtime, and Increment 7 now runs declarative releases through the generic workflow with Agent admission reopened. Deterministic, migration, Compose, and live worker-start gates pass; the paid restart/publication-drift scenarios remain before final Increment 7 acceptance and completion of Milestone M3.
 
 ## 15. Deferred decisions
 

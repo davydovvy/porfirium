@@ -33,4 +33,4 @@ The migration's first attempted live application encountered a SQLAlchemy bind-p
 
 ## Acceptance
 
-The user accepted Increment 6 on 2026-08-23 after the selected, pinned `tool-assistant:1.0.0` release preserved existing Agent behavior. Increment 7 is now the next implementation target and introduces the generic version-neutral Temporal workflow.
+The user accepted Increment 6 on 2026-08-23 after the selected, pinned `tool-assistant:1.0.0` release preserved existing Agent behavior. Increment 7 has since introduced the generic version-neutral Temporal workflow and the declarative `tool-assistant:1.1.0` compatibility release; `1.0.0` remains immutable historical catalog data.

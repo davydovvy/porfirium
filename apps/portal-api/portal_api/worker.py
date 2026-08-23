@@ -1,556 +1,249 @@
+# ruff: noqa: E501
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 import uuid
 
+from jsonschema import Draft202012Validator
 from sqlalchemy import select
 from temporalio import activity
 from temporalio.client import Client
 from temporalio.exceptions import ApplicationError
 from temporalio.worker import Worker
 
-from .agent import AgentWorkflowV1, ToolAgentWorkflowV2
+from .agent import AgentRunWorkflow
 from .chat import append_event
 from .config import settings
 from .db import session_factory
 from .gateways import ModelRequest, ToolCall, create_model_gateway, create_tool_gateway
-from .gateways.contracts import GatewayProtocolError
+from .gateways.contracts import ToolDefinition
 from .models import AgentRunSnapshot, Message, ToolRequest, Turn, now_utc
-from .observability import record_observation
-from .tool_policy import (
-    POLICY_VERSION,
-    allowed_tool_definitions,
-    allowed_tool_names,
-    validate_tool_call,
-)
+from .run_contracts import validate_run_snapshot
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-MAX_TOOL_CALLS_PER_STEP = 2
-MAX_TOOL_RESULT_BYTES = 32_768
 model_gateway = create_model_gateway()
 tool_gateway = create_tool_gateway()
 
 
-async def _run_contract(session, turn: Turn) -> tuple[dict[str, object], set[str]]:
-    snapshot = await session.get(AgentRunSnapshot, turn.agent_run_snapshot_id)
-    if snapshot is None:
+async def _contract(session, value: dict) -> tuple[Turn, dict[str, object]]:
+    try:
+        turn_id = uuid.UUID(str(value["turn_id"]))
+        snapshot_id = uuid.UUID(str(value["run_snapshot_id"]))
+    except (KeyError, ValueError) as exc:
+        raise ApplicationError("agent_run_identifiers_invalid", non_retryable=True) from exc
+    turn = await session.get(Turn, turn_id)
+    snapshot = await session.get(AgentRunSnapshot, snapshot_id)
+    if turn is None or snapshot is None:
         raise ApplicationError("agent_run_snapshot_missing", non_retryable=True)
+    if turn.agent_run_snapshot_id != snapshot.id:
+        raise ApplicationError("agent_run_snapshot_binding_mismatch", non_retryable=True)
     contract = snapshot.snapshot
-    manifest = contract.get("manifest")
-    tools = contract.get("tools")
-    if not isinstance(manifest, dict) or not isinstance(tools, list):
-        raise ApplicationError("agent_run_snapshot_invalid", non_retryable=True)
-    granted = {
-        str(tool["stable_name"])
-        for tool in tools
-        if isinstance(tool, dict) and isinstance(tool.get("stable_name"), str)
+    try:
+        validate_run_snapshot(contract)
+    except ValueError as exc:
+        raise ApplicationError(str(exc), non_retryable=True) from exc
+    agent = contract["agent"]
+    if not isinstance(agent, dict) or str(snapshot.agent_version_id) != agent.get("version_id"):
+        raise ApplicationError("agent_run_snapshot_identity_mismatch", non_retryable=True)
+    if snapshot.digest != agent.get("digest"):
+        raise ApplicationError("agent_run_snapshot_digest_mismatch", non_retryable=True)
+    return turn, contract
+
+
+@activity.defn(name="load_agent_run_plan")
+async def load_agent_run_plan(value: dict) -> dict[str, int]:
+    async with session_factory() as session:
+        _, contract = await _contract(session, value)
+    limits = contract["limits"]
+    assert isinstance(limits, dict)
+    return {
+        "contract_version": int(contract["contract_version"]),
+        "max_iterations": int(limits["max_iterations"]),
+        "max_tool_calls_per_step": int(limits["max_tool_calls_per_step"]),
     }
-    declared = manifest.get("tools")
-    if not isinstance(declared, list) or set(map(str, declared)) != granted:
-        raise ApplicationError("agent_run_snapshot_grants_mismatch", non_retryable=True)
-    return contract, granted
 
 
-@activity.defn(name="mark_agent_running")
-async def mark_agent_running(turn_id: str) -> None:
-    identifier = uuid.UUID(turn_id)
+@activity.defn(name="mark_agent_run_running")
+async def mark_agent_run_running(value: dict) -> None:
     async with session_factory() as session:
-        turn = await session.get(Turn, identifier)
-        if turn is None or turn.state in {"completed", "cancelled"}:
+        turn, _ = await _contract(session, value)
+        if turn.state not in {"completed", "cancelled"}:
+            turn.state = "running"
+            turn.updated_at = now_utc()
+            await session.commit()
+            identifier = turn.id
+        else:
             return
-        turn.state = "running"
-        turn.updated_at = now_utc()
-        await session.commit()
-    await append_event(
-        identifier, "agent.status", {"status": "planning", "label": "Planning response"}
-    )
+    await append_event(identifier, "agent.status", {"status": "planning", "label": "Planning response"})
 
 
-@activity.defn(name="generate_agent_response")
-async def generate_agent_response(turn_id: str) -> str:
-    identifier = uuid.UUID(turn_id)
-    await append_event(
-        identifier, "agent.status", {"status": "generating", "label": "Generating response"}
-    )
-    async with session_factory() as session:
-        turn = await session.get(Turn, identifier)
-        if turn is None:
-            raise ValueError("Turn no longer exists")
-        history = list(
-            (
-                await session.scalars(
-                    select(Message)
-                    .where(Message.conversation_id == turn.conversation_id)
-                    .order_by(Message.created_at, Message.id)
-                )
-            ).all()
-        )
-        model_request = ModelRequest(
-            model=settings.llm_model,
-            input=[
-                {"role": item.role, "content": item.content} for item in history if item.content
-            ],
-            correlation_id=turn.correlation_id,
-            instructions=(
-                "You are Porfirium's durable agent. Answer the user clearly and completely. "
-                "Do not claim to use tools; tools are introduced in a later phase."
-            ),
-            max_output_tokens=settings.llm_max_output_tokens,
-            tool_choice="none",
-            metadata={
-                "conversation_id": str(turn.conversation_id),
-                "turn_id": str(turn.id),
-                "user_id": str(turn.owner_id),
-                "correlation_id": turn.correlation_id,
-                "execution": "temporal-agent-v1",
-            },
-        )
-        correlation_id = turn.correlation_id
-    activity.heartbeat("calling-model")
-    payload = dict((await model_gateway.respond(model_request)).payload)
-    activity.heartbeat("model-complete")
-    if any(item.get("type") == "function_call" for item in payload.get("output", [])):
-        logger.warning(
-            "Rejected unexpected Phase 3 tool call correlation_id=%s turn_id=%s",
-            correlation_id,
-            identifier,
-        )
-        return (
-            "Tools are not available in Agent mode yet. Phase 3 provides durable no-tool "
-            "responses; the platform information and MTG tools arrive in Phase 4."
-        )
-    text = payload.get("output_text")
-    if not text:
-        text = "".join(
-            str(part.get("text", ""))
-            for item in payload.get("output", [])
-            for part in item.get("content", [])
-            if part.get("type") == "output_text"
-        )
-    if not text:
-        raise ValueError("Model returned no output text")
-    return str(text)
-
-
-def _response_text(payload: dict[str, object]) -> str:
-    direct = payload.get("output_text")
-    if direct:
-        return str(direct)
+def _text(payload: dict[str, object]) -> str:
+    if payload.get("output_text"):
+        return str(payload["output_text"])
     return "".join(
         str(part.get("text", ""))
-        for item in payload.get("output", [])
-        if isinstance(item, dict)
-        for part in item.get("content", [])
-        if isinstance(part, dict) and part.get("type") == "output_text"
+        for item in payload.get("output", []) if isinstance(item, dict)
+        for part in item.get("content", []) if isinstance(part, dict) and part.get("type") == "output_text"
     )
 
 
-@activity.defn(name="generate_agent_step")
-async def generate_agent_step(value: dict) -> dict:
-    identifier = uuid.UUID(str(value["turn_id"]))
+@activity.defn(name="generate_agent_run_step")
+async def generate_agent_run_step(value: dict) -> dict[str, object]:
     iteration = int(value["iteration"])
-    await append_event(
-        identifier,
-        "agent.status",
-        {
-            "status": "generating" if iteration == 0 else "synthesizing",
-            "label": "Selecting tools" if iteration == 0 else "Synthesizing tool results",
-        },
-    )
     async with session_factory() as session:
-        turn = await session.get(Turn, identifier)
-        if turn is None:
-            raise ApplicationError("turn_not_found", non_retryable=True)
-        contract, granted_tools = await _run_contract(session, turn)
-        manifest = contract["manifest"]
-        assert isinstance(manifest, dict)
-        history = list(
-            (
-                await session.scalars(
-                    select(Message)
-                    .where(Message.conversation_id == turn.conversation_id)
-                    .order_by(Message.created_at, Message.id)
-                )
-            ).all()
+        turn, contract = await _contract(session, value)
+        history = list((await session.scalars(select(Message).where(Message.conversation_id == turn.conversation_id).order_by(Message.created_at, Message.id))).all())
+        completed = list((await session.scalars(select(ToolRequest).where(ToolRequest.turn_id == turn.id, ToolRequest.state == "completed").order_by(ToolRequest.iteration, ToolRequest.created_at))).all())
+        model_input: list[dict[str, object]] = [{"role": item.role, "content": item.content} for item in history if item.content]
+        for item in completed:
+            model_input.extend([
+                {"type": "function_call", "call_id": item.tool_call_id, "name": item.external_tool_name, "arguments": json.dumps(item.arguments, separators=(",", ":"))},
+                {"type": "function_call_output", "call_id": item.tool_call_id, "output": json.dumps(item.result, separators=(",", ":"))},
+            ])
+        tools = contract["tools"]
+        assert isinstance(tools, list)
+        definitions = tuple(ToolDefinition(name=str(tool["stable_name"]), description=f"Read-only {tool['tool_name']} operation.", input_schema=tool["definition"]) for tool in tools if isinstance(tool, dict))
+        model = contract["model"]
+        limits = contract["limits"]
+        agent = contract["agent"]
+        assert isinstance(model, dict) and isinstance(limits, dict) and isinstance(agent, dict)
+        request = ModelRequest(
+            model=str(model["model"]), input=model_input, correlation_id=turn.correlation_id,
+            instructions=str(contract["instructions"]), max_output_tokens=int(limits["max_output_tokens"]),
+            tools=tuple(item.name for item in definitions), tool_definitions=definitions, tool_choice="auto",
+            metadata={"turn_id": str(turn.id), "snapshot_id": str(value["run_snapshot_id"]), "agent_version": str(agent["version"]), "agent_digest": str(agent["digest"]), "runtime_contract_version": "1", "iteration": str(iteration)},
         )
-        completed_tools = list(
-            (
-                await session.scalars(
-                    select(ToolRequest)
-                    .where(
-                        ToolRequest.turn_id == identifier,
-                        ToolRequest.decision == "allowed",
-                        ToolRequest.state == "completed",
-                    )
-                    .order_by(ToolRequest.iteration, ToolRequest.created_at)
-                )
-            ).all()
-        )
-        model_input: list[dict[str, object]] = [
-            {"role": item.role, "content": item.content} for item in history if item.content
-        ]
-        for tool in completed_tools:
-            model_input.extend(
-                [
-                    {
-                        "type": "function_call",
-                        "call_id": tool.tool_call_id,
-                        "name": tool.external_tool_name,
-                        "arguments": json.dumps(tool.arguments, separators=(",", ":")),
-                    },
-                    {
-                        "type": "function_call_output",
-                        "call_id": tool.tool_call_id,
-                        "output": json.dumps(tool.result, separators=(",", ":")),
-                    },
-                ]
-            )
-        model_request = ModelRequest(
-            model=settings.llm_model,
-            input=model_input,
-            correlation_id=turn.correlation_id,
-            instructions=str(manifest["instructions"]),
-            max_output_tokens=settings.llm_max_output_tokens,
-            tools=allowed_tool_names(granted_tools),
-            tool_definitions=allowed_tool_definitions(granted_tools),
-            tool_choice="auto",
-            metadata={
-                "conversation_id": str(turn.conversation_id),
-                "turn_id": str(turn.id),
-                "user_id": str(turn.owner_id),
-                "correlation_id": turn.correlation_id,
-                "execution": "temporal-tool-agent-v2",
-                "iteration": str(iteration),
-                "policy_version": POLICY_VERSION,
-                "agent_version_id": str(contract["agent_version_id"]),
-                "agent_digest": str(contract["digest"]),
-            },
-        )
-        correlation_id = turn.correlation_id
     activity.heartbeat(f"calling-model-{iteration}")
-    payload = dict((await model_gateway.respond(model_request)).payload)
-    activity.heartbeat(f"model-complete-{iteration}")
-    calls = [
-        {
-            "model_call_id": str(payload.get("id", "unknown")),
-            "tool_call_id": str(item.get("call_id", item.get("id", ""))),
-            "name": str(item.get("name", "")),
-            "arguments": str(item.get("arguments", "")),
-        }
-        for item in payload.get("output", [])
-        if isinstance(item, dict) and item.get("type") == "function_call"
-    ]
-    record_observation(
-        trace_id=correlation_id,
-        name=f"agent.model.iteration.{iteration}",
-        as_type="generation",
-        input={"iteration": iteration, "available_tools": allowed_tool_names(granted_tools)},
-        output={
-            "response_id": str(payload.get("id", "unknown")),
-            "kind": "tool_calls" if calls else "final_answer",
-            "tool_call_count": len(calls),
-        },
-        metadata={
-            "turn_id": str(identifier),
-            "iteration": iteration,
-            "policy_version": POLICY_VERSION,
-            "execution": "temporal-tool-agent-v2",
-            "agent_digest": str(contract["digest"]),
-        },
-        model=settings.llm_model,
-    )
+    payload = dict((await model_gateway.respond(request)).payload)
+    calls = [{"model_call_id": str(payload.get("id", "unknown")), "tool_call_id": str(item.get("call_id", item.get("id", ""))), "name": str(item.get("name", "")), "arguments": str(item.get("arguments", ""))} for item in payload.get("output", []) if isinstance(item, dict) and item.get("type") == "function_call"]
     if calls:
-        if len(calls) > MAX_TOOL_CALLS_PER_STEP or any(not call["tool_call_id"] for call in calls):
-            raise ApplicationError("tool_call_limit_exceeded", non_retryable=True)
         return {"tool_calls": calls}
-    text = _response_text(payload)
+    text = _text(payload)
     if not text:
-        raise ApplicationError("model_returned_no_output", non_retryable=True)
+        raise ApplicationError("model_output_empty", non_retryable=True)
     return {"final": text}
 
 
-@activity.defn(name="authorize_agent_tool")
-async def authorize_agent_tool(value: dict) -> dict:
-    identifier = uuid.UUID(str(value["turn_id"]))
-    iteration = int(value["iteration"])
-    call = value["call"]
+@activity.defn(name="authorize_agent_run_tool")
+async def authorize_agent_run_tool(value: dict) -> dict[str, str]:
+    call = value.get("call")
     if not isinstance(call, dict):
-        raise ApplicationError("tool_call_malformed", non_retryable=True)
-    name = str(call.get("name", ""))
-    raw_arguments = str(call.get("arguments", ""))
-    tool_call_id = str(call.get("tool_call_id", ""))
-    model_call_id = str(call.get("model_call_id", "unknown"))
-    decision = "allowed"
-    reason = "policy_allowlisted_read_only"
-    try:
-        policy, arguments = validate_tool_call(name, raw_arguments)
-    except ValueError as exc:
-        decision = "denied"
-        reason = str(exc)
-        server_name, _, tool_name = name.partition("-")
-        policy = None
-        arguments = {"raw_arguments_rejected": True}
+        raise ApplicationError("tool_call_invalid", non_retryable=True)
+    name, raw = str(call.get("name", "")), str(call.get("arguments", ""))
     async with session_factory() as session:
-        existing = await session.scalar(
-            select(ToolRequest).where(
-                ToolRequest.turn_id == identifier, ToolRequest.tool_call_id == tool_call_id
-            )
-        )
+        turn, contract = await _contract(session, value)
+        existing = await session.scalar(select(ToolRequest).where(ToolRequest.turn_id == turn.id, ToolRequest.tool_call_id == str(call.get("tool_call_id", ""))))
         if existing:
-            if existing.decision == "denied":
+            if existing.decision != "allowed":
                 raise ApplicationError(existing.decision_reason, non_retryable=True)
-            return {"request_id": str(existing.id), "decision": existing.decision}
-        turn = await session.get(Turn, identifier)
-        if turn is None:
-            raise ApplicationError("turn_not_found", non_retryable=True)
-        contract, granted_tools = await _run_contract(session, turn)
-        if name not in granted_tools:
-            decision = "denied"
+            return {"request_id": str(existing.id), "decision": "allowed"}
+        grant = next((tool for tool in contract["tools"] if isinstance(tool, dict) and tool.get("stable_name") == name), None)
+        reason = "allowed"
+        arguments: dict[str, object] = {}
+        if grant is None:
             reason = "tool_not_granted_to_agent_version"
-            policy = None
-            arguments = {"raw_arguments_rejected": True}
-        manifest = contract["manifest"]
-        assert isinstance(manifest, dict)
-        agent_manifest = manifest["agent"]
-        assert isinstance(agent_manifest, dict)
-        request = existing or ToolRequest(
-            turn_id=identifier,
-            owner_id=turn.owner_id,
-            workflow_id=turn.workflow_id or "unknown",
-            model_call_id=model_call_id,
-            tool_call_id=tool_call_id,
-            iteration=iteration,
-            agent_name=str(agent_manifest["id"]),
-            agent_version=str(agent_manifest["version"]),
-            policy_version=POLICY_VERSION,
-            server_name=policy.server_name if policy else server_name,
-            tool_name=policy.tool_name if policy else tool_name,
-            external_tool_name=name,
-            schema_version=policy.schema_version if policy else "unknown",
-            arguments=arguments,
-            decision=decision,
-            decision_reason=reason,
-            state="requested" if decision == "allowed" else "denied",
-            correlation_id=turn.correlation_id,
-        )
-        if existing is None:
-            session.add(request)
-        if decision == "denied":
-            request.completed_at = now_utc()
+        elif len(raw.encode()) > int(contract["limits"]["max_tool_argument_bytes"]):
+            reason = "tool_arguments_too_large"
+        else:
+            try:
+                parsed = json.loads(raw)
+                errors = list(Draft202012Validator(grant["definition"]).iter_errors(parsed))
+                if not isinstance(parsed, dict) or errors:
+                    reason = "tool_arguments_schema_invalid"
+                else:
+                    arguments = parsed
+            except json.JSONDecodeError:
+                reason = "tool_arguments_invalid_json"
+        allowed = reason == "allowed"
+        agent = contract["agent"]
+        request = ToolRequest(turn_id=turn.id, owner_id=turn.owner_id, workflow_id=turn.workflow_id or "unknown", model_call_id=str(call.get("model_call_id", "unknown")), tool_call_id=str(call.get("tool_call_id", "")), iteration=int(value["iteration"]), agent_name=str(agent["id"]), agent_version=str(agent["version"]), policy_version=str(grant["policy_version"]) if grant else "snapshot-v1", server_name=str(grant["server_name"]) if grant else "unknown", tool_name=str(grant["tool_name"]) if grant else "unknown", external_tool_name=name, schema_version=str(grant["schema_version"]) if grant else "unknown", arguments=arguments or {"rejected": True}, decision="allowed" if allowed else "denied", decision_reason=reason, state="requested" if allowed else "denied", correlation_id=turn.correlation_id, completed_at=None if allowed else now_utc())
+        session.add(request)
         await session.commit()
-        request_id = request.id
-    await append_event(
-        identifier,
-        "tool.requested",
-        {
-            "request_id": str(request_id),
-            "tool": name,
-            "decision": decision,
-            "label": f"Requested {name}",
-        },
-    )
-    if decision == "denied":
-        await append_event(
-            identifier,
-            "tool.completed",
-            {
-                "request_id": str(request_id),
-                "tool": name,
-                "status": "denied",
-                "reason": reason,
-                "label": f"Denied {name}",
-            },
-        )
+        request_id, identifier = request.id, turn.id
+    await append_event(identifier, "tool.requested", {"request_id": str(request_id), "tool": name, "decision": request.decision})
+    if not allowed:
         raise ApplicationError(reason, non_retryable=True)
-    return {"request_id": str(request_id), "decision": decision}
+    return {"request_id": str(request_id), "decision": "allowed"}
 
 
-@activity.defn(name="execute_agent_tool")
-async def execute_agent_tool(request_id: str) -> None:
-    request_uuid = uuid.UUID(request_id)
+@activity.defn(name="execute_agent_run_tool")
+async def execute_agent_run_tool(value: dict) -> None:
+    request_id = uuid.UUID(str(value["request_id"]))
     async with session_factory() as session:
-        request = await session.get(ToolRequest, request_uuid)
-        if request is None:
-            raise ApplicationError("tool_audit_missing", non_retryable=True)
-        if request.decision != "allowed":
+        turn, contract = await _contract(session, value)
+        request = await session.get(ToolRequest, request_id)
+        if request is None or request.turn_id != turn.id or request.decision != "allowed":
             raise ApplicationError("tool_not_authorized", non_retryable=True)
         if request.state in {"executed", "completed"}:
             return
-        if request.state not in {"requested", "started", "failed"}:
-            raise ApplicationError("tool_state_invalid", non_retryable=True)
-        emit_started = request.state == "requested"
-        request.state = "started"
-        request.started_at = request.started_at or now_utc()
-        request.completed_at = None
-        request.error_code = None
-        identifier = request.turn_id
-        name = request.external_tool_name
-        tool_call_id = request.tool_call_id
-        raw_arguments = json.dumps(request.arguments, separators=(",", ":"))
-        correlation_id = request.correlation_id
+        request.state, request.started_at = "started", request.started_at or now_utc()
         await session.commit()
-    if emit_started:
-        await append_event(
-            identifier,
-            "tool.started",
-            {"request_id": request_id, "tool": name, "label": f"Running {name}"},
-        )
-    try:
-        result = dict(
-            (
-                await tool_gateway.call_tool(
-                    ToolCall(
-                        call_id=tool_call_id,
-                        name=name,
-                        arguments=json.loads(raw_arguments),
-                        correlation_id=correlation_id,
-                        max_result_bytes=MAX_TOOL_RESULT_BYTES,
-                    )
-                )
-            ).payload
-        )
-    except Exception as exc:
-        async with session_factory() as session:
-            request = await session.get(ToolRequest, request_uuid)
-            if request:
-                request.state = "failed"
-                request.error_code = (
-                    str(exc) if isinstance(exc, ApplicationError) else "tool_execution_failed"
-                )
-                request.completed_at = now_utc()
-                await session.commit()
-        if isinstance(exc, GatewayProtocolError) and str(exc) == "tool_result_too_large":
-            raise ApplicationError("tool_result_too_large", non_retryable=True) from exc
-        if isinstance(exc, ApplicationError):
-            raise
-        raise ApplicationError("tool_execution_failed") from exc
+        limit = int(contract["limits"]["max_tool_result_bytes"])
+        call = ToolCall(call_id=request.tool_call_id, name=request.external_tool_name, arguments=request.arguments, correlation_id=request.correlation_id, max_result_bytes=limit)
+    result = dict((await tool_gateway.call_tool(call)).payload)
+    if len(json.dumps(result, separators=(",", ":")).encode()) > limit:
+        raise ApplicationError("tool_result_too_large", non_retryable=True)
     async with session_factory() as session:
-        request = await session.get(ToolRequest, request_uuid)
-        if request:
-            request.state = "executed"
-            request.result = result
+        request = await session.get(ToolRequest, request_id)
+        if request and request.state != "completed":
+            request.state, request.result = "executed", result
             await session.commit()
-    record_observation(
-        trace_id=correlation_id,
-        name=f"agent.tool.{name}",
-        as_type="tool",
-        input={"request_id": request_id, "arguments": json.loads(raw_arguments)},
-        output={"request_id": request_id, "result": result},
-        metadata={
-            "turn_id": str(identifier),
-            "request_id": request_id,
-            "tool_call_id": tool_call_id,
-            "external_tool_name": name,
-            "status": "executed",
-        },
-    )
 
 
-@activity.defn(name="record_agent_tool_result")
-async def record_agent_tool_result(request_id: str) -> None:
-    request_uuid = uuid.UUID(request_id)
+@activity.defn(name="record_agent_run_tool_result")
+async def record_agent_run_tool_result(value: dict) -> None:
+    request_id = uuid.UUID(str(value["request_id"]))
     async with session_factory() as session:
-        request = await session.get(ToolRequest, request_uuid)
-        if request is None:
+        turn, _ = await _contract(session, value)
+        request = await session.get(ToolRequest, request_id)
+        if request is None or request.turn_id != turn.id:
             raise ApplicationError("tool_audit_missing", non_retryable=True)
         if request.state == "completed":
             return
-        if request.state != "executed" or request.result is None:
+        if request.state != "executed":
             raise ApplicationError("tool_result_not_executed", non_retryable=True)
-        request.state = "completed"
-        request.completed_at = now_utc()
-        identifier = request.turn_id
+        request.state, request.completed_at = "completed", now_utc()
+        await session.commit()
         name = request.external_tool_name
-        await session.commit()
-    await append_event(
-        identifier,
-        "tool.completed",
-        {
-            "request_id": request_id,
-            "tool": name,
-            "status": "completed",
-            "label": f"Completed {name}",
-        },
-    )
+    await append_event(turn.id, "tool.completed", {"request_id": str(request_id), "tool": name, "status": "completed"})
 
 
-@activity.defn(name="complete_agent_turn")
-async def complete_agent_turn(value: dict[str, str]) -> None:
-    identifier = uuid.UUID(value["turn_id"])
-    content = value["content"]
+@activity.defn(name="complete_agent_run")
+async def complete_agent_run(value: dict) -> None:
+    content = str(value["content"])
     async with session_factory() as session:
-        turn = await session.get(Turn, identifier)
-        if turn is None or turn.state == "cancelled":
+        turn, _ = await _contract(session, value)
+        if turn.state == "cancelled":
             return
-        message = await session.scalar(
-            select(Message).where(Message.turn_id == identifier, Message.role == "assistant")
-        )
+        message = await session.scalar(select(Message).where(Message.turn_id == turn.id, Message.role == "assistant"))
         if message is None:
-            message = Message(
-                conversation_id=turn.conversation_id,
-                turn_id=turn.id,
-                role="assistant",
-                content=content,
-                status="complete",
-            )
+            message = Message(conversation_id=turn.conversation_id, turn_id=turn.id, role="assistant", content=content, status="complete")
             session.add(message)
-        else:
-            message.content = content
-            message.status = "complete"
-        turn.state = "completed"
-        turn.updated_at = now_utc()
+        turn.state, turn.updated_at = "completed", now_utc()
         await session.commit()
-        message_id = message.id
-    await append_event(
-        identifier, "agent.status", {"status": "completed", "label": "Response complete"}
-    )
-    await append_event(
-        identifier, "turn.completed", {"message_id": str(message_id), "content": content}
-    )
+        identifier, message_id = turn.id, message.id
+    await append_event(identifier, "turn.completed", {"message_id": str(message_id), "content": content})
 
 
-@activity.defn(name="fail_agent_turn")
-async def fail_agent_turn(turn_id: str) -> None:
-    identifier = uuid.UUID(turn_id)
+@activity.defn(name="fail_agent_run")
+async def fail_agent_run(value: dict) -> None:
+    identifier = uuid.UUID(str(value["turn_id"]))
     async with session_factory() as session:
         turn = await session.get(Turn, identifier)
         if turn is None or turn.state in {"completed", "cancelled"}:
             return
-        turn.state = "failed"
-        turn.error_code = "agent_execution_failed"
-        turn.updated_at = now_utc()
+        turn.state, turn.error_code, turn.updated_at = "failed", "agent_execution_failed", now_utc()
         await session.commit()
-        correlation_id = turn.correlation_id
-    await append_event(
-        identifier,
-        "turn.failed",
-        {
-            "code": "agent_execution_failed",
-            "message": "The durable agent could not complete this run.",
-            "correlation_id": correlation_id,
-        },
-    )
+    await append_event(identifier, "turn.failed", {"code": "agent_execution_failed", "message": "The durable agent could not complete this run."})
 
 
 async def run() -> None:
     client = await Client.connect(settings.temporal_address, namespace=settings.temporal_namespace)
-    worker = Worker(
-        client,
-        task_queue=settings.temporal_task_queue,
-        workflows=[AgentWorkflowV1, ToolAgentWorkflowV2],
-        activities=[
-            mark_agent_running,
-            generate_agent_response,
-            generate_agent_step,
-            authorize_agent_tool,
-            execute_agent_tool,
-            record_agent_tool_result,
-            complete_agent_turn,
-            fail_agent_turn,
-        ],
-    )
-    logger.info("Agent worker listening task_queue=%s", settings.temporal_task_queue)
+    worker = Worker(client, task_queue=settings.temporal_agent_run_task_queue, workflows=[AgentRunWorkflow], activities=[load_agent_run_plan, mark_agent_run_running, generate_agent_run_step, authorize_agent_run_tool, execute_agent_run_tool, record_agent_run_tool_result, complete_agent_run, fail_agent_run])
+    logger.info("Generic agent worker listening task_queue=%s", settings.temporal_agent_run_task_queue)
     await worker.run()
 
 

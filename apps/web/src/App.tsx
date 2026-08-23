@@ -8,12 +8,14 @@ type Agent = { id: string; slug: string; name: string; description: string; vers
 type Message = { id: string; turn_id?: string; role: 'user' | 'assistant'; content: string; status: string }
 type Turn = { turn_id: string; state: string; events_url: string; correlation_id: string }
 type StreamEvent = { sequence: number; type: string; payload: Record<string, string> }
+type Capabilities = { agent_execution: { mode: string; enabled: boolean; code?: string; message?: string } }
 
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(path, init)
   if (!response.ok) {
     const body = await response.json().catch(() => ({ detail: `Request failed (${response.status})` }))
-    throw new Error(body.detail ?? `Request failed (${response.status})`)
+    const detail = body.detail
+    throw new Error(typeof detail === 'object' && detail?.message ? detail.message : detail ?? `Request failed (${response.status})`)
   }
   return response.json()
 }
@@ -29,6 +31,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
   const [newMode, setNewMode] = useState<Mode>('direct')
   const [agents, setAgents] = useState<Agent[]>([])
   const [selectedAgentVersion, setSelectedAgentVersion] = useState('')
+  const [capabilities, setCapabilities] = useState<Capabilities | null>(null)
   const [error, setError] = useState<string | null>(null)
   const streamAbort = useRef<AbortController | null>(null)
 
@@ -52,10 +55,11 @@ export function App({ authenticated }: { authenticated: boolean }) {
 
   useEffect(() => {
     if (!authenticated) return
-    Promise.all([json<Identity>('/api/v1/me'), loadConversations(), json<Agent[]>('/api/v1/agents')])
-      .then(([me, items, catalog]) => {
+    Promise.all([json<Identity>('/api/v1/me'), loadConversations(), json<Agent[]>('/api/v1/agents'), json<Capabilities>('/api/v1/capabilities')])
+      .then(([me, items, catalog, available]) => {
         setIdentity(me)
         setAgents(catalog)
+        setCapabilities(available)
         setSelectedAgentVersion(catalog[0]?.version.id ?? '')
         const routeId = window.location.pathname.match(/^\/chat\/([^/]+)$/)?.[1]
         if (routeId) openConversation(routeId).catch((reason: Error) => setError(reason.message))
@@ -175,6 +179,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
   )
 
   const busy = turn && ['accepted', 'running'].includes(turn.state)
+  const agentAvailable = capabilities?.agent_execution.enabled ?? false
   return <main className="app-shell">
     <aside><div className="brand">PORFIRIUM</div>
       <div className="mode-picker" aria-label="New conversation mode">
@@ -202,8 +207,8 @@ export function App({ authenticated }: { authenticated: boolean }) {
           {streamText && <article className="assistant streaming"><label>assistant</label><p>{streamText}</p></article>}
           {busy && active.mode === 'agent' && <div className="agent-progress"><small>WORKFLOW PROGRESS</small>{progress.length ? progress.map((item, index) => <p key={`${item}-${index}`}>✓ {item}</p>) : <p>○ Waiting for worker</p>}</div>}
           {error && <div className="error">{error}</div>}</div>
-        <form className="composer" onSubmit={submit}><textarea aria-label="Message" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={active.mode === 'agent' ? 'Give the durable agent a task…' : 'Message the Yandex model…'} disabled={Boolean(busy)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} />
-          {busy ? <button type="button" className="cancel" onClick={() => cancel().catch((reason) => setError(reason.message))}>Stop</button> : <button type="submit" disabled={!draft.trim()}>Send ↗</button>}<small>{active.mode === 'agent' ? 'Temporal preserves this run across worker restarts.' : 'Responses stream through Agentgateway and persist locally.'}</small></form></>}
+        <form className="composer" onSubmit={submit}><textarea aria-label="Message" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={active.mode === 'agent' && !agentAvailable ? 'Agent runtime maintenance in progress…' : active.mode === 'agent' ? 'Give the durable agent a task…' : 'Message the Yandex model…'} disabled={Boolean(busy) || active.mode === 'agent' && !agentAvailable} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} />
+          {busy ? <button type="button" className="cancel" onClick={() => cancel().catch((reason) => setError(reason.message))}>Stop</button> : <button type="submit" disabled={!draft.trim() || active.mode === 'agent' && !agentAvailable}>Send ↗</button>}<small>{active.mode === 'agent' && !agentAvailable ? capabilities?.agent_execution.message ?? 'Agent execution is temporarily unavailable while the runtime is upgraded.' : active.mode === 'agent' ? 'Temporal preserves this run across worker restarts.' : 'Responses stream through Agentgateway and persist locally.'}</small></form></>}
     </section>
   </main>
 }

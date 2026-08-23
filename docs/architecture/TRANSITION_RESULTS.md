@@ -82,9 +82,9 @@ Both required live commands passed on 2026-08-22. The complete migration regress
 
 At the Increment 3 checkpoint, Agentgateway became the default MCP provider while Bifrost remained deployed for model traffic and MCP rollback. No Bifrost path was removed in that increment.
 
-## Next acceptance target
+## Current acceptance target
 
-Increment 6 was accepted on 2026-08-23 after the selected, pinned `tool-assistant:1.0.0` release preserved existing Agent behavior. See [Increment 6 results](INCREMENT6_RESULTS.md). Increment 7, the generic Temporal workflow, is the next implementation target.
+Increment 6 was accepted on 2026-08-23 after the selected, pinned `tool-assistant:1.0.0` release preserved existing Agent behavior. Increment 6.5 subsequently retired the drained legacy runtime. Increment 7 is now implemented: `tool-assistant:1.1.0` executes from immutable, self-contained snapshots through `AgentRunWorkflow` on `porfirium-agent-runtime-v1`. Deterministic tests, migration, Compose, and live worker startup pass; paid restart and publication-drift scenarios remain before final acceptance. See [Increment 6 results](INCREMENT6_RESULTS.md), [Increment 6.5 results](INCREMENT6_5_RESULTS.md), and [Increment 7 results](INCREMENT7_RESULTS.md).
 
 ## Increment 4 acceptance
 

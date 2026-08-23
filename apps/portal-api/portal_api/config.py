@@ -6,6 +6,7 @@ _agentgateway_url = os.getenv("AGENTGATEWAY_URL", "http://agentgateway:8090")
 
 @dataclass(frozen=True)
 class Settings:
+    agent_execution_mode: str = os.getenv("AGENT_EXECUTION_MODE", "maintenance")
     database_url: str = os.getenv(
         "DATABASE_URL", "postgresql+asyncpg://genai:genai@application-postgres:5432/genai"
     )
@@ -25,7 +26,15 @@ class Settings:
     llm_max_output_tokens: int = int(os.getenv("LLM_MAX_OUTPUT_TOKENS", "2048"))
     temporal_address: str = os.getenv("TEMPORAL_ADDRESS", "temporal:7233")
     temporal_namespace: str = os.getenv("TEMPORAL_NAMESPACE", "default")
-    temporal_task_queue: str = os.getenv("TEMPORAL_TASK_QUEUE", "porfirium-agent-v1")
+    temporal_agent_run_task_queue: str = os.getenv(
+        "TEMPORAL_AGENT_RUN_TASK_QUEUE", "porfirium-agent-runtime-v1"
+    )
+
+    def __post_init__(self) -> None:
+        if self.agent_execution_mode not in {"maintenance", "generic"}:
+            raise ValueError("AGENT_EXECUTION_MODE must be 'maintenance' or 'generic'")
+        if self.temporal_agent_run_task_queue != "porfirium-agent-runtime-v1":
+            raise ValueError("TEMPORAL_AGENT_RUN_TASK_QUEUE must use the generic runtime queue")
 
     @property
     def jwks_url(self) -> str:

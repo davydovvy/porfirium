@@ -1,10 +1,10 @@
 # Porfirium — Architecture and Delivery Specification
 
 Status: Implemented Phase 0–4 baseline; architecture transition in progress
-Last updated: 2026-08-22
-Implementation status: Phases 0–4 and transition Increments 0–5 implemented and accepted
+Last updated: 2026-08-23
+Implementation status: Phases 0–4 and transition Increments 0–6 accepted; Increments 6.5–7 implemented with final live acceptance pending
 
-> **Current architecture overlay:** The staged replacement of both Bifrost gateway roles with Agentgateway, together with the introduction of independently publishable and immutable agent versions, is defined in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md). Increments 3–5 are accepted, so Agentgateway is the sole MCP and model provider and Bifrost has been retired. Bifrost-specific sections below describe the accepted Phase 0–4 baseline and remain historical regression evidence.
+> **Current architecture overlay:** The staged replacement of both Bifrost gateway roles with Agentgateway, together with immutable versioned agents, is defined in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md). Agentgateway is the sole MCP and model provider, Bifrost is retired, and Increment 7 supplies the platform-owned generic `AgentRunWorkflow` on `porfirium-agent-runtime-v1`. Bifrost- and legacy-workflow-specific sections below describe accepted historical baselines.
 
 Transition acceptance evidence is recorded in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md). Increment 0, the complete live Bifrost-era migration regression baseline, passed and was accepted on 2026-08-21.
 

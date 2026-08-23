@@ -14,4 +14,4 @@ npm run build
 cd "$repo_dir"
 docker compose config --quiet
 ./scripts/phase1/secrets.sh
-./scripts/phase3/smoke.sh
+./scripts/increment6_5/verify.sh

@@ -34,7 +34,6 @@ echo "PASS: migration baseline static, unit, component, and build checks"
 
 ./scripts/agentgateway-spike/verify.sh
 ./scripts/phase2/smoke.sh
-./scripts/phase3/smoke.sh
-./scripts/phase4/smoke.sh
+./scripts/increment6_5/verify.sh
 
-echo "PASS: complete Agentgateway migration regression gate"
+echo "PASS: migration regression and legacy-runtime retirement gate"

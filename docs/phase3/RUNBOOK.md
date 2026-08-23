@@ -1,5 +1,10 @@
 # Porfirium Phase 3 runbook
 
+> Current runtime overlay (2026-08-23): the Phase 3/4 legacy Agent worker and queue are retired.
+> Agent admission is open through `AgentRunWorkflow` on `porfirium-agent-runtime-v1`. The Phase 3
+> no-tool workflow descriptions remain historical regression context; worker restart commands
+> now operate on the generic worker.
+
 > Current transition note (2026-08-22): Agentgateway is the sole model and MCP provider. The Phase 3 results document preserves the retired Bifrost-era acceptance evidence.
 
 Phase 3 adds a Temporal-backed, no-tool Agent mode while preserving Direct LLM chat. Keycloak remains a separately managed prerequisite.
@@ -12,9 +17,9 @@ Ensure Keycloak is running, `portal.local` resolves to `127.0.0.1`, and the repo
 ./scripts/phase3/start.sh
 ```
 
-The first start downloads the pinned Temporal server and UI images and may take several minutes. Startup applies database migration `0003_phase3` automatically.
+The first start downloads the pinned Temporal server and UI images and may take several minutes. Startup applies the complete migration chain through `0007_generic_runtime` automatically and starts the generic worker.
 
-Agentgateway requests receive only application policy-approved tool definitions; the replay-safe Phase 3 workflow explicitly requests no tools.
+Agentgateway requests receive only the reviewed tool definitions captured in the immutable run snapshot. The original replay-safe Phase 3 workflow is retained only as historical evidence and is not registered in production.
 
 ## Use and inspect
 
@@ -36,7 +41,7 @@ The workflow ID is `porfirium-agent-<turn-id>`. Search for it in Temporal UI. Th
 ./scripts/phase3/verify.sh
 ```
 
-The live smoke test creates an Agent conversation, waits for its planning event, restarts `agent-worker`, and requires the same Temporal workflow to finish and persist its response. It makes one paid Yandex request.
+The preserved live smoke creates an Agent conversation through the current generic route, waits for its planning event, restarts `agent-worker`, and requires the same Temporal workflow to finish and persist its response. It makes paid Yandex requests and is not part of the default static Increment 7 gate.
 
 To exercise recovery manually:
 
@@ -61,4 +66,4 @@ Do not run `docker compose down -v` unless permanent deletion of application, Te
 
 ## Phase boundary
 
-This historical runbook exercises Agent workflow V1, which deliberately has no tools and performs one model activity. Phase 4 is now the current Agent path and adds the time/catalog tools, validation, read-only execution policy, and tool-status events while retaining V1 registration for replay compatibility.
+This historical runbook originally exercised Agent workflow V1, which deliberately had no tools and performed one model activity. The current generic Agent path retains the user-visible durability contract and adds snapshot-backed time/catalog tools, validation, read-only execution policy, and tool-status events. V1 is no longer registered by the production worker; completed histories remain historical records.

@@ -1,108 +1,81 @@
+from __future__ import annotations
+
 import uuid
 from datetime import timedelta
+from typing import TypedDict
 
 from temporalio import workflow
 from temporalio.common import RetryPolicy
-from temporalio.exceptions import ActivityError
+from temporalio.exceptions import ActivityError, ApplicationError
 
 
-@workflow.defn(name="PorfiriumAgentWorkflowV1")
-class AgentWorkflowV1:
+class AgentRunInput(TypedDict):
+    turn_id: str
+    run_snapshot_id: str
+
+
+def _activity_options(seconds: int = 30) -> dict[str, object]:
+    return {
+        "start_to_close_timeout": timedelta(seconds=seconds),
+        "retry_policy": RetryPolicy(maximum_attempts=5),
+    }
+
+
+@workflow.defn(name="AgentRunWorkflow")
+class AgentRunWorkflow:
+    """Version-neutral orchestration; all behavior comes from the accepted snapshot."""
+
     @workflow.run
-    async def run(self, turn_id: str) -> str:
+    async def run(self, value: AgentRunInput) -> str:
+        turn_id = value["turn_id"]
+        snapshot_id = value["run_snapshot_id"]
         try:
-            await workflow.execute_activity(
-                "mark_agent_running",
-                turn_id,
-                start_to_close_timeout=timedelta(seconds=30),
-                retry_policy=RetryPolicy(maximum_attempts=10),
+            plan = await workflow.execute_activity(
+                "load_agent_run_plan", value, **_activity_options()
             )
-            # A durable timer provides a visible recovery window without holding a worker thread.
-            await workflow.sleep(timedelta(seconds=3))
-            response = await workflow.execute_activity(
-                "generate_agent_response",
-                turn_id,
-                start_to_close_timeout=timedelta(minutes=5),
-                heartbeat_timeout=timedelta(seconds=15),
-                retry_policy=RetryPolicy(maximum_attempts=5),
-            )
-            await workflow.execute_activity(
-                "complete_agent_turn",
-                {"turn_id": turn_id, "content": response},
-                start_to_close_timeout=timedelta(seconds=30),
-                retry_policy=RetryPolicy(maximum_attempts=10),
-            )
-            return response
-        except ActivityError:
-            await workflow.execute_activity(
-                "fail_agent_turn",
-                turn_id,
-                start_to_close_timeout=timedelta(seconds=30),
-                retry_policy=RetryPolicy(maximum_attempts=10),
-            )
-            raise
-
-
-@workflow.defn(name="PorfiriumToolAgentWorkflowV2")
-class ToolAgentWorkflowV2:
-    @workflow.run
-    async def run(self, turn_id: str) -> str:
-        try:
-            await workflow.execute_activity(
-                "mark_agent_running",
-                turn_id,
-                start_to_close_timeout=timedelta(seconds=30),
-                retry_policy=RetryPolicy(maximum_attempts=10),
-            )
-            for iteration in range(4):
+            await workflow.execute_activity("mark_agent_run_running", value, **_activity_options())
+            for iteration in range(int(plan["max_iterations"])):
                 step = await workflow.execute_activity(
-                    "generate_agent_step",
-                    {"turn_id": turn_id, "iteration": iteration},
+                    "generate_agent_run_step",
+                    {**value, "iteration": iteration},
                     start_to_close_timeout=timedelta(minutes=5),
                     heartbeat_timeout=timedelta(seconds=15),
                     retry_policy=RetryPolicy(maximum_attempts=5),
                 )
                 final = step.get("final")
-                if isinstance(final, str):
+                if isinstance(final, str) and final:
                     await workflow.execute_activity(
-                        "complete_agent_turn",
-                        {"turn_id": turn_id, "content": final},
-                        start_to_close_timeout=timedelta(seconds=30),
-                        retry_policy=RetryPolicy(maximum_attempts=10),
+                        "complete_agent_run", {**value, "content": final}, **_activity_options()
                     )
                     return final
-                calls = step.get("tool_calls", [])
+                calls = step.get("tool_calls")
                 if not isinstance(calls, list) or not calls:
-                    raise ValueError("agent step returned neither final text nor tool calls")
+                    raise ApplicationError("agent_step_invalid", non_retryable=True)
+                if len(calls) > int(plan["max_tool_calls_per_step"]):
+                    raise ApplicationError("agent_tool_call_limit_exceeded", non_retryable=True)
                 for call in calls:
                     authorization = await workflow.execute_activity(
-                        "authorize_agent_tool",
-                        {"turn_id": turn_id, "iteration": iteration, "call": call},
-                        start_to_close_timeout=timedelta(seconds=30),
-                        retry_policy=RetryPolicy(maximum_attempts=10),
+                        "authorize_agent_run_tool",
+                        {**value, "iteration": iteration, "call": call},
+                        **_activity_options(),
                     )
-                    # This durable boundary makes worker-restart recovery observable and testable.
-                    await workflow.sleep(timedelta(seconds=3))
                     request_id = str(authorization["request_id"])
                     await workflow.execute_activity(
-                        "execute_agent_tool",
-                        request_id,
-                        start_to_close_timeout=timedelta(seconds=30),
-                        retry_policy=RetryPolicy(maximum_attempts=3),
+                        "execute_agent_run_tool",
+                        {**value, "request_id": request_id},
+                        **_activity_options(),
                     )
                     await workflow.execute_activity(
-                        "record_agent_tool_result",
-                        request_id,
-                        start_to_close_timeout=timedelta(seconds=30),
-                        retry_policy=RetryPolicy(maximum_attempts=10),
+                        "record_agent_run_tool_result",
+                        {**value, "request_id": request_id},
+                        **_activity_options(),
                     )
-            raise ValueError("agent iteration limit exceeded")
-        except (ActivityError, ValueError):
+            raise ApplicationError("agent_iteration_limit_exceeded", non_retryable=True)
+        except (ActivityError, ApplicationError):
             await workflow.execute_activity(
-                "fail_agent_turn",
-                turn_id,
-                start_to_close_timeout=timedelta(seconds=30),
-                retry_policy=RetryPolicy(maximum_attempts=10),
+                "fail_agent_run",
+                {"turn_id": turn_id, "run_snapshot_id": snapshot_id},
+                **_activity_options(),
             )
             raise
 

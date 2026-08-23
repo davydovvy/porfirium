@@ -1,0 +1,30 @@
+{
+  "schema_version": 2,
+  "agent": {
+    "id": "tool-assistant",
+    "version": "1.1.0",
+    "name": "Tool Assistant",
+    "description": "Generic durable read-only time and MTG catalog assistant"
+  },
+  "runtime": {
+    "kind": "declarative",
+    "contract_version": 1
+  },
+  "model": {"alias": "default"},
+  "instructions": "You are Porfirium's durable tool assistant. Use the available read-only time or MTG catalog tools when needed. Never invent tool results. Prices are static illustrative snapshots, not live quotes or purchasing advice. After tool results arrive, answer clearly and completely.",
+  "tools": [
+    "demo_time-get_current_time",
+    "demo_time-convert_time",
+    "demo_mtg_catalog-search_cards",
+    "demo_mtg_catalog-get_card",
+    "demo_mtg_catalog-compare_cards",
+    "demo_mtg_catalog-list_sets"
+  ],
+  "limits": {
+    "max_iterations": 4,
+    "max_tool_calls_per_step": 2,
+    "max_tool_argument_bytes": 4096,
+    "max_tool_result_bytes": 32768,
+    "max_output_tokens": 2048
+  }
+}

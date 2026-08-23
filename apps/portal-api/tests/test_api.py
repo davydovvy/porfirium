@@ -1,7 +1,13 @@
-import pytest
-from httpx import ASGITransport, AsyncClient
+from typing import get_type_hints
 
-from portal_api.main import app
+import pytest
+from fastapi import HTTPException
+from httpx import ASGITransport, AsyncClient
+from temporalio.converter import default
+
+from portal_api.config import Settings
+from portal_api.main import app, require_agent_execution_available
+from portal_api.worker import load_agent_run_plan
 
 
 @pytest.fixture
@@ -20,7 +26,31 @@ async def test_config_exposes_no_secrets(client: AsyncClient) -> None:
     response = await client.get("/api/v1/config")
     assert response.status_code == 200
     assert response.json()["oidc_client_id"] == "genai-demo-web"
+    assert response.json()["agent_execution_mode"] == "maintenance"
     assert "password" not in response.text.lower()
+
+
+def test_agent_execution_maintenance_gate_is_fail_closed() -> None:
+    require_agent_execution_available("direct")
+    with pytest.raises(HTTPException) as error:
+        require_agent_execution_available("agent")
+    assert error.value.status_code == 503
+    assert error.value.detail["code"] == "agent_runtime_maintenance"
+
+
+def test_unknown_agent_execution_mode_is_rejected() -> None:
+    with pytest.raises(ValueError, match="AGENT_EXECUTION_MODE"):
+        Settings(agent_execution_mode="legacy")
+
+
+def test_generic_activity_input_uses_temporal_json_compatible_hint() -> None:
+    hint = get_type_hints(load_agent_run_plan)["value"]
+    payload = default().payload_converter.to_payload({"turn_id": "t", "run_snapshot_id": "s"})
+    assert payload is not None
+    assert default().payload_converter.from_payload(payload, hint) == {
+        "turn_id": "t",
+        "run_snapshot_id": "s",
+    }
 
 
 async def test_identity_requires_authentication(client: AsyncClient) -> None:

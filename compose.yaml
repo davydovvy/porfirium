@@ -39,7 +39,8 @@ services:
       LANGFUSE_BASE_URL: http://langfuse-web:3000
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_NAMESPACE: default
-      TEMPORAL_TASK_QUEUE: porfirium-agent-v1
+      AGENT_EXECUTION_MODE: generic
+      TEMPORAL_AGENT_RUN_TASK_QUEUE: porfirium-agent-runtime-v1
     extra_hosts:
       - "keycloak.local:host-gateway"
     volumes:
@@ -67,14 +68,16 @@ services:
       AGENTGATEWAY_URL: http://agentgateway:8090
       LLM_MODEL: ${YANDEX_MODEL}
       LLM_TIMEOUT_SECONDS: "120"
-      LLM_MAX_OUTPUT_TOKENS: "2048"
       LANGFUSE_AUTH: ${LANGFUSE_AUTH}
       LANGFUSE_BASE_URL: http://langfuse-web:3000
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_NAMESPACE: default
-      TEMPORAL_TASK_QUEUE: porfirium-agent-v1
+      AGENT_EXECUTION_MODE: generic
+      TEMPORAL_AGENT_RUN_TASK_QUEUE: porfirium-agent-runtime-v1
     depends_on:
-      portal-api:
+      agentgateway:
+        condition: service_healthy
+      application-postgres:
         condition: service_healthy
       temporal:
         condition: service_healthy
