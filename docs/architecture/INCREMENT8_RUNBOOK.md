@@ -1,6 +1,6 @@
 # Increment 8 filesystem publication runbook
 
-Status: Implemented; acceptance pending
+Status: Accepted on 2026-08-23
 
 The Portal API container exposes the operator-only `porfirium` CLI and mounts the repository
 `agents/` directory read-only at `/agents`. The agent worker has no source mount. Publication

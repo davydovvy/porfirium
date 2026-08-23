@@ -1,6 +1,6 @@
 # Increment 8 — Filesystem and CLI publication results
 
-Status: Implemented; awaiting user acceptance
+Status: Completed and accepted
 Date: 2026-08-23
 
 ## Delivered
@@ -59,8 +59,9 @@ release. Roll back selection by choosing `tool-assistant:1.2.0` for a new conver
 accepted 1.3.0 runs to finish. Do not mutate or delete releases, artifacts, grants, snapshots,
 conversations, or Temporal histories.
 
-## Acceptance remaining
+## User acceptance
 
-The implementation and automated/live canary gates are complete. User acceptance remains open
-for hands-on CLI/status inspection and selection/execution through the portal. Milestone M4 is
-not complete until Increment 9 is delivered and accepted.
+After the portal catalog was corrected to expand every published agent version rather than only
+the server default, the user confirmed that 1.3.0 was visible and that everything worked. The
+selector retains 1.2.0 as the default while allowing explicit 1.3.0 selection. Increment 8 was
+accepted on 2026-08-23. Milestone M4 remains open until Increment 9 is delivered and accepted.

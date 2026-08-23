@@ -1,6 +1,6 @@
 # Agentgateway and Versioned Agent Platform Transition Plan
 
-Status: In progress — Increments 0–7 and Milestones M1–M3 accepted; Increment 8 implemented, acceptance pending
+Status: In progress — Increments 0–8 and Milestones M1–M3 accepted; Increment 9 not started
 
 Last updated: 2026-08-23
 Starting point: Phases 0–4 implemented and accepted
@@ -432,7 +432,7 @@ Status: **Completed and accepted on 2026-08-23.** See [Increment 7 results](INCR
 
 Focused implementation plan: [Increment 8 — Filesystem and CLI publication plan](INCREMENT8_PLAN.md).
 
-Status: **Implemented on 2026-08-23; awaiting user acceptance.** See
+Status: **Completed and accepted on 2026-08-23.** See
 [Increment 8 results](INCREMENT8_RESULTS.md).
 
 Provide commands equivalent to:
@@ -542,7 +542,7 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 
 No milestone combines a gateway cutover with a database/catalog or Temporal workflow migration.
 
-Current progress: Increments 0–7 and Milestones M1–M3 are complete and accepted. Increment 6.5 retired the legacy runtime; Increment 7 runs immutable declarative releases through the generic workflow with Agent admission reopened. The versioned `tool-assistant:1.2.0` correction was accepted through the portal. Increment 8 filesystem/CLI publication is implemented and awaiting user acceptance.
+Current progress: Increments 0–8 and Milestones M1–M3 are complete and accepted. Increment 6.5 retired the legacy runtime; Increment 7 runs immutable declarative releases through the generic workflow with Agent admission reopened. Increment 8 publishes immutable declarative releases from version directories through the shared publisher and CLI. The filesystem-published `tool-assistant:1.3.0` release was accepted through the portal. Increment 9 has not started, so Milestone M4 remains open.
 
 ## 15. Deferred decisions
 

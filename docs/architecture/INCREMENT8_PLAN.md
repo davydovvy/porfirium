@@ -1,6 +1,6 @@
 # Increment 8 — Filesystem and CLI publication plan
 
-Status: Implemented on 2026-08-23; awaiting user acceptance
+Status: Completed and accepted on 2026-08-23
 Target milestone: M4 — Independent publication (filesystem half)
 Prerequisite: Increment 7 generic runtime accepted
 

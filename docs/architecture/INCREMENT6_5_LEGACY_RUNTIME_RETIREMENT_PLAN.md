@@ -1,6 +1,6 @@
 # Increment 6.5 — Legacy Temporal runtime retirement plan
 
-Status: Implemented; awaiting user acceptance  
+Status: Completed and accepted on 2026-08-23
 Position: After accepted Increment 6 and before Increment 7  
 Purpose: Remove the legacy Temporal compatibility burden before introducing the generic runtime
 
