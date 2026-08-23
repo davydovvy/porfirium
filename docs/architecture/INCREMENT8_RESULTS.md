@@ -64,4 +64,7 @@ conversations, or Temporal histories.
 After the portal catalog was corrected to expand every published agent version rather than only
 the server default, the user confirmed that 1.3.0 was visible and that everything worked. The
 selector retains 1.2.0 as the default while allowing explicit 1.3.0 selection. Increment 8 was
-accepted on 2026-08-23. Milestone M4 remains open until Increment 9 is delivered and accepted.
+accepted on 2026-08-23. Milestone M4 remained open until Increment 9 was delivered and accepted.
+
+Follow-up: Increment 9 and Milestone M4 were accepted later on 2026-08-23; see
+[Increment 9 results](INCREMENT9_RESULTS.md).

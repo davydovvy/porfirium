@@ -1,6 +1,6 @@
 # Increment 9 portal agent builder runbook
 
-Status: Implementation candidate
+Status: Accepted operational procedure
 
 ## Access
 

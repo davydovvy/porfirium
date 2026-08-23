@@ -6,11 +6,17 @@ Porfirium is a local-first agent and LLM demonstration platform. Phases 0–4 ar
 
 The active architecture transition has moved both gateway roles from Bifrost to Agentgateway and now introduces independently developed, immutable agent packages that can be published from the filesystem or authored declaratively in the portal. The staged plan, compatibility gates, target component boundaries, versioning model, and rollback rules are documented in [Agentgateway and Versioned Agent Platform Transition Plan](docs/architecture/AGENTGATEWAY_AGENT_PLATFORM_TRANSITION.md).
 
-Transition Increments 0–8 and Milestones M1–M3 are complete and accepted. Agentgateway 1.4.0 is the sole model and MCP provider through `AgentgatewayModelGateway` and `AgentgatewayToolGateway`; Bifrost has been removed from runtime, configuration, and current verification paths. Every accepted Agent turn is pinned to an immutable version and self-contained run snapshot. Rerun the current gates with `./scripts/phase4/verify.sh`, `./scripts/increment7/verify.sh`, and `./scripts/increment8/verify.sh`. Cumulative evidence is tracked in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md).
+Transition Increments 0–9 and Milestones M1–M4 are complete and accepted. Agentgateway 1.4.0 is the sole model and MCP provider through `AgentgatewayModelGateway` and `AgentgatewayToolGateway`; Bifrost has been removed from runtime, configuration, and current verification paths. Every accepted Agent turn is pinned to an immutable version and self-contained run snapshot. Rerun the current gates with `./scripts/phase4/verify.sh`, `./scripts/increment8/verify.sh`, and `./scripts/increment9/verify.sh`. Cumulative evidence is tracked in [Architecture Transition Results](docs/architecture/TRANSITION_RESULTS.md).
 
 Increment 7 is accepted. The platform-owned `AgentRunWorkflow` executes immutable declarative run snapshots on the sole `porfirium-agent-runtime-v1` queue; the bundled `tool-assistant:1.2.0` release is the default generic release with a corrected versioned MTG set-search contract, while `1.0.0` and `1.1.0` remain immutable historical data. See the [Increment 7 plan](docs/architecture/INCREMENT7_PLAN.md) and [acceptance results](docs/architecture/INCREMENT7_RESULTS.md).
 
 Increment 8 is accepted. It adds independent declarative publication from version directories. The filesystem-published `tool-assistant:1.3.0` release is available for explicit selection; publication does not change the default or existing conversations. See the [Increment 8 results](docs/architecture/INCREMENT8_RESULTS.md) and [filesystem publication runbook](docs/architecture/INCREMENT8_RUNBOOK.md).
+
+Increment 9 and Milestone M4 are accepted. Separately authorized users can create, revise,
+validate, privately test, publish, and deprecate declarative agents through the portal while
+reusing the immutable publication and generic runtime contracts. See the
+[Increment 9 results](docs/architecture/INCREMENT9_RESULTS.md) and
+[portal builder runbook](docs/architecture/INCREMENT9_RUNBOOK.md).
 
 The quick starts and phase documents below retain the accepted Phase 0–4 behavior while current model and Agent tool traffic use Agentgateway.
 
@@ -80,3 +86,8 @@ Prerequisites:
 Phase 0 documents preserve the original Bifrost-era connectivity baseline and acceptance evidence. Its retired smoke path is no longer runnable against the current topology. Use the Phase 4 or migration verification commands above for current operation. Product architecture and later phases are defined in [SPECIFICATION.md](SPECIFICATION.md).
 
 Phase evidence is recorded in [Phase 0 results](docs/phase0/RESULTS.md), [Phase 1 results](docs/phase1/RESULTS.md), [Phase 2 results](docs/phase2/RESULTS.md), [Phase 3 results](docs/phase3/RESULTS.md), and [Phase 4 results](docs/phase4/RESULTS.md). Phases 0–4 are implemented and accepted.
+
+## Contributing
+
+See [Repository Guidelines](AGENTS.md) for repository layout, development commands, coding and
+testing conventions, pull-request expectations, and security guidance.
