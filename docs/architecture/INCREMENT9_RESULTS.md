@@ -1,6 +1,6 @@
 # Increment 9 — Portal declarative agent builder results
 
-Status: Implemented candidate; live role and user acceptance pending
+Status: Completed and accepted
 Date: 2026-08-23
 
 ## Delivered
@@ -25,7 +25,7 @@ Date: 2026-08-23
 
 The following passed on 2026-08-23:
 
-- backend Ruff and 43 Pytest tests;
+- backend Ruff and 44 Pytest tests;
 - frontend ESLint, 4 Vitest tests, TypeScript, and production Vite build;
 - Increment 7 generic-runtime static regression;
 - Increment 8 filesystem publication and CLI regression;
@@ -39,19 +39,44 @@ one prepared statement. PostgreSQL rolled the migration back transactionally. Th
 corrected to create the immutability function and trigger in separate statements, then applied
 successfully at revision `0010_portal_builder`.
 
-## Acceptance remaining
+During live private testing, the first **Run test** request exposed an unordered ORM flush:
+SQLAlchemy attempted to insert the user message before its referenced turn, and PostgreSQL
+correctly rejected the write. The endpoint now flushes the turn before adding its first message,
+with a regression test that enforces that ordering. The rebuilt Portal API completed the same
+private test successfully.
 
-Increment 9 and Milestone M4 are not yet accepted. The remaining gate is operational:
+Live portal evidence:
 
-1. assign `genai-agent-author` and `genai-agent-publisher` independently in Keycloak;
-2. refresh the acceptance users' sessions and verify the user/author/publisher role matrix;
-3. create, revise, validate, and privately test a declarative draft through the portal;
-4. publish it as an authorized publisher and execute the selected release;
-5. prove filesystem/portal canonical equivalence and safe deprecation behavior;
-6. obtain user acceptance and record the live identifiers and results.
+```text
+draft: 2bb51c16-63ec-4a46-95e3-e542d802c560
+revision: 2 (ef0fbc24-def1-41d7-b193-f0181c4b2724)
+digest: sha256:435de652a303f4db0ce60d30e376a924c0d7a1cef3c28ce195d60e1fb415f859
+private test: 769a0a69-7aa6-42f6-b7b7-b3f62ce70b4b
+test conversation: 30d75202-9380-4389-b476-5b25e7179233
+test turn: eded748d-d7a7-4601-897d-4eb97e453c04
+test snapshot: 371276ac-6f88-413a-9e06-62abad2ab71f
+test workflow: porfirium-agent-eded748d-d7a7-4601-897d-4eb97e453c04
+release: 502aa1d5-9e09-4e89-a959-1fc64988b04c
+publication: ab6406ac-4fdf-4aad-8479-97cc92484f05
+production turn: 76e65585-d116-41ca-82f4-09981f4d79b4
+production snapshot: 20cd2c55-1e1b-4ffc-8bde-c840c40c8ec6
+production workflow: porfirium-agent-76e65585-d116-41ca-82f4-09981f4d79b4
+```
 
-Use the [Increment 9 runbook](INCREMENT9_RUNBOOK.md) for this workflow. Do not mark Increment 9 or
-M4 accepted until these live steps and user confirmation are complete.
+The published `portal-assistant:1.0.0` release retained the revision's canonical digest and
+`portal` provenance, and both its private test and selected production run completed through the
+unchanged generic workflow.
+
+## User acceptance
+
+After the private-test ordering defect was corrected and the exact Increment 9 verification gate
+passed, the user confirmed on 2026-08-23 that everything worked as expected. Increment 9 and
+Milestone M4 are accepted.
+
+The final acceptance regression run executed `scripts/increment9/verify.sh` followed by
+`scripts/increment8/verify.sh`. Increment 9 passed Ruff, 44 backend tests, frontend ESLint, 4
+frontend tests, TypeScript, and the production build. Increment 8 then passed canonical
+filesystem validation, Ruff, and the same 44-test backend suite.
 
 ## Rollback
 

@@ -88,13 +88,14 @@ Increment 6 was accepted on 2026-08-23 after the selected, pinned `tool-assistan
 
 Increment 8 was accepted on 2026-08-23. Filesystem candidates now pass strict offline and platform validation before atomic publication as immutable canonical artifacts. The independently published `tool-assistant:1.3.0` release completed a live Yandex/time-tool run through the unchanged generic workflow, identical publication retry returned the original release and publication identities, and the user confirmed successful version selection and operation through the corrected portal catalog. See the [Increment 8 plan](INCREMENT8_PLAN.md), [runbook](INCREMENT8_RUNBOOK.md), and [results](INCREMENT8_RESULTS.md).
 
-Increment 9 is implemented as an acceptance candidate. The portal now provides role-separated,
+Increment 9 and Milestone M4 were accepted on 2026-08-23. The portal now provides role-separated,
 revisioned declarative authoring, shared validation/publication, private tests through the
 generic workflow, and safe deprecation. Migration `0010_portal_builder`, backend/frontend gates,
-and Increment 7–8 regressions pass. Live Keycloak role assignment and end-to-end user acceptance
-remain, so Increment 9 and Milestone M4 are not yet accepted. See the
-[Increment 9 plan](INCREMENT9_PLAN.md), [runbook](INCREMENT9_RUNBOOK.md), and
-[candidate results](INCREMENT9_RESULTS.md).
+and Increment 7–8 regressions pass. The accepted `portal-assistant:1.0.0` release completed both
+its revision-pinned private test and a selected production run. Live testing found and corrected
+a turn/message flush-order defect in **Run test**, which is retained as a regression test. See
+the [Increment 9 plan](INCREMENT9_PLAN.md), [runbook](INCREMENT9_RUNBOOK.md), and
+[accepted results](INCREMENT9_RESULTS.md).
 
 ## Increment 4 acceptance
 

@@ -506,6 +506,10 @@ async def create_test_turn(
         agent_run_snapshot_id=snapshot.id,
     )
     session.add(turn)
+    # Message.turn_id is a database foreign key, but there is no ORM relationship
+    # between Message and Turn from which SQLAlchemy can infer insert ordering.
+    # Materialize the turn before adding its first message.
+    await session.flush()
     session.add(
         Message(
             conversation_id=test.conversation_id,

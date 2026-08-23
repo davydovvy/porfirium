@@ -1,6 +1,6 @@
 # Agentgateway and Versioned Agent Platform Transition Plan
 
-Status: In progress — Increments 0–8 and Milestones M1–M3 accepted; Increment 9 implementation candidate awaiting acceptance
+Status: In progress — Increments 0–9 and Milestones M1–M4 accepted
 
 Last updated: 2026-08-23
 Starting point: Phases 0–4 implemented and accepted
@@ -451,7 +451,7 @@ An optional local scanner may detect candidates, but it must publish only comple
 
 Focused implementation plan: [Increment 9 — Portal declarative agent builder plan](INCREMENT9_PLAN.md).
 
-Status: **Implemented candidate; live role and user acceptance pending.**
+Status: **Completed and accepted.**
 
 Implementation evidence: [Increment 9 results](INCREMENT9_RESULTS.md).
 
@@ -548,7 +548,7 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 
 No milestone combines a gateway cutover with a database/catalog or Temporal workflow migration.
 
-Current progress: Increments 0–8 and Milestones M1–M3 are complete and accepted. Increment 6.5 retired the legacy runtime; Increment 7 runs immutable declarative releases through the generic workflow with Agent admission reopened. Increment 8 publishes immutable declarative releases from version directories through the shared publisher and CLI. The filesystem-published `tool-assistant:1.3.0` release was accepted through the portal. Increment 9 is implemented as a candidate and awaits live role/user acceptance, so Milestone M4 remains open.
+Current progress: Increments 0–9 and Milestones M1–M4 are complete and accepted. Increment 6.5 retired the legacy runtime; Increment 7 runs immutable declarative releases through the generic workflow with Agent admission reopened. Increment 8 publishes immutable declarative releases from version directories through the shared publisher and CLI. The filesystem-published `tool-assistant:1.3.0` release was accepted through the portal. Increment 9 adds accepted role-separated portal authoring, private revision tests, shared publication, and lifecycle handling; the portal-published `portal-assistant:1.0.0` completed private and production runs through the generic workflow.
 
 ## 15. Deferred decisions
 
