@@ -65,3 +65,16 @@ article.streaming p::after { content: '▋'; color: #d7ff70; animation: blink 1s
 .agent-progress small { color: #d7ff70; font: 10px ui-monospace, monospace; letter-spacing: .12em; }
 .agent-progress p { margin: 10px 0 0; color: #83919a; font: 12px ui-monospace, monospace; }
 @media (max-width: 700px) { .app-shell { grid-template-columns: 1fr; } aside { display: none; } .hero { margin-left: 0; } footer span:nth-child(2) { display: none; } .composer { left: 20px; right: 20px; } .messages { padding-left: 20px; padding-right: 20px; } }
+.builder { overflow: auto; padding: 2rem; background: #f5f2ea; color: #1f1c17; }
+.builder > header { display: flex; justify-content: space-between; gap: 2rem; align-items: start; }
+.builder > header h1 { margin-top: .3rem; }.builder > header p { max-width: 34rem; }
+.builder-grid { display: grid; grid-template-columns: minmax(13rem, 18rem) minmax(28rem, 54rem); gap: 2rem; align-items: start; }
+.builder-grid nav, .builder-grid form, .builder fieldset, .test-panel { display: grid; gap: 1rem; }
+.builder-grid nav button { text-align: left; display: grid; gap: .25rem; }
+.builder fieldset { border: 1px solid #c8c1b2; padding: 1rem; margin-bottom: 1rem; }
+.builder label { display: grid; gap: .35rem; }
+.builder input:not([type=checkbox]), .builder textarea, .builder select { width: 100%; box-sizing: border-box; padding: .7rem; border: 1px solid #aaa18f; background: white; color: #1f1c17; }
+.tool-options { display: grid; gap: .5rem; }.tool-options label { display: flex; align-items: center; gap: .5rem; }
+.builder-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin: 1rem 0; }
+.test-panel { padding: 1rem; background: #e8e3d8; }
+@media (max-width: 900px) { .builder-grid { grid-template-columns: 1fr; } .builder { padding: 1rem; } }

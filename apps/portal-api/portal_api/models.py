@@ -155,8 +155,38 @@ class AgentDraft(Base):
     manifest: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
     state: Mapped[str] = mapped_column(String(32), nullable=False)
     validation: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    current_revision: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class AgentDraftRevision(Base):
+    __tablename__ = "agent_draft_revisions"
+    __table_args__ = (UniqueConstraint("draft_id", "revision", name="uq_agent_draft_revision"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    draft_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agent_drafts.id"), index=True)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    manifest: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    content: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    digest: Mapped[str] = mapped_column(String(71), nullable=False)
+    author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    validation: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    tested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class AgentDraftTest(Base):
+    __tablename__ = "agent_draft_tests"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    draft_revision_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agent_draft_revisions.id"), index=True
+    )
+    owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    conversation_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("conversations.id"), unique=True)
+    digest: Mapped[str] = mapped_column(String(71), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
 class AgentPublication(Base):
@@ -170,6 +200,18 @@ class AgentPublication(Base):
     digest: Mapped[str] = mapped_column(String(71), nullable=False)
     validation: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class AgentLifecycleAudit(Base):
+    __tablename__ = "agent_lifecycle_audits"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agent_versions.id"), index=True)
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    action: Mapped[str] = mapped_column(String(32), nullable=False)
+    previous_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    new_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
 class ToolCatalogEntry(Base):
@@ -204,7 +246,12 @@ class AgentRunSnapshot(Base):
     __tablename__ = "agent_run_snapshots"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    agent_version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agent_versions.id"), index=True)
+    agent_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agent_versions.id"), index=True
+    )
+    draft_revision_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agent_draft_revisions.id"), index=True
+    )
     digest: Mapped[str] = mapped_column(String(71), nullable=False)
     snapshot: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
@@ -230,9 +277,7 @@ class ToolRequest(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    turn_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("turns.id"), index=True, nullable=False
-    )
+    turn_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("turns.id"), index=True, nullable=False)
     owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     workflow_id: Mapped[str] = mapped_column(String(255), nullable=False)
     model_call_id: Mapped[str] = mapped_column(String(255), nullable=False)

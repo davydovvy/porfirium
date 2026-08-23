@@ -1,12 +1,13 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { apiFetch, keycloak } from './auth'
+import { AgentBuilder } from './AgentBuilder'
 import { progressLabel, terminalTurnError, type ProgressEvent } from './progress'
 
-type Identity = { id: string; username: string; display_name: string; roles: string[] }
+type Identity = { id: string; username: string; display_name: string; roles: string[]; capabilities?: { agent_authoring?: boolean; agent_publication?: boolean } }
 type Mode = 'direct' | 'agent'
 type Conversation = { id: string; title: string; mode: Mode; agent_version_id?: string | null; messages?: Message[]; active_turn?: Turn | null; latest_turn?: Turn | null }
 type AgentVersion = { id: string; version: string; digest: string }
-type Agent = { id: string; slug: string; name: string; description: string; version: AgentVersion }
+type Agent = { id: string; slug: string; name: string; description: string; version: AgentVersion; default_version_id?: string | null }
 type Message = { id: string; turn_id?: string; role: 'user' | 'assistant'; content: string; status: string }
 type Turn = { turn_id: string; state: string; events_url: string; correlation_id: string; error_code?: string | null }
 type StreamEvent = ProgressEvent
@@ -29,7 +30,7 @@ export async function loadAgentCatalog(): Promise<{ agents: Agent[]; defaultVers
     const published = await json<AgentVersion[]>(`/api/v1/agents/${agent.slug}/versions`)
     return published.map((version) => ({ ...agent, version }))
   }))
-  return { agents: versions.flat(), defaultVersionId: defaults[0]?.version.id ?? '' }
+  return { agents: versions.flat(), defaultVersionId: defaults.find((agent) => agent.default_version_id)?.default_version_id ?? defaults[0]?.version.id ?? '' }
 }
 
 export function App({ authenticated }: { authenticated: boolean }) {
@@ -45,6 +46,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
   const [selectedAgentVersion, setSelectedAgentVersion] = useState('')
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [view, setView] = useState<'chat' | 'builder'>('chat')
   const streamAbort = useRef<AbortController | null>(null)
 
   const loadConversations = useCallback(async () => {
@@ -207,6 +209,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
         <button className={newMode === 'agent' ? 'active' : ''} onClick={() => selectMode('agent')}>Agent</button>
       </div>
       <button className="new-chat" onClick={() => createConversation().catch((reason) => setError(reason.message))}>＋ New {newMode} conversation</button>
+      {identity?.capabilities?.agent_authoring && <button className={view === 'builder' ? 'new-chat selected' : 'new-chat'} onClick={() => setView(view === 'builder' ? 'chat' : 'builder')}>{view === 'builder' ? '← Back to chat' : '◇ Agent builder'}</button>}
       {newMode === 'agent' && <label className="agent-selector">Agent version
         <select aria-label="Agent version" value={selectedAgentVersion} onChange={(event) => setSelectedAgentVersion(event.target.value)}>
           {agents.map((agent) => <option key={agent.version.id} value={agent.version.id}>{agent.name} · {agent.version.version}</option>)}
@@ -218,7 +221,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
         <div><strong>{identity?.display_name ?? 'Loading identity'}</strong><small>{identity?.username}</small></div>
         <button className="logout" aria-label="Sign out" onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>↗</button></div>
     </aside>
-    <section className="workspace"><header><span className="dot" /> {active?.mode === 'agent' ? 'Agent' : 'Direct LLM'} <span className="model">{active?.mode === 'agent' ? `Temporal · ${agents.find((agent) => agent.version.id === active.agent_version_id)?.name ?? 'Tool Agent'} ${agents.find((agent) => agent.version.id === active.agent_version_id)?.version.version ?? 'v1'}` : 'Yandex · default'}</span><span className="phase">INCREMENT 6</span></header>
+    {view === 'builder' ? <AgentBuilder canPublish={Boolean(identity?.capabilities?.agent_publication)} onCatalogChanged={() => loadAgentCatalog().then((catalog) => { setAgents(catalog.agents); setSelectedAgentVersion(catalog.defaultVersionId) }).catch((reason: Error) => setError(reason.message))} /> : <section className="workspace"><header><span className="dot" /> {active?.mode === 'agent' ? 'Agent' : 'Direct LLM'} <span className="model">{active?.mode === 'agent' ? `Temporal · ${agents.find((agent) => agent.version.id === active.agent_version_id)?.name ?? 'Tool Agent'} ${agents.find((agent) => agent.version.id === active.agent_version_id)?.version.version ?? 'v1'}` : 'Yandex · default'}</span><span className="phase">INCREMENT 9</span></header>
       {!active ? <div className="empty-state"><div className="orb"><span /></div><p className="eyebrow">Direct channel ready</p>
         <h1>Welcome, {identity?.display_name ?? 'traveler'}.</h1><p>Create a direct conversation or a durable Agent run.</p>
         <button className="primary" onClick={() => createConversation().catch((reason) => setError(reason.message))}>Start a conversation</button></div>
@@ -229,6 +232,6 @@ export function App({ authenticated }: { authenticated: boolean }) {
           {error && <div className="error">{error}</div>}</div>
         <form className="composer" onSubmit={submit}><textarea aria-label="Message" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={active.mode === 'agent' && !agentAvailable ? 'Agent runtime maintenance in progress…' : active.mode === 'agent' ? 'Give the durable agent a task…' : 'Message the Yandex model…'} disabled={Boolean(busy) || active.mode === 'agent' && !agentAvailable} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} />
           {busy ? <button type="button" className="cancel" onClick={() => cancel().catch((reason) => setError(reason.message))}>Stop</button> : <button type="submit" disabled={!draft.trim() || active.mode === 'agent' && !agentAvailable}>Send ↗</button>}<small>{active.mode === 'agent' && !agentAvailable ? capabilities?.agent_execution.message ?? 'Agent execution is temporarily unavailable while the runtime is upgraded.' : active.mode === 'agent' ? 'Temporal preserves this run across worker restarts.' : 'Responses stream through Agentgateway and persist locally.'}</small></form></>}
-    </section>
+    </section>}
   </main>
 }

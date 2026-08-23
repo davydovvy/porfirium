@@ -54,7 +54,8 @@ async def _contract(session, value: dict) -> tuple[Turn, dict[str, object]]:
     except ValueError as exc:
         raise ApplicationError(str(exc), non_retryable=True) from exc
     agent = contract["agent"]
-    if not isinstance(agent, dict) or str(snapshot.agent_version_id) != agent.get("version_id"):
+    source_id = snapshot.agent_version_id or snapshot.draft_revision_id
+    if not isinstance(agent, dict) or str(source_id) != agent.get("version_id"):
         raise ApplicationError("agent_run_snapshot_identity_mismatch", non_retryable=True)
     if snapshot.digest != agent.get("digest"):
         raise ApplicationError("agent_run_snapshot_digest_mismatch", non_retryable=True)

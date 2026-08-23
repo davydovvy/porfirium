@@ -8,7 +8,7 @@ test -f docs/architecture/INCREMENT8_PLAN.md
 test -f agents/tool-assistant/1.3.0/manifest.json
 test -f apps/portal-api/migrations/versions/0009_filesystem_publication.py
 rg -q 'porfirium = "portal_api.cli:main"' apps/portal-api/pyproject.toml
-rg -q 'provenance="filesystem"' apps/portal-api/portal_api/publisher.py
+rg -q 'provenance: str = "filesystem"' apps/portal-api/portal_api/publisher.py
 compose_config=$(docker compose config)
 rg -q 'target: /agents' <<<"$compose_config"
 rg -q 'read_only: true' <<<"$compose_config"

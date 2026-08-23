@@ -1,6 +1,6 @@
 # Agentgateway and Versioned Agent Platform Transition Plan
 
-Status: In progress — Increments 0–8 and Milestones M1–M3 accepted; Increment 9 not started
+Status: In progress — Increments 0–8 and Milestones M1–M3 accepted; Increment 9 implementation candidate awaiting acceptance
 
 Last updated: 2026-08-23
 Starting point: Phases 0–4 implemented and accepted
@@ -449,6 +449,12 @@ An optional local scanner may detect candidates, but it must publish only comple
 
 ### Increment 9 — Add the portal agent builder
 
+Focused implementation plan: [Increment 9 — Portal declarative agent builder plan](INCREMENT9_PLAN.md).
+
+Status: **Implemented candidate; live role and user acceptance pending.**
+
+Implementation evidence: [Increment 9 results](INCREMENT9_RESULTS.md).
+
 - Add draft create/edit/validate/test/publish/deprecate flows.
 - Apply administrator/author roles separately from ordinary agent-use permissions.
 - Use the same publisher and manifest contracts as filesystem publication.
@@ -542,7 +548,7 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 
 No milestone combines a gateway cutover with a database/catalog or Temporal workflow migration.
 
-Current progress: Increments 0–8 and Milestones M1–M3 are complete and accepted. Increment 6.5 retired the legacy runtime; Increment 7 runs immutable declarative releases through the generic workflow with Agent admission reopened. Increment 8 publishes immutable declarative releases from version directories through the shared publisher and CLI. The filesystem-published `tool-assistant:1.3.0` release was accepted through the portal. Increment 9 has not started, so Milestone M4 remains open.
+Current progress: Increments 0–8 and Milestones M1–M3 are complete and accepted. Increment 6.5 retired the legacy runtime; Increment 7 runs immutable declarative releases through the generic workflow with Agent admission reopened. Increment 8 publishes immutable declarative releases from version directories through the shared publisher and CLI. The filesystem-published `tool-assistant:1.3.0` release was accepted through the portal. Increment 9 is implemented as a candidate and awaits live role/user acceptance, so Milestone M4 remains open.
 
 ## 15. Deferred decisions
 

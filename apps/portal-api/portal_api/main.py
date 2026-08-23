@@ -13,6 +13,7 @@ from temporalio.client import Client
 
 from .agent import AgentRunWorkflow, workflow_id
 from .auth import CurrentIdentity, Identity
+from .authoring import router as authoring_router
 from .chat import append_event, cancel_turn, event_stream, start_turn
 from .config import settings
 from .db import get_session
@@ -32,6 +33,7 @@ from .models import (
 from .run_contracts import validate_run_snapshot
 
 app = FastAPI(title="Porfirium Portal API", version="0.3.0")
+app.include_router(authoring_router)
 Session = Annotated[AsyncSession, Depends(get_session)]
 
 
@@ -152,7 +154,13 @@ async def me(identity: CurrentIdentity, session: Session) -> dict[str, object]:
         "display_name": identity.display_name,
         "email": identity.email,
         "roles": identity.roles,
-        "capabilities": {"chat": True, "agent": settings.agent_execution_mode == "generic", "tools": settings.agent_execution_mode == "generic"},
+        "capabilities": {
+            "chat": True,
+            "agent": settings.agent_execution_mode == "generic",
+            "tools": settings.agent_execution_mode == "generic",
+            "agent_authoring": "genai-agent-author" in identity.roles,
+            "agent_publication": "genai-agent-publisher" in identity.roles,
+        },
     }
 
 
@@ -174,7 +182,14 @@ async def capabilities(identity: CurrentIdentity) -> dict[str, object]:
         "agent_execution": {
             "mode": settings.agent_execution_mode,
             "enabled": enabled,
-            **({} if enabled else {"code": "agent_runtime_maintenance", "message": "Agent execution is temporarily unavailable while the runtime is upgraded."}),
+            **(
+                {}
+                if enabled
+                else {
+                    "code": "agent_runtime_maintenance",
+                    "message": "Agent execution is temporarily unavailable while the runtime is upgraded.",
+                }
+            ),
         },
     }
 
@@ -198,15 +213,37 @@ def agent_version_json(agent: Agent, version: AgentVersion) -> dict[str, object]
 
 @app.get("/api/v1/agents")
 async def agents(identity: CurrentIdentity, session: Session) -> list[dict[str, object]]:
-    rows = (
-        await session.execute(
-            select(Agent, AgentVersion)
-            .join(AgentVersion, Agent.default_version_id == AgentVersion.id)
-            .where(AgentVersion.status == "published")
-            .order_by(Agent.name)
+    identities = list(
+        (
+            await session.scalars(
+                select(Agent)
+                .where(
+                    select(AgentVersion.id)
+                    .where(AgentVersion.agent_id == Agent.id, AgentVersion.status == "published")
+                    .exists()
+                )
+                .order_by(Agent.name)
+            )
+        ).all()
+    )
+    result: list[dict[str, object]] = []
+    for agent in identities:
+        version = await session.scalar(
+            select(AgentVersion)
+            .where(AgentVersion.agent_id == agent.id, AgentVersion.status == "published")
+            .order_by(
+                (AgentVersion.id == agent.default_version_id).desc(),
+                AgentVersion.published_at.desc(),
+            )
+            .limit(1)
         )
-    ).all()
-    return [agent_version_json(agent, version) for agent, version in rows]
+        assert version is not None
+        item = agent_version_json(agent, version)
+        item["default_version_id"] = (
+            str(agent.default_version_id) if agent.default_version_id else None
+        )
+        result.append(item)
+    return result
 
 
 @app.get("/api/v1/agents/{agent_slug}")
@@ -268,7 +305,7 @@ async def conversations(identity: CurrentIdentity, session: Session) -> list[dic
     items = (
         await session.scalars(
             select(Conversation)
-            .where(Conversation.owner_id == user.id)
+            .where(Conversation.owner_id == user.id, Conversation.mode.in_(("direct", "agent")))
             .order_by(Conversation.updated_at.desc())
         )
     ).all()
@@ -321,7 +358,9 @@ async def create_agent_run_snapshot(
             select(AgentVersion, Agent, ModelAlias)
             .join(Agent, Agent.id == AgentVersion.agent_id)
             .join(ModelAlias, ModelAlias.id == AgentVersion.model_alias_id)
-            .where(AgentVersion.id == conversation.agent_version_id, AgentVersion.status == "published")
+            .where(
+                AgentVersion.id == conversation.agent_version_id, AgentVersion.status == "published"
+            )
         )
     ).one_or_none()
     if row is None:
@@ -329,13 +368,18 @@ async def create_agent_run_snapshot(
     version, agent, model = row
     manifest = version.manifest
     runtime = manifest.get("runtime")
-    if manifest.get("schema_version") != 2 or runtime != {"kind": "declarative", "contract_version": 1}:
+    if manifest.get("schema_version") != 2 or runtime != {
+        "kind": "declarative",
+        "contract_version": 1,
+    }:
         raise HTTPException(status_code=409, detail={"code": "agent_runtime_unsupported"})
     grants = (
         await session.execute(
             select(AgentToolGrant, ToolCatalogEntry)
             .join(ToolCatalogEntry, ToolCatalogEntry.id == AgentToolGrant.tool_id)
-            .where(AgentToolGrant.agent_version_id == version.id, ToolCatalogEntry.enabled.is_(True))
+            .where(
+                AgentToolGrant.agent_version_id == version.id, ToolCatalogEntry.enabled.is_(True)
+            )
         )
     ).all()
     by_name = {tool.stable_name: (grant, tool) for grant, tool in grants}
@@ -347,12 +391,25 @@ async def create_agent_run_snapshot(
         raise HTTPException(status_code=503, detail={"code": "agent_model_unresolved"})
     snapshot_data: dict[str, object] = {
         "contract_version": 1,
-        "agent": {"id": agent.slug, "version": version.version, "version_id": str(version.id), "digest": version.digest},
+        "agent": {
+            "id": agent.slug,
+            "version": version.version,
+            "version_id": str(version.id),
+            "digest": version.digest,
+        },
         "runtime": runtime,
         "instructions": manifest["instructions"],
         "model": {"alias": model.alias, "provider": model.provider, "model": resolved_model},
         "tools": [
-            {"stable_name": name, "server_name": by_name[name][1].server_name, "tool_name": by_name[name][1].tool_name, "schema_version": by_name[name][1].schema_version, "read_only": by_name[name][1].read_only, "definition": by_name[name][1].input_schema, "policy_version": by_name[name][0].policy_version}
+            {
+                "stable_name": name,
+                "server_name": by_name[name][1].server_name,
+                "tool_name": by_name[name][1].tool_name,
+                "schema_version": by_name[name][1].schema_version,
+                "read_only": by_name[name][1].read_only,
+                "definition": by_name[name][1].input_schema,
+                "policy_version": by_name[name][0].policy_version,
+            }
             for name in map(str, declared)
         ],
         "limits": manifest["limits"],
@@ -361,7 +418,9 @@ async def create_agent_run_snapshot(
         validate_run_snapshot(snapshot_data)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail={"code": str(exc)}) from exc
-    snapshot = AgentRunSnapshot(agent_version_id=version.id, digest=version.digest, snapshot=snapshot_data)
+    snapshot = AgentRunSnapshot(
+        agent_version_id=version.id, digest=version.digest, snapshot=snapshot_data
+    )
     session.add(snapshot)
     await session.flush()
     return snapshot
@@ -426,7 +485,11 @@ async def create_turn(
     if existing:
         return turn_json(existing)
     turn_id = uuid.uuid4()
-    snapshot = await create_agent_run_snapshot(session, conversation) if conversation.mode == "agent" else None
+    snapshot = (
+        await create_agent_run_snapshot(session, conversation)
+        if conversation.mode == "agent"
+        else None
+    )
     turn = Turn(
         id=turn_id,
         conversation_id=conversation.id,
@@ -457,7 +520,9 @@ async def create_turn(
     if conversation.mode == "agent":
         assert snapshot is not None and turn.workflow_id is not None
         try:
-            temporal = await Client.connect(settings.temporal_address, namespace=settings.temporal_namespace)
+            temporal = await Client.connect(
+                settings.temporal_address, namespace=settings.temporal_namespace
+            )
             await temporal.start_workflow(
                 AgentRunWorkflow.run,
                 {"turn_id": str(turn.id), "run_snapshot_id": str(snapshot.id)},
@@ -468,7 +533,14 @@ async def create_turn(
             turn.state = "failed"
             turn.error_code = "workflow_start_failed"
             await session.commit()
-            await append_event(turn.id, "turn.failed", {"code": "workflow_start_failed", "message": "The durable agent could not be started."})
+            await append_event(
+                turn.id,
+                "turn.failed",
+                {
+                    "code": "workflow_start_failed",
+                    "message": "The durable agent could not be started.",
+                },
+            )
     else:
         start_turn(turn.id)
     return turn_json(turn)

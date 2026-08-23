@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .catalog import load_candidate
+from .catalog import MAX_MANIFEST_BYTES, canonical_manifest, load_candidate, validate_manifest
 from .models import (
     Agent,
     AgentArtifact,
@@ -41,6 +42,27 @@ class Candidate:
     @property
     def version(self) -> str:
         return str(self.manifest["agent"]["version"])  # type: ignore[index]
+
+
+@dataclass(frozen=True)
+class PublicationContext:
+    provenance: str = "filesystem"
+    actor_id: uuid.UUID | None = None
+    draft_id: uuid.UUID | None = None
+    draft_revision: int | None = None
+
+
+def candidate_from_manifest(manifest: dict[str, object], *, source: str = "portal") -> Candidate:
+    try:
+        digest = validate_manifest(manifest)
+    except ValueError as error:
+        raise PublicationError("candidate_invalid", str(error)) from error
+    if manifest.get("schema_version") != 2:
+        raise PublicationError("candidate_invalid", "runtime_not_publishable")
+    artifact = canonical_manifest(manifest)
+    if len(artifact) > MAX_MANIFEST_BYTES:
+        raise PublicationError("candidate_invalid", "manifest_too_large")
+    return Candidate(manifest, artifact, digest, source)
 
 
 def candidate_from_directory(directory: Path) -> Candidate:
@@ -115,7 +137,14 @@ async def platform_report(
     return report, model, tools
 
 
-async def publish(session: AsyncSession, candidate: Candidate) -> dict[str, object]:
+async def publish(
+    session: AsyncSession,
+    candidate: Candidate,
+    context: PublicationContext | None = None,
+) -> dict[str, object]:
+    context = context or PublicationContext()
+    if context.provenance not in {"filesystem", "portal"}:
+        raise PublicationError("candidate_invalid", "provenance")
     # Serialize each release identity so identical concurrent requests converge predictably.
     await session.execute(
         text("SELECT pg_advisory_xact_lock(hashtext(:identity))"),
@@ -160,6 +189,8 @@ async def publish(session: AsyncSession, candidate: Candidate) -> dict[str, obje
         )
         session.add(agent)
         await session.flush()
+    elif agent.name != str(metadata["name"]) or agent.description != str(metadata["description"]):
+        raise PublicationError("agent_metadata_conflict")
 
     artifact = AgentArtifact(
         digest=candidate.digest,
@@ -185,14 +216,24 @@ async def publish(session: AsyncSession, candidate: Candidate) -> dict[str, obje
             AgentToolGrant(
                 agent_version_id=version.id,
                 tool_id=tool.id,
-                policy_version=f"filesystem:{candidate.agent_id}:{candidate.version}",
+                policy_version=f"{context.provenance}:{candidate.agent_id}:{candidate.version}",
             )
         )
     publication = AgentPublication(
         agent_version_id=version.id,
-        provenance="filesystem",
+        draft_id=context.draft_id,
+        publisher_id=context.actor_id,
+        provenance=context.provenance,
         digest=candidate.digest,
-        validation={**report, "source": candidate.source, "cli_contract_version": 1},
+        validation={
+            **report,
+            "source": candidate.source,
+            **(
+                {"draft_revision": context.draft_revision}
+                if context.draft_revision is not None
+                else {"cli_contract_version": 1}
+            ),
+        },
     )
     session.add(publication)
     await session.flush()
