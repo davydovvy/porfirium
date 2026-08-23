@@ -17,7 +17,7 @@ Ensure Keycloak is running, `portal.local` resolves to `127.0.0.1`, and the repo
 ./scripts/phase3/start.sh
 ```
 
-The first start downloads the pinned Temporal server and UI images and may take several minutes. Startup applies the complete migration chain through `0007_generic_runtime` automatically and starts the generic worker.
+The first start downloads the pinned Temporal server and UI images and may take several minutes. Startup applies the complete migration chain through `0008_versioned_tool_schema` automatically and starts the generic worker.
 
 Agentgateway requests receive only the reviewed tool definitions captured in the immutable run snapshot. The original replay-safe Phase 3 workflow is retained only as historical evidence and is not registered in production.
 

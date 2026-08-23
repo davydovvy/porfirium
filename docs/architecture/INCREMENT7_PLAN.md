@@ -1,8 +1,8 @@
 # Increment 7 — Generic versioned agent runtime plan
 
-Status: Implemented on 2026-08-23; final live acceptance pending  
-Target milestone: M3 — Versioned agent runtime  
-Prerequisite: Increment 6.5 legacy runtime retirement accepted  
+Status: Completed and accepted on 2026-08-23
+Target milestone: M3 — Versioned agent runtime
+Prerequisite: Increment 6.5 legacy runtime retirement accepted
 
 ## Outcome
 

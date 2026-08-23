@@ -84,7 +84,7 @@ At the Increment 3 checkpoint, Agentgateway became the default MCP provider whil
 
 ## Current acceptance target
 
-Increment 6 was accepted on 2026-08-23 after the selected, pinned `tool-assistant:1.0.0` release preserved existing Agent behavior. Increment 6.5 subsequently retired the drained legacy runtime. Increment 7 is now implemented: `tool-assistant:1.1.0` executes from immutable, self-contained snapshots through `AgentRunWorkflow` on `porfirium-agent-runtime-v1`. Deterministic tests, migration, Compose, and live worker startup pass; paid restart and publication-drift scenarios remain before final acceptance. See [Increment 6 results](INCREMENT6_RESULTS.md), [Increment 6.5 results](INCREMENT6_5_RESULTS.md), and [Increment 7 results](INCREMENT7_RESULTS.md).
+Increment 6 was accepted on 2026-08-23 after the selected, pinned `tool-assistant:1.0.0` release preserved existing Agent behavior. Increment 6.5 subsequently retired the drained legacy runtime. Increment 7 and Milestone M3 were accepted on 2026-08-23: immutable declarative releases execute from self-contained snapshots through `AgentRunWorkflow` on `porfirium-agent-runtime-v1`. The accepted `tool-assistant:1.2.0` follow-up versions the corrected MTG set-search schema without mutating `1.1.0` grants or snapshots. See [Increment 6 results](INCREMENT6_RESULTS.md), [Increment 6.5 results](INCREMENT6_5_RESULTS.md), and [Increment 7 results](INCREMENT7_RESULTS.md). Increment 8 has not started.
 
 ## Increment 4 acceptance
 

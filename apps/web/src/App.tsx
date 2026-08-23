@@ -1,13 +1,14 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { apiFetch, keycloak } from './auth'
+import { progressLabel, terminalTurnError, type ProgressEvent } from './progress'
 
 type Identity = { id: string; username: string; display_name: string; roles: string[] }
 type Mode = 'direct' | 'agent'
-type Conversation = { id: string; title: string; mode: Mode; agent_version_id?: string | null; messages?: Message[]; active_turn?: Turn | null }
+type Conversation = { id: string; title: string; mode: Mode; agent_version_id?: string | null; messages?: Message[]; active_turn?: Turn | null; latest_turn?: Turn | null }
 type Agent = { id: string; slug: string; name: string; description: string; version: { id: string; version: string; digest: string } }
 type Message = { id: string; turn_id?: string; role: 'user' | 'assistant'; content: string; status: string }
-type Turn = { turn_id: string; state: string; events_url: string; correlation_id: string }
-type StreamEvent = { sequence: number; type: string; payload: Record<string, string> }
+type Turn = { turn_id: string; state: string; events_url: string; correlation_id: string; error_code?: string | null }
+type StreamEvent = ProgressEvent
 type Capabilities = { agent_execution: { mode: string; enabled: boolean; code?: string; message?: string } }
 
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
@@ -49,6 +50,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
     setError(null)
     const item = await json<Conversation>(`/api/v1/conversations/${id}`)
     setActive(item)
+    setError(terminalTurnError(item.latest_turn))
     setNewMode(item.mode)
     window.history.replaceState({}, '', `/chat/${id}`)
   }, [])
@@ -108,6 +110,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
+    let terminalError: string | null = null
     while (true) {
       const { value, done } = await reader.read()
       if (done) break
@@ -119,15 +122,21 @@ export function App({ authenticated }: { authenticated: boolean }) {
         if (!data) continue
         const event = JSON.parse(data.slice(6)) as StreamEvent
         if (event.type === 'assistant.delta') setStreamText((value) => value + event.payload.delta)
-        if (event.type === 'agent.status') setProgress((value) => [...value, event.payload.label])
-        if (event.type.startsWith('tool.')) setProgress((value) => [...value, event.payload.label])
-        if (event.type === 'turn.failed') setError(`${event.payload.message} Reference: ${event.payload.correlation_id}`)
+        if (event.type === 'agent.status' || event.type.startsWith('tool.')) {
+          const label = progressLabel(event)
+          if (label) setProgress((value) => [...value, label])
+        }
+        if (event.type === 'turn.failed') {
+          terminalError = `${event.payload.message} Reference: ${event.payload.correlation_id}`
+          setError(terminalError)
+        }
         if (['turn.completed', 'turn.failed', 'turn.cancelled'].includes(event.type)) {
           setTurn((current) => current ? { ...current, state: event.type.slice(5) } : current)
         }
       }
     }
     await openConversation(conversationId)
+    if (terminalError) setError(terminalError)
     await loadConversations()
   }
 

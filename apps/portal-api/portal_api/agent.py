@@ -60,6 +60,8 @@ class AgentRunWorkflow:
                         **_activity_options(),
                     )
                     request_id = str(authorization["request_id"])
+                    if authorization["decision"] == "denied":
+                        continue
                     await workflow.execute_activity(
                         "execute_agent_run_tool",
                         {**value, "request_id": request_id},
@@ -70,7 +72,20 @@ class AgentRunWorkflow:
                         {**value, "request_id": request_id},
                         **_activity_options(),
                     )
-            raise ApplicationError("agent_iteration_limit_exceeded", non_retryable=True)
+            final_step = await workflow.execute_activity(
+                "generate_agent_run_step",
+                {**value, "iteration": int(plan["max_iterations"]), "final_only": True},
+                start_to_close_timeout=timedelta(minutes=5),
+                heartbeat_timeout=timedelta(seconds=15),
+                retry_policy=RetryPolicy(maximum_attempts=5),
+            )
+            final = final_step.get("final")
+            if not isinstance(final, str) or not final:
+                raise ApplicationError("agent_final_synthesis_invalid", non_retryable=True)
+            await workflow.execute_activity(
+                "complete_agent_run", {**value, "content": final}, **_activity_options()
+            )
+            return final
         except (ActivityError, ApplicationError):
             await workflow.execute_activity(
                 "fail_agent_run",

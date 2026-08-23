@@ -7,6 +7,9 @@ from portal_api.catalog import load_manifest, manifest_digest, validate_manifest
 
 MANIFEST_PATH = Path(__file__).parents[3] / "agents/tool-assistant/1.0.0/manifest.json"
 GENERIC_MANIFEST_PATH = Path(__file__).parents[3] / "agents/tool-assistant/1.1.0/manifest.json"
+CORRECTED_SEARCH_MANIFEST_PATH = (
+    Path(__file__).parents[3] / "agents/tool-assistant/1.2.0/manifest.json"
+)
 
 
 def test_bundled_manifest_is_valid_and_digest_is_stable() -> None:
@@ -37,6 +40,12 @@ def test_manifest_identity_must_match_package_path(tmp_path: Path) -> None:
 def test_generic_manifest_v2_is_valid() -> None:
     manifest, digest = load_manifest(GENERIC_MANIFEST_PATH)
     assert manifest["runtime"] == {"kind": "declarative", "contract_version": 1}
+    assert digest == manifest_digest(manifest)
+
+
+def test_corrected_search_manifest_is_valid() -> None:
+    manifest, digest = load_manifest(CORRECTED_SEARCH_MANIFEST_PATH)
+    assert manifest["agent"]["version"] == "1.2.0"
     assert digest == manifest_digest(manifest)
 
 

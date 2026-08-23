@@ -28,6 +28,18 @@ class CatalogToolTests(unittest.TestCase):
             [card["id"] for card in CARDS if card["set_code"] == "ISD"][:3],
         )
 
+    def test_set_only_search_returns_only_the_requested_set(self) -> None:
+        for set_code in ("RTR", "M11"):
+            result = search_catalog(set_code=set_code, limit=20)
+            self.assertEqual(result["returned"], 20)
+            self.assertEqual(result["total_matches"], 20)
+            self.assertEqual({card["set_code"] for card in result["cards"]}, {set_code})
+
+    def test_set_code_query_does_not_match_unrelated_card_text(self) -> None:
+        result = search_catalog("RTR", limit=20)
+        self.assertEqual(result["total_matches"], 20)
+        self.assertEqual({card["set_code"] for card in result["cards"]}, {"RTR"})
+
     def test_search_filters_type_color_rarity_and_price(self) -> None:
         result = search_catalog(
             "", colors=["G"], card_type="creature", rarity="rare", min_price="0.01"

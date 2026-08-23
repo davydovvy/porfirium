@@ -1,6 +1,6 @@
 # Increment 7 — Generic versioned agent runtime results
 
-Status: Implemented; deterministic and local runtime gates passed  
+Status: Completed and accepted
 Date: 2026-08-23
 
 ## Delivered
@@ -20,8 +20,8 @@ The legacy `tool-assistant:1.0.0` catalog record and completed histories remain 
 
 The following passed from the shared worktree:
 
-- backend Ruff and 33 Pytest tests;
-- Python compilation and a single Alembic head at `0007_generic_runtime`;
+- backend Ruff and 36 Pytest tests;
+- Python compilation and a single Alembic head, subsequently advanced additively to `0008_versioned_tool_schema`;
 - frontend ESLint, Vitest, TypeScript, and production Vite build;
 - `docker compose config --quiet`;
 - live additive migration from `0006_agent_immutable` to `0007_generic_runtime`;
@@ -43,9 +43,26 @@ restarted under the same workflow ID with its original immutable snapshot. It co
 one authorized `demo_time-get_current_time` call, one completed audit/result sequence, and one
 final assistant message. No snapshot or accepted turn data was rewritten.
 
-One paid model/tool canary completed during incident recovery. The full worker-restart and
-publication-drift acceptance scenarios remain operator-run checks when credentials and demo
-users are intentionally placed in scope.
+One paid model/tool canary completed during incident recovery. The operator subsequently
+reported the acceptance scripts passing and exercised the generic Agent through the portal.
+
+## Acceptance follow-up: versioned MTG search correction
+
+UI testing found that the original search contract required a free-text `query` even for a
+structured `set_code` filter. Because query and structured filters were combined, set names and
+codes returned no cards; an unfiltered short substring could instead match unrelated card text.
+The bundled catalog always contained 20 records for each declared set.
+
+Migration `0008_versioned_tool_schema` makes tool-catalog identities unique by stable name and
+schema version, preserving all `1.1.0` grants and snapshots. It publishes
+`tool-assistant:1.2.0` with search schema `1.1.0`, where query is optional, and makes that release
+the default only for new conversations. Deterministic tests prove set-only RTR and M11 searches
+return exactly their 20 in-set records and that the RTR code no longer matches unrelated text.
+
+The user then exercised a new `tool-assistant:1.2.0` conversation in the portal, confirmed the
+corrected progress, failure handling, bounded final synthesis, and RTR set search, and reported
+that everything works. Increment 7 and Milestone M3 were accepted on 2026-08-23. Increment 8
+remains unstarted.
 
 ## Operation and rollback
 

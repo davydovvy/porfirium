@@ -19,5 +19,7 @@ fi
 
 test -f agents/tool-assistant/1.1.0/manifest.json
 test -f apps/portal-api/migrations/versions/0007_generic_agent_runtime.py
+test -f agents/tool-assistant/1.2.0/manifest.json
+test -f apps/portal-api/migrations/versions/0008_versioned_tool_schema.py
 
 echo "PASS: Increment 7 generic runtime static gate"

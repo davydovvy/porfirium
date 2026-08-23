@@ -153,9 +153,12 @@ class AgentPublication(Base):
 
 class ToolCatalogEntry(Base):
     __tablename__ = "tool_catalog"
+    __table_args__ = (
+        UniqueConstraint("stable_name", "schema_version", name="uq_tool_catalog_stable_schema"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    stable_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    stable_name: Mapped[str] = mapped_column(String(255), nullable=False)
     server_name: Mapped[str] = mapped_column(String(128), nullable=False)
     tool_name: Mapped[str] = mapped_column(String(128), nullable=False)
     schema_version: Mapped[str] = mapped_column(String(32), nullable=False)

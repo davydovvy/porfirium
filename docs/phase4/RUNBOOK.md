@@ -2,7 +2,7 @@
 
 > Current runtime overlay (2026-08-23): the Phase 4 V1/V2 worker and `porfirium-agent-v1`
 > queue are retired. Agent admission is open through the platform-owned `AgentRunWorkflow` on
-> `porfirium-agent-runtime-v1`; the default release is `tool-assistant:1.1.0`. Historical Phase
+> `porfirium-agent-runtime-v1`; the default release is `tool-assistant:1.2.0`. Historical Phase
 > 4 behavior remains the regression baseline. Current static runtime verification is
 > `./scripts/increment7/verify.sh`.
 
@@ -18,7 +18,7 @@ Ensure the standalone Keycloak project is running, `portal.local` resolves to `1
 ./scripts/phase4/start.sh
 ```
 
-Startup builds the independently locked time and MTG catalog MCP services, starts Agentgateway and the existing platform services, applies migrations through `0007_generic_runtime`, and starts the portal API plus the sole generic Temporal worker. Agentgateway handles MCP and model traffic.
+Startup builds the independently locked time and MTG catalog MCP services, starts Agentgateway and the existing platform services, applies migrations through `0008_versioned_tool_schema`, and starts the portal API plus the sole generic Temporal worker. Agentgateway handles MCP and model traffic.
 
 ## Use and inspect
 
@@ -28,7 +28,7 @@ Startup builds the independently locked time and MTG catalog MCP services, start
 - Langfuse: <http://localhost:3000>
 - Keycloak: <https://keycloak.local:8443>
 
-Sign in as `alise` or `bob` with the local demo password `123456`. Select `Agent`, choose **Tool Assistant · 1.1.0**, create a conversation, and try either of these tasks:
+Sign in as `alise` or `bob` with the local demo password `123456`. Select `Agent`, choose **Tool Assistant · 1.2.0**, create a conversation, and try either of these tasks:
 
 - `Use the time tool to give the current time in Europe/Moscow.`
 - `Search the MTG catalog for Cultivate in M11, retrieve its details, and report its dated snapshot price.`

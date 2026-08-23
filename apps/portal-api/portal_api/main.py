@@ -395,6 +395,9 @@ async def get_conversation(
     result["active_turn"] = (
         turn_json(max(active_turns, key=lambda value: value.created_at)) if active_turns else None
     )
+    result["latest_turn"] = (
+        turn_json(max(item.turns, key=lambda value: value.created_at)) if item.turns else None
+    )
     return result
 
 

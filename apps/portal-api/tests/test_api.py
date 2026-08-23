@@ -7,7 +7,7 @@ from temporalio.converter import default
 
 from portal_api.config import Settings
 from portal_api.main import app, require_agent_execution_available
-from portal_api.worker import load_agent_run_plan
+from portal_api.worker import load_agent_run_plan, stored_tool_arguments, tool_rejection_result
 
 
 @pytest.fixture
@@ -50,6 +50,21 @@ def test_generic_activity_input_uses_temporal_json_compatible_hint() -> None:
     assert default().payload_converter.from_payload(payload, hint) == {
         "turn_id": "t",
         "run_snapshot_id": "s",
+    }
+
+
+def test_tool_rejection_result_is_bounded_and_retryable() -> None:
+    assert tool_rejection_result("tool_arguments_schema_invalid") == {
+        "error": "tool_arguments_schema_invalid",
+        "retryable": True,
+    }
+
+
+def test_empty_allowed_arguments_are_not_marked_rejected() -> None:
+    assert stored_tool_arguments(True, {}, "{}") == {}
+    assert stored_tool_arguments(False, {}, "{}") == {
+        "rejected": True,
+        "argument_bytes": 2,
     }
 
 

@@ -94,7 +94,7 @@ def _summary(card: dict[str, object]) -> dict[str, object]:
 
 
 def search_catalog(
-    query: str,
+    query: str = "",
     set_code: str | None = None,
     colors: list[str] | None = None,
     card_type: str | None = None,
@@ -122,10 +122,14 @@ def search_catalog(
     matches: list[dict[str, object]] = []
     for card in CARDS:
         searchable = " ".join(
-            str(card.get(field) or "") for field in ("name", "type_line", "oracle_text")
+            str(card.get(field) or "")
+            for field in ("name", "type_line", "oracle_text", "set_code", "set_name")
         ).casefold()
         amount = Decimal(str(card["price"]["amount"]))  # type: ignore[index]
-        if needle and needle not in searchable:
+        if needle and needle.upper() in MANIFEST["set_codes"]:
+            if card["set_code"] != needle.upper():
+                continue
+        elif needle and needle not in searchable:
             continue
         if normalized_set and card["set_code"] != normalized_set:
             continue
@@ -197,7 +201,7 @@ def catalog_sets() -> dict[str, object]:
 
 @mcp.tool()
 def search_cards(
-    query: str,
+    query: str = "",
     set_code: str | None = None,
     colors: list[str] | None = None,
     card_type: str | None = None,

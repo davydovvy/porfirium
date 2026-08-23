@@ -1,6 +1,6 @@
 # Agentgateway and Versioned Agent Platform Transition Plan
 
-Status: In progress — Increments 0–7 implemented; Increment 7 acceptance pending
+Status: In progress — Increments 0–7 and Milestones M1–M3 accepted; Increment 8 not started
 
 Last updated: 2026-08-23
 Starting point: Phases 0–4 implemented and accepted
@@ -418,7 +418,7 @@ Status: **Implemented on 2026-08-23.** Its bounded maintenance interval ended wh
 
 Focused implementation plan: [Increment 7 — Generic versioned agent runtime plan](INCREMENT7_PLAN.md).
 
-Status: **Implemented on 2026-08-23; final live acceptance pending.** See [Increment 7 results](INCREMENT7_RESULTS.md).
+Status: **Completed and accepted on 2026-08-23.** See [Increment 7 results](INCREMENT7_RESULTS.md).
 
 - Add `AgentRunWorkflow` and version-neutral activities.
 - Move prompts, limits, model selection, and tool grants out of worker constants into the pinned release/snapshots.
@@ -531,13 +531,13 @@ Replacing Bifrost's `x-bf-session-id` behavior must not break Langfuse trace loo
 |---|---|---|
 | M1 — Gateway seam and proof | 0–2 | Complete; Agentgateway/Yandex compatibility is proven. |
 | M2 — Agentgateway production cutover | 3–5 | Complete; LLM and MCP traffic use Agentgateway and Bifrost is removed. |
-| M3 — Versioned agent runtime | 6–7 | Conversations select immutable agent versions executed by a generic durable workflow. |
+| M3 — Versioned agent runtime | 6–7 | Complete; conversations select immutable agent versions executed by a generic durable workflow. |
 | M4 — Independent publication | 8–9 | Agents can be published from directories or created declaratively in the portal. |
 | M5 — Executable-code isolation | 10 | Independently supplied code runs in a constrained runner boundary. |
 
 No milestone combines a gateway cutover with a database/catalog or Temporal workflow migration.
 
-Current progress: Increments 0–6 and Milestones M1–M2 are complete and accepted. Increment 6.5 retired the legacy runtime, and Increment 7 now runs declarative releases through the generic workflow with Agent admission reopened. Deterministic, migration, Compose, and live worker-start gates pass; the paid restart/publication-drift scenarios remain before final Increment 7 acceptance and completion of Milestone M3.
+Current progress: Increments 0–7 and Milestones M1–M3 are complete and accepted. Increment 6.5 retired the legacy runtime; Increment 7 runs immutable declarative releases through the generic workflow with Agent admission reopened. The versioned `tool-assistant:1.2.0` correction was accepted through the portal. Increment 8 has not started.
 
 ## 15. Deferred decisions
 
