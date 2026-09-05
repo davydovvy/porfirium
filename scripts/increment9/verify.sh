@@ -4,8 +4,8 @@ set -euo pipefail
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 cd "$repo_dir"
 
-test -f docs/architecture/INCREMENT9_PLAN.md
-test -f docs/architecture/INCREMENT9_RUNBOOK.md
+test -f docs/ARCHITECTURE.md
+test -f docs/OPERATIONS.md
 test -f apps/portal-api/migrations/versions/0010_portal_agent_builder.py
 rg -q 'genai-agent-author' apps/portal-api/portal_api/authoring.py
 rg -q 'genai-agent-publisher' apps/portal-api/portal_api/authoring.py

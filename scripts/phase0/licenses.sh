@@ -10,5 +10,4 @@ docker compose config --images | while IFS= read -r image; do
   printf '%-70s %s\n' "$image" "${digest:-not-pulled}"
 done
 echo
-echo "Human-reviewed license decisions: docs/phase0/LICENSES.md"
-
+echo "Review configured image and dependency licenses before distribution."
