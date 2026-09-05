@@ -113,6 +113,11 @@ compatibility validation, access grants, publication/deprecation, and signed run
 resolution. Reuse behavior from the legacy publisher where it matches the new contract, but do not
 carry forward database-stored executable artifact bytes.
 
+Implementation status: complete. The Registry owns migrations, immutable releases, access grants,
+lifecycle audit, OIDC-authorized HTTP operations, OCI/provenance verification, and immutable signed
+run specifications. `./scripts/target-phase3/acceptance.sh` builds and pushes independent images
+and proves the exit gate against disposable Distribution and PostgreSQL services.
+
 Exit gate: two separately built agents can be published without rebuilding Registry, releases are
 immutable, access-filtered discovery works, and resolution returns an authorized signed snapshot.
 

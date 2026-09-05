@@ -3,6 +3,7 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim@sha256:531f855bda2c73cd6ef67d
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY agent_registry agent_registry
+COPY migrations migrations
 RUN uv sync --frozen --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH" \

@@ -132,15 +132,44 @@ services:
     <<: *target_service
     build:
       context: ../../services/agent-registry
+    depends_on:
+      registry-migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://agent_registry:${REGISTRY_DB_PASSWORD:?set REGISTRY_DB_PASSWORD}@postgres:5432/registry
       OCI_REGISTRY_URL: http://registry:5000
+      OCI_REGISTRY_HOST: ${OCI_REGISTRY_HOST:-registry:5000}
+      OIDC_INTROSPECTION_URL: ${OIDC_INTROSPECTION_URL:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-agent-registry}
+      REGISTRY_PUBLICATION_KEYS: ${REGISTRY_PUBLICATION_KEYS:-}
+      REGISTRY_RUN_SIGNING_KEY_FILE: ${REGISTRY_RUN_SIGNING_KEY_FILE:-}
+      REGISTRY_RUN_SIGNING_KEY_ID: ${REGISTRY_RUN_SIGNING_KEY_ID:-}
+      REGISTRY_RUN_SPECIFICATION_TTL_SECONDS: ${REGISTRY_RUN_SPECIFICATION_TTL_SECONDS:-300}
       NATS_URL: nats://nats:4222
       NATS_USER: agent_registry
       NATS_PASSWORD: ${NATS_REGISTRY_PASSWORD:?set NATS_REGISTRY_PASSWORD}
     healthcheck:
       <<: *service_healthcheck
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8102/health/ready', timeout=2)"]
+
+  registry-migrate:
+    profiles: [target]
+    build:
+      context: ../../services/agent-registry
+    restart: "no"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://agent_registry:${REGISTRY_DB_PASSWORD:?set REGISTRY_DB_PASSWORD}@postgres:5432/registry
+    command: ["python", "-m", "agent_registry.migrate"]
 
   agent-runner:
     <<: *target_service

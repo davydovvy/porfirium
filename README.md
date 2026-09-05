@@ -39,9 +39,9 @@ grants, the Agent Runner owns isolated execution, and NATS JetStream carries dur
 events. Service-owned databases and versioned contracts allow components to evolve independently.
 
 The repository still runs the previous Portal API and Temporal worker. The target implementation
-has completed the contract foundation, feasibility gates, and Phase 2 infrastructure/service
-foundation. Phase 3 Agent Registry MVP is next; the legacy runtime remains authoritative until the
-planned cutover.
+has completed the contract foundation, feasibility gates, Phase 2 infrastructure/service
+foundation, and Phase 3 Agent Registry MVP. Phase 4 Checkpoint API and SDK core is next; the legacy
+runtime remains authoritative until the planned cutover.
 
 The authoritative documents are:
 
@@ -70,6 +70,7 @@ Focused commands:
 ```bash
 ./scripts/contracts/verify.sh
 ./scripts/target-phase2/acceptance.sh
+./scripts/target-phase3/acceptance.sh
 
 cd apps/portal-api
 uv run pytest -q

@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+compose_file="$repo_dir/deploy/compose/target.yaml"
+acceptance_compose_file="$repo_dir/scripts/target-phase3/compose.yaml"
+project_name="porfirium-phase3-acceptance-$$"
+check_secret="phase3-$(date +%s)-$$"
+export PHASE3_REGISTRY_PORT
+PHASE3_REGISTRY_PORT=$(python3 -c \
+  'import socket; sock = socket.socket(); sock.bind(("127.0.0.1", 0)); print(sock.getsockname()[1]); sock.close()')
+
+export TARGET_POSTGRES_ADMIN_PASSWORD="$check_secret-admin"
+export CONVERSATION_DB_PASSWORD="$check_secret-conversation-db"
+export REGISTRY_DB_PASSWORD="$check_secret-registry-db"
+export RUNNER_DB_PASSWORD="$check_secret-runner-db"
+export RUNTIME_DB_PASSWORD="$check_secret-runtime-db"
+export DELEGATION_DB_PASSWORD="$check_secret-delegation-db"
+export CONFIGURATION_DB_PASSWORD="$check_secret-configuration-db"
+export CHECKPOINT_DB_PASSWORD="$check_secret-checkpoint-db"
+export NATS_BOOTSTRAP_PASSWORD="$check_secret-bootstrap"
+export NATS_CONVERSATION_PASSWORD="$check_secret-conversation"
+export NATS_RUNNER_PASSWORD="$check_secret-runner"
+export NATS_RUNTIME_PASSWORD="$check_secret-runtime"
+export NATS_CHECKPOINT_PASSWORD="$check_secret-checkpoint"
+export NATS_REGISTRY_PASSWORD="$check_secret-registry"
+export NATS_DELEGATION_PASSWORD="$check_secret-delegation"
+export NATS_CONFIGURATION_PASSWORD="$check_secret-configuration"
+
+compose=(
+  docker compose -p "$project_name" --profile target
+  -f "$compose_file" -f "$acceptance_compose_file"
+)
+cleanup() {
+  "${compose[@]}" down -v >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+
+"${compose[@]}" up -d --wait postgres registry
+
+fixture_dir="$repo_dir/scripts/target-phase3/fixtures"
+for release in alpha-v1 alpha-v2 beta-v1; do
+  agent=${release%-v*}-agent
+  version=${release##*-v}
+  image="localhost:$PHASE3_REGISTRY_PORT/porfirium-acceptance/$agent:$version"
+  docker build --build-arg "RELEASE=$release" -t "$image" "$fixture_dir" >/dev/null
+  docker push "$image" >/dev/null
+done
+export ALPHA_V1_DIGEST
+export ALPHA_V2_DIGEST
+export BETA_V1_DIGEST
+ALPHA_V1_DIGEST=$(docker image inspect "localhost:$PHASE3_REGISTRY_PORT/porfirium-acceptance/alpha-agent:1" \
+  --format '{{index .RepoDigests 0}}' | sed 's/.*@//')
+ALPHA_V2_DIGEST=$(docker image inspect "localhost:$PHASE3_REGISTRY_PORT/porfirium-acceptance/alpha-agent:2" \
+  --format '{{index .RepoDigests 0}}' | sed 's/.*@//')
+BETA_V1_DIGEST=$(docker image inspect "localhost:$PHASE3_REGISTRY_PORT/porfirium-acceptance/beta-agent:1" \
+  --format '{{index .RepoDigests 0}}' | sed 's/.*@//')
+
+"${compose[@]}" run --rm registry-migrate
+"${compose[@]}" run --rm --no-deps \
+  -e ALPHA_V1_DIGEST -e ALPHA_V2_DIGEST -e BETA_V1_DIGEST \
+  -v "$repo_dir/scripts/target-phase3/acceptance.py:/acceptance.py:ro" \
+  agent-registry python /acceptance.py
+
+echo "Target Phase 3 Agent Registry acceptance passed."

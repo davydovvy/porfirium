@@ -1,0 +1,4 @@
+services:
+  registry:
+    ports:
+      - "127.0.0.1:${PHASE3_REGISTRY_PORT}:5000"

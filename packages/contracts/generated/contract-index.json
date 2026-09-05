@@ -22,7 +22,7 @@
     "fixtures/events/run-suspension-committed-v1.json": "b1d4fd0f209520ec1989110ae11ff82b74a150f6f1fc91ce8af9904b956faa76",
     "fixtures/http/problem-v1.json": "b1a1200afa1febd59b79bf93b87b84c7c7aa1ac1f81057ba878f92fad6e811ba",
     "http/problem-v1.schema.json": "5d466caa6fdd9a14d0b5e67d8c2cd9045b07717a91e9149ce8c4a10fd2c4d947",
-    "openapi/agent-registry-v1.json": "2f69ace3653a56acc3a1cf466dd430a9f3cadd544d8e345783962d12c669f471",
+    "openapi/agent-registry-v1.json": "ea05017fc31b111991e388f2eb4139acd541646af4f82d4c179875ef63b3e2a1",
     "openapi/agent-runner-v1.json": "c892f7130719614b029dc0ea7764f7f3c13dd7624eb8cda72b09cc79e6b6dd48",
     "openapi/checkpoint-api-v1.json": "e49aa0e4d5db12265347c09c88b276d91b65b899ec8bc7446bfa30cd10641b6f",
     "openapi/configuration-service-v1.json": "44b5613a3422052f4ad36b7d9177ff14a4896fa5c4722b03c76b3cb29e73388f",

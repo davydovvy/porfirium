@@ -3,9 +3,9 @@
 Status: current pre-migration deployment
 
 These procedures operate the existing Portal API and Temporal-based runtime. The target Agent
-Registry, Agent Runner, SDK, and JetStream architecture has completed its contract foundation and
-feasibility phase but is not yet the deployed runtime. Target-service procedures will replace this
-document during an accepted transition.
+Registry, Agent Runner, SDK, and JetStream architecture has completed its contract foundation,
+feasibility gates, infrastructure foundation, and Agent Registry MVP, but is not yet the deployed
+runtime. Target-service procedures will replace this document during an accepted transition.
 
 ## Start
 
@@ -99,6 +99,18 @@ These gates cover backend and MCP tests, Python lint, frontend lint/tests/build,
 secret scanning, declarative runtime behavior, filesystem publication, and portal authoring.
 Provider-backed smoke tests are intentionally separate because they use credentials, external
 state, and paid APIs.
+
+Target-platform foundation and Registry verification are independent of the deployed legacy
+runtime:
+
+```bash
+./scripts/contracts/verify.sh
+./scripts/target-phase2/acceptance.sh
+./scripts/target-phase3/acceptance.sh
+```
+
+The Phase 3 gate builds temporary OCI fixtures and removes its isolated containers and volumes on
+exit. It requires Docker with Compose and an available local loopback port.
 
 ## Target-platform feasibility gates
 
