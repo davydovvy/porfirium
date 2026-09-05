@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://porfirium.local/contracts/events/run-messages-committed-v1.schema.json", "title": "Run message commit confirmation data v1",
+  "type": "object", "required": ["run_id", "message_ids", "conversation_sequence"], "additionalProperties": false,
+  "properties": {"run_id": {"type": "string", "format": "uuid"}, "message_ids": {"type": "array", "maxItems": 64, "items": {"type": "string", "format": "uuid"}}, "conversation_sequence": {"type": "integer", "minimum": 1}}
+}

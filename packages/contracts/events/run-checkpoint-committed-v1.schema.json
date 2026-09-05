@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://porfirium.local/contracts/events/run-checkpoint-committed-v1.schema.json", "title": "Run checkpoint commit confirmation data v1",
+  "type": "object", "required": ["run_id", "checkpoint_id", "checkpoint_version", "payload_sha256"], "additionalProperties": false,
+  "properties": {"run_id": {"type": "string", "format": "uuid"}, "checkpoint_id": {"type": "string", "format": "uuid"}, "checkpoint_version": {"type": "integer", "minimum": 1}, "payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://porfirium.local/contracts/events/audit-v1.schema.json", "title": "Security audit data v1",
+  "type": "object", "required": ["action", "outcome", "resource_type", "resource_id"], "additionalProperties": false,
+  "properties": {"action": {"type": "string", "minLength": 1, "maxLength": 96}, "outcome": {"enum": ["allowed", "denied", "failed"]}, "reason_code": {"type": ["string", "null"], "maxLength": 64}, "resource_type": {"type": "string", "minLength": 1, "maxLength": 64}, "resource_id": {"type": "string", "minLength": 1, "maxLength": 128}, "policy_version": {"type": ["string", "null"], "maxLength": 64}}
+}

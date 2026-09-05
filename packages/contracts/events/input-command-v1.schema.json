@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://porfirium.local/contracts/events/input-command-v1.schema.json", "title": "User input command data v1",
+  "type": "object", "required": ["input_request_id", "response_id", "resume_run_id", "idempotency_key", "response"], "additionalProperties": false,
+  "properties": {"input_request_id": {"type": "string", "format": "uuid"}, "response_id": {"type": "string", "format": "uuid"}, "resume_run_id": {"type": "string", "format": "uuid"}, "idempotency_key": {"type": "string", "minLength": 8, "maxLength": 128}, "response": {}}
+}

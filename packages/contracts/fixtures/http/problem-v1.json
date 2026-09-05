@@ -1,0 +1,8 @@
+{
+  "type": "https://porfirium.local/problems/idempotency-conflict",
+  "title": "The idempotency key was reused with different input",
+  "status": 409,
+  "code": "idempotency_conflict",
+  "correlation_id": "4cb7bfa4-5c1a-4d64-9e3d-23e44bc45933",
+  "retryable": false
+}

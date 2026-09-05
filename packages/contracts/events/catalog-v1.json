@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "events": {
+    "porfirium.run.command.schedule.v1": {"stream": "RUN_COMMANDS", "subject": "porfirium.run.command.schedule", "data_schema": "run-command-v1.schema.json", "fixture": "../fixtures/events/run-command-schedule-v1.json"},
+    "porfirium.run.command.cancel.v1": {"stream": "RUN_COMMANDS", "subject": "porfirium.run.command.cancel", "data_schema": "run-command-v1.schema.json"},
+    "porfirium.run.accepted.v1": {"stream": "RUN_EVENTS", "subject": "porfirium.run.event.accepted", "data_schema": "run-lifecycle-v1.schema.json"},
+    "porfirium.run.started.v1": {"stream": "RUN_EVENTS", "subject": "porfirium.run.event.started", "data_schema": "run-lifecycle-v1.schema.json"},
+    "porfirium.run.completed.v1": {"stream": "RUN_EVENTS", "subject": "porfirium.run.event.completed", "data_schema": "run-lifecycle-v1.schema.json"},
+    "porfirium.run.failed.v1": {"stream": "RUN_EVENTS", "subject": "porfirium.run.event.failed", "data_schema": "run-lifecycle-v1.schema.json"},
+    "porfirium.run.cancelled.v1": {"stream": "RUN_EVENTS", "subject": "porfirium.run.event.cancelled", "data_schema": "run-lifecycle-v1.schema.json"},
+    "porfirium.run.result_proposed.v1": {"stream": "RUN_EVENTS", "subject": "porfirium.run.event.result_proposed", "data_schema": "run-result-proposed-v1.schema.json", "fixture": "../fixtures/events/run-result-proposed-v1.json"},
+    "porfirium.run.messages_committed.v1": {"stream": "RUN_EVENTS", "subject": "porfirium.run.event.messages_committed", "data_schema": "run-messages-committed-v1.schema.json"},
+    "porfirium.run.checkpoint_committed.v1": {"stream": "RUN_EVENTS", "subject": "porfirium.run.event.checkpoint_committed", "data_schema": "run-checkpoint-committed-v1.schema.json"},
+    "porfirium.run.suspension_committed.v1": {"stream": "RUN_EVENTS", "subject": "porfirium.run.event.suspension_committed", "data_schema": "run-suspension-committed-v1.schema.json", "fixture": "../fixtures/events/run-suspension-committed-v1.json"},
+    "porfirium.message.delta.v1": {"stream": "MESSAGE_DELTAS", "subject": "porfirium.message.delta.*", "data_schema": "message-delta-v1.schema.json", "fixture": "../fixtures/events/message-delta-v1.json"},
+    "porfirium.message.completed.v1": {"stream": "CONVERSATION_EVENTS", "subject": "porfirium.conversation.event.message-completed", "data_schema": "message-completed-v1.schema.json"},
+    "porfirium.input.request_created.v1": {"stream": "CONVERSATION_EVENTS", "subject": "porfirium.conversation.event.input_request_created", "data_schema": "input-request-created-v1.schema.json"},
+    "porfirium.input.command.respond.v1": {"stream": "USER_INPUT", "subject": "porfirium.input.command.respond", "data_schema": "input-command-v1.schema.json", "fixture": "../fixtures/events/input-command-v1.json"},
+    "porfirium.audit.security.v1": {"stream": "AUDIT_EVENTS", "subject": "porfirium.audit.event.security", "data_schema": "audit-v1.schema.json"},
+    "porfirium.dlq.message.v1": {"stream": "DEAD_LETTERS", "subject": "porfirium.dlq.message", "data_schema": "dead-letter-v1.schema.json"}
+  }
+}

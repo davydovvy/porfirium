@@ -52,14 +52,22 @@ The authoritative documents are:
 - [Agent configuration](docs/architecture/CONFIGURATION.md) — values, revisions, and secret handling
 - [Agent SDK](docs/architecture/AGENT_SDK.md) — supported agent-facing interface
 - [Planning handoff](docs/architecture/IMPLEMENTATION_HANDOFF.md) — accepted decisions and inputs
+- [Implementation plan](docs/IMPLEMENTATION_PLAN.md) — active sequence, gates, and cutover strategy
 - [Operations](docs/OPERATIONS.md) — currently deployed stack procedures
 - [Glossary](docs/architecture/GLOSSARY.md) — domain terminology
+
+Target service interfaces are maintained separately from service implementations in
+[`packages/contracts`](packages/contracts). They currently establish Registry, Runner,
+Conversation, Checkpoint, Configuration, and Identity Delegation HTTP boundaries, durable message
+events, common HTTP errors, and the SDK/Runtime stream.
 
 ## Development
 
 Focused commands:
 
 ```bash
+./scripts/contracts/verify.sh
+
 cd apps/portal-api
 uv run pytest -q
 uv run ruff check .

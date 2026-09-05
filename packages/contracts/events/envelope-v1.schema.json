@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://porfirium.local/contracts/events/envelope-v1.schema.json",
+  "title": "Porfirium durable event envelope v1",
+  "type": "object",
+  "required": [
+    "specversion", "type", "id", "source", "subject", "time", "user_id",
+    "correlation_id", "causation_id", "traceparent", "schema_version", "data"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "specversion": {"const": "1.0"},
+    "type": {"type": "string", "pattern": "^porfirium\\.[a-z0-9_.-]+\\.v1$", "maxLength": 128},
+    "id": {"type": "string", "format": "uuid"},
+    "source": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$"},
+    "subject": {"type": "string", "minLength": 1, "maxLength": 256},
+    "time": {"type": "string", "format": "date-time"},
+    "user_id": {"type": "string", "format": "uuid"},
+    "conversation_id": {"type": "string", "format": "uuid"},
+    "thread_id": {"type": "string", "format": "uuid"},
+    "run_id": {"type": "string", "format": "uuid"},
+    "attempt_id": {"type": "string", "format": "uuid"},
+    "lease_epoch": {"type": "integer", "minimum": 1},
+    "correlation_id": {"type": "string", "format": "uuid"},
+    "causation_id": {"type": "string", "format": "uuid"},
+    "traceparent": {"type": "string", "pattern": "^00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$"},
+    "schema_version": {"const": 1},
+    "aggregate_sequence": {"type": "integer", "minimum": 1},
+    "data": {"type": "object"}
+  }
+}

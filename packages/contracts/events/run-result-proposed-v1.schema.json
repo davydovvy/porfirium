@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://porfirium.local/contracts/events/run-result-proposed-v1.schema.json", "title": "Run result proposal data v1",
+  "type": "object", "required": ["run_id", "attempt_id", "lease_epoch", "final_message_ids", "required_confirmations"], "additionalProperties": false,
+  "properties": {"run_id": {"type": "string", "format": "uuid"}, "attempt_id": {"type": "string", "format": "uuid"}, "lease_epoch": {"type": "integer", "minimum": 1}, "final_message_ids": {"type": "array", "maxItems": 64, "items": {"type": "string", "format": "uuid"}}, "final_checkpoint_id": {"type": ["string", "null"], "format": "uuid"}, "required_confirmations": {"type": "array", "maxItems": 2, "items": {"enum": ["messages", "checkpoint"]}}}
+}

@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://porfirium.local/contracts/events/dead-letter-v1.schema.json", "title": "Dead-letter diagnostic data v1",
+  "type": "object", "required": ["original_event_id", "original_type", "consumer", "attempts", "error_code", "first_failed_at", "last_failed_at"], "additionalProperties": false,
+  "properties": {"original_event_id": {"type": "string", "format": "uuid"}, "original_type": {"type": "string", "maxLength": 128}, "consumer": {"type": "string", "maxLength": 128}, "attempts": {"type": "integer", "minimum": 1}, "error_code": {"type": "string", "maxLength": 64}, "first_failed_at": {"type": "string", "format": "date-time"}, "last_failed_at": {"type": "string", "format": "date-time"}}
+}

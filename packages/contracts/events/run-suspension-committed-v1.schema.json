@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://porfirium.local/contracts/events/run-suspension-committed-v1.schema.json", "title": "Run suspension commitment data v1",
+  "type": "object", "required": ["run_id", "suspension_id", "checkpoint_id", "input_request_id"], "additionalProperties": false,
+  "properties": {"run_id": {"type": "string", "format": "uuid"}, "suspension_id": {"type": "string", "format": "uuid"}, "checkpoint_id": {"type": "string", "format": "uuid"}, "input_request_id": {"type": "string", "format": "uuid"}}
+}

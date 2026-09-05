@@ -1,0 +1,114 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "Porfirium Agent Registry API", "version": "1.0.0"},
+  "servers": [{"url": "/v1"}],
+  "security": [{"serviceOAuth": []}],
+  "paths": {
+    "/agents": {
+      "get": {
+        "operationId": "listVisibleAgents",
+        "responses": {
+          "200": {
+            "description": "Agents visible to the authenticated caller",
+            "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/AgentSummary"}}}}
+          },
+          "default": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    },
+    "/agents/{agent_id}/versions/{version}": {
+      "get": {
+        "operationId": "getVisibleAgentRelease",
+        "parameters": [
+          {"$ref": "#/components/parameters/AgentId"},
+          {"name": "version", "in": "path", "required": true, "schema": {"type": "string", "maxLength": 32}}
+        ],
+        "responses": {
+          "200": {"description": "Visible immutable release", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Release"}}}},
+          "default": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    },
+    "/releases": {
+      "post": {
+        "operationId": "publishRelease",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PublishRelease"}}}},
+        "responses": {
+          "201": {"description": "Published immutable release", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Release"}}}},
+          "default": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    },
+    "/releases/{release_id}:deprecate": {
+      "post": {
+        "operationId": "deprecateRelease",
+        "parameters": [
+          {"name": "release_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "responses": {
+          "200": {"description": "Deprecated release", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Release"}}}},
+          "default": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    },
+    "/run-specifications:resolve": {
+      "post": {
+        "operationId": "resolveRunSpecification",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ResolveRunSpecification"}}}},
+        "responses": {
+          "200": {"description": "Signed immutable run specification", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SignedRunSpecification"}}}},
+          "default": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {"serviceOAuth": {"type": "oauth2", "flows": {"clientCredentials": {"tokenUrl": "https://keycloak.local/token", "scopes": {}}}}},
+    "parameters": {
+      "IdempotencyKey": {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 8, "maxLength": 128}},
+      "AgentId": {"name": "agent_id", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$"}}
+    },
+    "responses": {
+      "Problem": {"description": "Bounded machine-readable error", "content": {"application/problem+json": {"schema": {"$ref": "../http/problem-v1.schema.json"}}}}
+    },
+    "schemas": {
+      "AgentSummary": {
+        "type": "object", "required": ["agent_id", "name", "description"], "additionalProperties": false,
+        "properties": {"agent_id": {"type": "string"}, "name": {"type": "string"}, "description": {"type": "string"}, "default_release_id": {"type": ["string", "null"], "format": "uuid"}}
+      },
+      "Release": {
+        "type": "object", "required": ["release_id", "agent_id", "version", "image", "manifest", "status"], "additionalProperties": false,
+        "properties": {
+          "release_id": {"type": "string", "format": "uuid"}, "agent_id": {"type": "string"}, "version": {"type": "string"},
+          "image": {"type": "string", "pattern": "^[^@]+@sha256:[0-9a-f]{64}$"}, "manifest": {"type": "object"},
+          "status": {"enum": ["published", "deprecated"]}
+        }
+      },
+      "PublishRelease": {
+        "type": "object", "required": ["manifest", "image", "provenance"], "additionalProperties": false,
+        "properties": {"manifest": {"type": "object"}, "image": {"type": "string"}, "provenance": {"type": "object"}}
+      },
+      "ResolveRunSpecification": {
+        "type": "object", "required": ["run_id", "user_id", "conversation_id", "thread_id", "release_id", "delegation_grant_id", "trace_id"], "additionalProperties": false,
+        "properties": {
+          "run_id": {"type": "string", "format": "uuid"}, "user_id": {"type": "string", "format": "uuid"},
+          "conversation_id": {"type": "string", "format": "uuid"}, "thread_id": {"type": "string", "format": "uuid"},
+          "release_id": {"type": "string", "format": "uuid"}, "delegation_grant_id": {"type": "string", "format": "uuid"},
+          "configuration_revision_id": {"type": ["string", "null"], "format": "uuid"}, "starting_checkpoint_id": {"type": ["string", "null"], "format": "uuid"},
+          "trace_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"}
+        }
+      },
+      "SignedRunSpecification": {
+        "type": "object", "required": ["specification_id", "run_id", "payload", "payload_sha256", "signature", "key_id"], "additionalProperties": false,
+        "properties": {
+          "specification_id": {"type": "string", "format": "uuid"}, "run_id": {"type": "string", "format": "uuid"},
+          "payload": {"type": "object"}, "payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "signature": {"type": "string", "contentEncoding": "base64"}, "key_id": {"type": "string", "maxLength": 128}
+        }
+      }
+    }
+  }
+}

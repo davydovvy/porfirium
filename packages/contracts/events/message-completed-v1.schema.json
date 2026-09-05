@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://porfirium.local/contracts/events/message-completed-v1.schema.json",
+  "title": "Message completion data v1",
+  "type": "object",
+  "required": [
+    "message_id", "content", "chunk_count", "content_bytes", "content_sha256",
+    "finish_reason", "usage"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "message_id": {"type": "string", "format": "uuid"},
+    "content": {"type": "string", "maxLength": 262144},
+    "chunk_count": {"type": "integer", "minimum": 0, "maximum": 65536},
+    "content_bytes": {"type": "integer", "minimum": 0, "maximum": 262144},
+    "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "finish_reason": {"enum": ["stop", "length", "cancelled", "tool", "other"]},
+    "usage": {"type": "object", "maxProperties": 16}
+  }
+}

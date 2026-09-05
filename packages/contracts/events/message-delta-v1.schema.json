@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://porfirium.local/contracts/events/message-delta-v1.schema.json",
+  "title": "Message delta data v1",
+  "type": "object",
+  "required": ["message_id", "chunk_sequence", "content"],
+  "additionalProperties": false,
+  "properties": {
+    "message_id": {"type": "string", "format": "uuid"},
+    "chunk_sequence": {"type": "integer", "minimum": 1},
+    "content": {"type": "string", "minLength": 1, "maxLength": 4096}
+  }
+}

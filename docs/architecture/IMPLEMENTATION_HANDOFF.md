@@ -1,9 +1,10 @@
 # Architecture handoff for implementation planning
 
-Status: architecture decisions accepted; implementation sequencing intentionally undecided
+Status: architecture decisions accepted; implementation sequencing established
 
-This document is the entry point for a future implementation-planning session. It records what is
-fixed, what remains an implementation choice, and what evidence the plan must preserve.
+This document records what is fixed, what remains an implementation choice, and what evidence the
+implementation must preserve. The active sequencing and phase gates are maintained in
+[Target implementation plan](../IMPLEMENTATION_PLAN.md).
 
 ## Accepted decisions
 
@@ -56,9 +57,9 @@ fixed, what remains an implementation choice, and what evidence the plan must pr
 If documents conflict, the more focused contract governs its subject. Any discovered conflict must
 be resolved in the architecture set before implementation relies on it.
 
-## Inputs the implementation plan must produce
+## Inputs preserved by the implementation plan
 
-The future plan must define:
+The active plan and its phase deliverables must define:
 
 - repository layout and extraction order for every target deployable;
 - API/event schema package format and code-generation workflow;

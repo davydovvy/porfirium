@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://porfirium.local/contracts/events/run-lifecycle-v1.schema.json", "title": "Run lifecycle data v1",
+  "type": "object", "required": ["run_id", "state"], "additionalProperties": false,
+  "properties": {"run_id": {"type": "string", "format": "uuid"}, "state": {"enum": ["accepted", "scheduled", "starting", "running", "suspending", "waiting_for_input", "completion_reconciling", "cancelling", "completed", "failed", "cancelled"]}, "attempt_id": {"type": ["string", "null"], "format": "uuid"}, "lease_epoch": {"type": ["integer", "null"], "minimum": 1}, "code": {"type": ["string", "null"], "maxLength": 64}}
+}

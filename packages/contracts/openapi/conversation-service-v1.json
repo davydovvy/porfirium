@@ -1,0 +1,40 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "Porfirium Conversation Service API", "version": "1.0.0"},
+  "servers": [{"url": "/v1"}],
+  "security": [{"serviceOAuth": []}],
+  "paths": {
+    "/conversations": {
+      "get": {"operationId": "listConversations", "responses": {"200": {"description": "Caller-visible conversations", "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/Conversation"}}}}}, "default": {"$ref": "#/components/responses/Problem"}}},
+      "post": {"operationId": "createConversation", "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CreateConversation"}}}}, "responses": {"201": {"description": "Created conversation", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Conversation"}}}}, "default": {"$ref": "#/components/responses/Problem"}}}
+    },
+    "/conversations/{conversation_id}": {
+      "get": {"operationId": "getConversation", "parameters": [{"$ref": "#/components/parameters/ConversationId"}], "responses": {"200": {"description": "Authoritative conversation projection", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ConversationProjection"}}}}, "default": {"$ref": "#/components/responses/Problem"}}}
+    },
+    "/conversations/{conversation_id}/messages": {
+      "post": {"operationId": "createUserMessage", "parameters": [{"$ref": "#/components/parameters/ConversationId"}, {"$ref": "#/components/parameters/IdempotencyKey"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CreateUserMessage"}}}}, "responses": {"202": {"description": "Message stored and run intent committed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MessageAccepted"}}}}, "default": {"$ref": "#/components/responses/Problem"}}}
+    },
+    "/conversations/{conversation_id}/events": {
+      "get": {"operationId": "streamConversationEvents", "parameters": [{"$ref": "#/components/parameters/ConversationId"}, {"name": "Last-Event-ID", "in": "header", "required": false, "schema": {"type": "integer", "minimum": 0}}], "responses": {"200": {"description": "Replay followed by live ordered events", "content": {"text/event-stream": {"schema": {"type": "string"}}}}, "default": {"$ref": "#/components/responses/Problem"}}}
+    },
+    "/input-requests/{input_request_id}/responses": {
+      "post": {"operationId": "answerInputRequest", "parameters": [{"name": "input_request_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}, {"$ref": "#/components/parameters/IdempotencyKey"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/InputResponse"}}}}, "responses": {"202": {"description": "Effective response and resume-run intent", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MessageAccepted"}}}}, "default": {"$ref": "#/components/responses/Problem"}}}
+    }
+  },
+  "components": {
+    "securitySchemes": {"serviceOAuth": {"type": "oauth2", "flows": {"clientCredentials": {"tokenUrl": "https://keycloak.local/token", "scopes": {}}}}},
+    "parameters": {
+      "IdempotencyKey": {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 8, "maxLength": 128}},
+      "ConversationId": {"name": "conversation_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+    },
+    "responses": {"Problem": {"description": "Bounded error", "content": {"application/problem+json": {"schema": {"$ref": "../http/problem-v1.schema.json"}}}}},
+    "schemas": {
+      "CreateConversation": {"type": "object", "required": ["title", "release_id", "thread_id"], "additionalProperties": false, "properties": {"title": {"type": "string", "minLength": 1, "maxLength": 200}, "release_id": {"type": "string", "format": "uuid"}, "thread_id": {"type": "string", "format": "uuid"}, "configuration_revision_id": {"type": ["string", "null"], "format": "uuid"}}},
+      "Conversation": {"type": "object", "required": ["conversation_id", "thread_id", "release_id", "title", "created_at", "updated_at"], "additionalProperties": false, "properties": {"conversation_id": {"type": "string", "format": "uuid"}, "thread_id": {"type": "string", "format": "uuid"}, "release_id": {"type": "string", "format": "uuid"}, "configuration_revision_id": {"type": ["string", "null"], "format": "uuid"}, "title": {"type": "string"}, "created_at": {"type": "string", "format": "date-time"}, "updated_at": {"type": "string", "format": "date-time"}}},
+      "ConversationProjection": {"allOf": [{"$ref": "#/components/schemas/Conversation"}, {"type": "object", "required": ["messages", "input_requests", "last_sequence"], "properties": {"messages": {"type": "array", "items": {"type": "object"}}, "input_requests": {"type": "array", "items": {"type": "object"}}, "last_sequence": {"type": "integer", "minimum": 0}}}]},
+      "CreateUserMessage": {"type": "object", "required": ["message_id", "run_id", "content", "delegation_grant_id"], "additionalProperties": false, "properties": {"message_id": {"type": "string", "format": "uuid"}, "run_id": {"type": "string", "format": "uuid"}, "content": {"type": "string", "minLength": 1, "maxLength": 20000}, "delegation_grant_id": {"type": "string", "format": "uuid"}}},
+      "MessageAccepted": {"type": "object", "required": ["message_id", "run_id", "conversation_sequence"], "additionalProperties": false, "properties": {"message_id": {"type": "string", "format": "uuid"}, "run_id": {"type": "string", "format": "uuid"}, "conversation_sequence": {"type": "integer", "minimum": 1}}},
+      "InputResponse": {"type": "object", "required": ["run_id", "response"], "additionalProperties": false, "properties": {"run_id": {"type": "string", "format": "uuid"}, "response": {}}}
+    }
+  }
+}

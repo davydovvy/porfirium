@@ -1,0 +1,33 @@
+{
+  "format_version": 1,
+  "sources": {
+    "events/audit-v1.schema.json": "313a2e3d6f8a588f806eb7528d9031939a0f503b3cda33d57b17eaea212d4549",
+    "events/catalog-v1.json": "21ef0de011761d39c3c6f6909a40934b4440fadba900324d07bac54c25b37522",
+    "events/dead-letter-v1.schema.json": "3b1b8dedcdabe35bb1708fb79fa8f39d3f0aae697285aedc6ece271a451ccb1e",
+    "events/envelope-v1.schema.json": "0fbef5649b2083c05ecf395505b94a24028a62e98b5bbc107aeb300f8c55e236",
+    "events/input-command-v1.schema.json": "179cb55a1dc45d73ba722a04ef439aaf96e3eb237734986bc19c94a04c0d8751",
+    "events/input-request-created-v1.schema.json": "9a2ecf497353a59ef54977a7110c2dad21f28891d783c5d6242593113faa0ada",
+    "events/message-completed-v1.schema.json": "b9df2c38399fd4fc9286b3e4ed140f13ccd29070478678ed125ca1af12d7e724",
+    "events/message-delta-v1.schema.json": "4c8e9150bdc6bf9607190359a9c14eb41ab20787570f7dcae300f39be4572048",
+    "events/run-checkpoint-committed-v1.schema.json": "91a150dbbfda6d9940cb312901beb1315c769436a2f2ecbe463411ab0823e4e1",
+    "events/run-command-v1.schema.json": "87a1ab5f98f4cc6956109d60f171aa1080dd2699e193029eaf166700ec6acbb0",
+    "events/run-lifecycle-v1.schema.json": "92782680dfded334143ae8cd9a34e282ca1de908c95d64f3b4e24a8a644fb9f2",
+    "events/run-messages-committed-v1.schema.json": "decdbae526ad3ec0bc43744c9ab87aa4d111e3ccdbc4a8cea887b1bc10cac7e3",
+    "events/run-result-proposed-v1.schema.json": "739ceaadb4757d54aaf948b0a178674e0751796eab523a5de9fd8dcb2251ffd1",
+    "events/run-suspension-committed-v1.schema.json": "3b3d603e0f5fca0ff96d23e98560d2bb575065ff2b9b061ae407a15120828996",
+    "fixtures/events/input-command-v1.json": "faede9c4f385f0e645d57bd029515fc5961098bd4303942a3c6d17da8598fd88",
+    "fixtures/events/message-delta-v1.json": "30b92b5ed6de5b7362f03caacf37002fa62b13eadb2a671603040fabead6619e",
+    "fixtures/events/run-command-schedule-v1.json": "783eb415458dc1d25863280d2ce62c055ea960dd58bc2594532fa7b28df022c4",
+    "fixtures/events/run-result-proposed-v1.json": "5ee7acbb0d99e86b7083c3fef6c60b2957b2189aeeaeaeb19110537b0f2e8754",
+    "fixtures/events/run-suspension-committed-v1.json": "b1d4fd0f209520ec1989110ae11ff82b74a150f6f1fc91ce8af9904b956faa76",
+    "fixtures/http/problem-v1.json": "b1a1200afa1febd59b79bf93b87b84c7c7aa1ac1f81057ba878f92fad6e811ba",
+    "http/problem-v1.schema.json": "5d466caa6fdd9a14d0b5e67d8c2cd9045b07717a91e9149ce8c4a10fd2c4d947",
+    "openapi/agent-registry-v1.json": "2f69ace3653a56acc3a1cf466dd430a9f3cadd544d8e345783962d12c669f471",
+    "openapi/agent-runner-v1.json": "c892f7130719614b029dc0ea7764f7f3c13dd7624eb8cda72b09cc79e6b6dd48",
+    "openapi/checkpoint-api-v1.json": "e49aa0e4d5db12265347c09c88b276d91b65b899ec8bc7446bfa30cd10641b6f",
+    "openapi/configuration-service-v1.json": "44b5613a3422052f4ad36b7d9177ff14a4896fa5c4722b03c76b3cb29e73388f",
+    "openapi/conversation-service-v1.json": "f837748fb8c938c3934c4992d97b2d10c177ca782975353e721d12e1d718c0ed",
+    "openapi/identity-delegation-v1.json": "fc72f0526561b90c9591191c49eae3476c76843459e25f88830054e352602fec",
+    "protobuf/porfirium/runtime/v1/runtime.proto": "904cd325c6e4a3aea94114d74ba3db188806fe88447185679b16e55cd32bc21f"
+  }
+}

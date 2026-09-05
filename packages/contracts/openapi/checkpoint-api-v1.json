@@ -1,0 +1,20 @@
+{
+  "openapi": "3.1.0", "info": {"title": "Porfirium Checkpoint API", "version": "1.0.0"}, "servers": [{"url": "/v1"}], "security": [{"runCapability": []}],
+  "paths": {
+    "/threads/{thread_id}/checkpoints": {"get": {"operationId": "listCheckpoints", "parameters": [{"$ref": "#/components/parameters/ThreadId"}], "responses": {"200": {"description": "Authorized checkpoint metadata", "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/CheckpointMetadata"}}}}}, "default": {"$ref": "#/components/responses/Problem"}}}},
+    "/threads/{thread_id}/checkpoints/{checkpoint_id}": {
+      "get": {"operationId": "getCheckpoint", "parameters": [{"$ref": "#/components/parameters/ThreadId"}, {"$ref": "#/components/parameters/CheckpointId"}], "responses": {"200": {"description": "Checkpoint and opaque payload", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Checkpoint"}}}}, "default": {"$ref": "#/components/responses/Problem"}}},
+      "put": {"operationId": "putCheckpoint", "parameters": [{"$ref": "#/components/parameters/ThreadId"}, {"$ref": "#/components/parameters/CheckpointId"}, {"$ref": "#/components/parameters/IdempotencyKey"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PutCheckpoint"}}}}, "responses": {"200": {"description": "Idempotently committed checkpoint", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CheckpointMetadata"}}}}, "default": {"$ref": "#/components/responses/Problem"}}}
+    }
+  },
+  "components": {
+    "securitySchemes": {"runCapability": {"type": "http", "scheme": "bearer", "bearerFormat": "run-capability"}},
+    "parameters": {"IdempotencyKey": {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 8, "maxLength": 128}}, "ThreadId": {"name": "thread_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}, "CheckpointId": {"name": "checkpoint_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}},
+    "responses": {"Problem": {"description": "Bounded error", "content": {"application/problem+json": {"schema": {"$ref": "../http/problem-v1.schema.json"}}}}},
+    "schemas": {
+      "CheckpointMetadata": {"type": "object", "required": ["checkpoint_id", "thread_id", "version", "serialization_version", "payload_sha256", "created_at"], "additionalProperties": false, "properties": {"checkpoint_id": {"type": "string", "format": "uuid"}, "thread_id": {"type": "string", "format": "uuid"}, "version": {"type": "integer", "minimum": 1}, "serialization_version": {"type": "string", "maxLength": 32}, "payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "created_at": {"type": "string", "format": "date-time"}}},
+      "Checkpoint": {"allOf": [{"$ref": "#/components/schemas/CheckpointMetadata"}, {"type": "object", "required": ["payload"], "properties": {"payload": {"type": "string", "contentEncoding": "base64", "maxLength": 1398104}}}]},
+      "PutCheckpoint": {"type": "object", "required": ["run_id", "attempt_id", "lease_epoch", "expected_version", "serialization_version", "payload", "payload_sha256"], "additionalProperties": false, "properties": {"run_id": {"type": "string", "format": "uuid"}, "attempt_id": {"type": "string", "format": "uuid"}, "lease_epoch": {"type": "integer", "minimum": 1}, "expected_version": {"type": "integer", "minimum": 0}, "serialization_version": {"type": "string", "maxLength": 32}, "payload": {"type": "string", "contentEncoding": "base64", "maxLength": 1398104}, "payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}
+    }
+  }
+}

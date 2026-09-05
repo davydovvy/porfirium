@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://porfirium.local/contracts/events/input-request-created-v1.schema.json", "title": "Input request created data v1",
+  "type": "object", "required": ["input_request_id", "suspension_id", "checkpoint_id", "prompt", "response_schema", "expires_at"], "additionalProperties": false,
+  "properties": {"input_request_id": {"type": "string", "format": "uuid"}, "suspension_id": {"type": "string", "format": "uuid"}, "checkpoint_id": {"type": "string", "format": "uuid"}, "prompt": {"type": "string", "minLength": 1, "maxLength": 4096}, "response_schema": {"type": "object"}, "expires_at": {"type": ["string", "null"], "format": "date-time"}}
+}

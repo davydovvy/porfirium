@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://porfirium.local/contracts/http/problem-v1.schema.json",
+  "title": "Porfirium API problem v1",
+  "type": "object",
+  "required": ["type", "title", "status", "code", "correlation_id", "retryable"],
+  "additionalProperties": false,
+  "properties": {
+    "type": {"type": "string", "format": "uri", "maxLength": 512},
+    "title": {"type": "string", "minLength": 1, "maxLength": 256},
+    "status": {"type": "integer", "minimum": 400, "maximum": 599},
+    "code": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
+    "correlation_id": {"type": "string", "format": "uuid"},
+    "retryable": {"type": "boolean"},
+    "details": {"type": "object", "maxProperties": 16}
+  }
+}

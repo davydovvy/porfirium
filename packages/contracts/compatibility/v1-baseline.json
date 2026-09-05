@@ -1,0 +1,1094 @@
+{
+  "documents": {
+    "events/audit-v1.schema.json": {
+      "$.action:maxLength": 96,
+      "$.action:minLength": 1,
+      "$.action:type": "string",
+      "$.outcome:enum": [
+        "allowed",
+        "denied",
+        "failed"
+      ],
+      "$.policy_version:maxLength": 64,
+      "$.policy_version:type": [
+        "string",
+        "null"
+      ],
+      "$.reason_code:maxLength": 64,
+      "$.reason_code:type": [
+        "string",
+        "null"
+      ],
+      "$.resource_id:maxLength": 128,
+      "$.resource_id:minLength": 1,
+      "$.resource_id:type": "string",
+      "$.resource_type:maxLength": 64,
+      "$.resource_type:minLength": 1,
+      "$.resource_type:type": "string",
+      "$:required": [
+        "action",
+        "outcome",
+        "resource_id",
+        "resource_type"
+      ],
+      "$:type": "object"
+    },
+    "events/dead-letter-v1.schema.json": {
+      "$.attempts:minimum": 1,
+      "$.attempts:type": "integer",
+      "$.consumer:maxLength": 128,
+      "$.consumer:type": "string",
+      "$.error_code:maxLength": 64,
+      "$.error_code:type": "string",
+      "$.first_failed_at:format": "date-time",
+      "$.first_failed_at:type": "string",
+      "$.last_failed_at:format": "date-time",
+      "$.last_failed_at:type": "string",
+      "$.original_event_id:format": "uuid",
+      "$.original_event_id:type": "string",
+      "$.original_type:maxLength": 128,
+      "$.original_type:type": "string",
+      "$:required": [
+        "attempts",
+        "consumer",
+        "error_code",
+        "first_failed_at",
+        "last_failed_at",
+        "original_event_id",
+        "original_type"
+      ],
+      "$:type": "object"
+    },
+    "events/envelope-v1.schema.json": {
+      "$.aggregate_sequence:minimum": 1,
+      "$.aggregate_sequence:type": "integer",
+      "$.attempt_id:format": "uuid",
+      "$.attempt_id:type": "string",
+      "$.causation_id:format": "uuid",
+      "$.causation_id:type": "string",
+      "$.conversation_id:format": "uuid",
+      "$.conversation_id:type": "string",
+      "$.correlation_id:format": "uuid",
+      "$.correlation_id:type": "string",
+      "$.data:type": "object",
+      "$.id:format": "uuid",
+      "$.id:type": "string",
+      "$.lease_epoch:minimum": 1,
+      "$.lease_epoch:type": "integer",
+      "$.run_id:format": "uuid",
+      "$.run_id:type": "string",
+      "$.schema_version:const": 1,
+      "$.source:pattern": "^[a-z][a-z0-9-]{0,62}$",
+      "$.source:type": "string",
+      "$.specversion:const": "1.0",
+      "$.subject:maxLength": 256,
+      "$.subject:minLength": 1,
+      "$.subject:type": "string",
+      "$.thread_id:format": "uuid",
+      "$.thread_id:type": "string",
+      "$.time:format": "date-time",
+      "$.time:type": "string",
+      "$.traceparent:pattern": "^00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$",
+      "$.traceparent:type": "string",
+      "$.type:maxLength": 128,
+      "$.type:pattern": "^porfirium\\.[a-z0-9_.-]+\\.v1$",
+      "$.type:type": "string",
+      "$.user_id:format": "uuid",
+      "$.user_id:type": "string",
+      "$:required": [
+        "causation_id",
+        "correlation_id",
+        "data",
+        "id",
+        "schema_version",
+        "source",
+        "specversion",
+        "subject",
+        "time",
+        "traceparent",
+        "type",
+        "user_id"
+      ],
+      "$:type": "object"
+    },
+    "events/input-command-v1.schema.json": {
+      "$.idempotency_key:maxLength": 128,
+      "$.idempotency_key:minLength": 8,
+      "$.idempotency_key:type": "string",
+      "$.input_request_id:format": "uuid",
+      "$.input_request_id:type": "string",
+      "$.response_id:format": "uuid",
+      "$.response_id:type": "string",
+      "$.resume_run_id:format": "uuid",
+      "$.resume_run_id:type": "string",
+      "$:required": [
+        "idempotency_key",
+        "input_request_id",
+        "response",
+        "response_id",
+        "resume_run_id"
+      ],
+      "$:type": "object"
+    },
+    "events/input-request-created-v1.schema.json": {
+      "$.checkpoint_id:format": "uuid",
+      "$.checkpoint_id:type": "string",
+      "$.expires_at:format": "date-time",
+      "$.expires_at:type": [
+        "string",
+        "null"
+      ],
+      "$.input_request_id:format": "uuid",
+      "$.input_request_id:type": "string",
+      "$.prompt:maxLength": 4096,
+      "$.prompt:minLength": 1,
+      "$.prompt:type": "string",
+      "$.response_schema:type": "object",
+      "$.suspension_id:format": "uuid",
+      "$.suspension_id:type": "string",
+      "$:required": [
+        "checkpoint_id",
+        "expires_at",
+        "input_request_id",
+        "prompt",
+        "response_schema",
+        "suspension_id"
+      ],
+      "$:type": "object"
+    },
+    "events/message-completed-v1.schema.json": {
+      "$.chunk_count:maximum": 65536,
+      "$.chunk_count:minimum": 0,
+      "$.chunk_count:type": "integer",
+      "$.content:maxLength": 262144,
+      "$.content:type": "string",
+      "$.content_bytes:maximum": 262144,
+      "$.content_bytes:minimum": 0,
+      "$.content_bytes:type": "integer",
+      "$.content_sha256:pattern": "^[0-9a-f]{64}$",
+      "$.content_sha256:type": "string",
+      "$.finish_reason:enum": [
+        "cancelled",
+        "length",
+        "other",
+        "stop",
+        "tool"
+      ],
+      "$.message_id:format": "uuid",
+      "$.message_id:type": "string",
+      "$.usage:type": "object",
+      "$:required": [
+        "chunk_count",
+        "content",
+        "content_bytes",
+        "content_sha256",
+        "finish_reason",
+        "message_id",
+        "usage"
+      ],
+      "$:type": "object"
+    },
+    "events/message-delta-v1.schema.json": {
+      "$.chunk_sequence:minimum": 1,
+      "$.chunk_sequence:type": "integer",
+      "$.content:maxLength": 4096,
+      "$.content:minLength": 1,
+      "$.content:type": "string",
+      "$.message_id:format": "uuid",
+      "$.message_id:type": "string",
+      "$:required": [
+        "chunk_sequence",
+        "content",
+        "message_id"
+      ],
+      "$:type": "object"
+    },
+    "events/run-checkpoint-committed-v1.schema.json": {
+      "$.checkpoint_id:format": "uuid",
+      "$.checkpoint_id:type": "string",
+      "$.checkpoint_version:minimum": 1,
+      "$.checkpoint_version:type": "integer",
+      "$.payload_sha256:pattern": "^[0-9a-f]{64}$",
+      "$.payload_sha256:type": "string",
+      "$.run_id:format": "uuid",
+      "$.run_id:type": "string",
+      "$:required": [
+        "checkpoint_id",
+        "checkpoint_version",
+        "payload_sha256",
+        "run_id"
+      ],
+      "$:type": "object"
+    },
+    "events/run-command-v1.schema.json": {
+      "$.action:enum": [
+        "cancel",
+        "pause",
+        "resume",
+        "schedule"
+      ],
+      "$.idempotency_key:maxLength": 128,
+      "$.idempotency_key:minLength": 8,
+      "$.idempotency_key:type": "string",
+      "$.reason_code:maxLength": 64,
+      "$.reason_code:type": [
+        "string",
+        "null"
+      ],
+      "$.run_id:format": "uuid",
+      "$.run_id:type": "string",
+      "$:required": [
+        "action",
+        "idempotency_key",
+        "run_id"
+      ],
+      "$:type": "object"
+    },
+    "events/run-lifecycle-v1.schema.json": {
+      "$.attempt_id:format": "uuid",
+      "$.attempt_id:type": [
+        "string",
+        "null"
+      ],
+      "$.code:maxLength": 64,
+      "$.code:type": [
+        "string",
+        "null"
+      ],
+      "$.lease_epoch:minimum": 1,
+      "$.lease_epoch:type": [
+        "integer",
+        "null"
+      ],
+      "$.run_id:format": "uuid",
+      "$.run_id:type": "string",
+      "$.state:enum": [
+        "accepted",
+        "cancelled",
+        "cancelling",
+        "completed",
+        "completion_reconciling",
+        "failed",
+        "running",
+        "scheduled",
+        "starting",
+        "suspending",
+        "waiting_for_input"
+      ],
+      "$:required": [
+        "run_id",
+        "state"
+      ],
+      "$:type": "object"
+    },
+    "events/run-messages-committed-v1.schema.json": {
+      "$.conversation_sequence:minimum": 1,
+      "$.conversation_sequence:type": "integer",
+      "$.message_ids:type": "array",
+      "$.message_ids[]:format": "uuid",
+      "$.message_ids[]:type": "string",
+      "$.run_id:format": "uuid",
+      "$.run_id:type": "string",
+      "$:required": [
+        "conversation_sequence",
+        "message_ids",
+        "run_id"
+      ],
+      "$:type": "object"
+    },
+    "events/run-result-proposed-v1.schema.json": {
+      "$.attempt_id:format": "uuid",
+      "$.attempt_id:type": "string",
+      "$.final_checkpoint_id:format": "uuid",
+      "$.final_checkpoint_id:type": [
+        "string",
+        "null"
+      ],
+      "$.final_message_ids:type": "array",
+      "$.final_message_ids[]:format": "uuid",
+      "$.final_message_ids[]:type": "string",
+      "$.lease_epoch:minimum": 1,
+      "$.lease_epoch:type": "integer",
+      "$.required_confirmations:type": "array",
+      "$.required_confirmations[]:enum": [
+        "checkpoint",
+        "messages"
+      ],
+      "$.run_id:format": "uuid",
+      "$.run_id:type": "string",
+      "$:required": [
+        "attempt_id",
+        "final_message_ids",
+        "lease_epoch",
+        "required_confirmations",
+        "run_id"
+      ],
+      "$:type": "object"
+    },
+    "events/run-suspension-committed-v1.schema.json": {
+      "$.checkpoint_id:format": "uuid",
+      "$.checkpoint_id:type": "string",
+      "$.input_request_id:format": "uuid",
+      "$.input_request_id:type": "string",
+      "$.run_id:format": "uuid",
+      "$.run_id:type": "string",
+      "$.suspension_id:format": "uuid",
+      "$.suspension_id:type": "string",
+      "$:required": [
+        "checkpoint_id",
+        "input_request_id",
+        "run_id",
+        "suspension_id"
+      ],
+      "$:type": "object"
+    },
+    "http/problem-v1.schema.json": {
+      "$.code:pattern": "^[a-z][a-z0-9_]{0,63}$",
+      "$.code:type": "string",
+      "$.correlation_id:format": "uuid",
+      "$.correlation_id:type": "string",
+      "$.details:type": "object",
+      "$.retryable:type": "boolean",
+      "$.status:maximum": 599,
+      "$.status:minimum": 400,
+      "$.status:type": "integer",
+      "$.title:maxLength": 256,
+      "$.title:minLength": 1,
+      "$.title:type": "string",
+      "$.type:format": "uri",
+      "$.type:maxLength": 512,
+      "$.type:type": "string",
+      "$:required": [
+        "code",
+        "correlation_id",
+        "retryable",
+        "status",
+        "title",
+        "type"
+      ],
+      "$:type": "object"
+    },
+    "openapi/agent-registry-v1.json": {
+      "GET /agents": {
+        "operationId": "listVisibleAgents",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "GET /agents/{agent_id}/versions/{version}": {
+        "operationId": "getVisibleAgentRelease",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "POST /releases": {
+        "operationId": "publishRelease",
+        "responses": [
+          "201",
+          "default"
+        ]
+      },
+      "POST /releases/{release_id}:deprecate": {
+        "operationId": "deprecateRelease",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "POST /run-specifications:resolve": {
+        "operationId": "resolveRunSpecification",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "schema:AgentSummary": {
+        "$.agent_id:type": "string",
+        "$.default_release_id:format": "uuid",
+        "$.default_release_id:type": [
+          "string",
+          "null"
+        ],
+        "$.description:type": "string",
+        "$.name:type": "string",
+        "$:required": [
+          "agent_id",
+          "description",
+          "name"
+        ],
+        "$:type": "object"
+      },
+      "schema:PublishRelease": {
+        "$.image:type": "string",
+        "$.manifest:type": "object",
+        "$.provenance:type": "object",
+        "$:required": [
+          "image",
+          "manifest",
+          "provenance"
+        ],
+        "$:type": "object"
+      },
+      "schema:Release": {
+        "$.agent_id:type": "string",
+        "$.image:pattern": "^[^@]+@sha256:[0-9a-f]{64}$",
+        "$.image:type": "string",
+        "$.manifest:type": "object",
+        "$.release_id:format": "uuid",
+        "$.release_id:type": "string",
+        "$.status:enum": [
+          "deprecated",
+          "published"
+        ],
+        "$.version:type": "string",
+        "$:required": [
+          "agent_id",
+          "image",
+          "manifest",
+          "release_id",
+          "status",
+          "version"
+        ],
+        "$:type": "object"
+      },
+      "schema:ResolveRunSpecification": {
+        "$.configuration_revision_id:format": "uuid",
+        "$.configuration_revision_id:type": [
+          "string",
+          "null"
+        ],
+        "$.conversation_id:format": "uuid",
+        "$.conversation_id:type": "string",
+        "$.delegation_grant_id:format": "uuid",
+        "$.delegation_grant_id:type": "string",
+        "$.release_id:format": "uuid",
+        "$.release_id:type": "string",
+        "$.run_id:format": "uuid",
+        "$.run_id:type": "string",
+        "$.starting_checkpoint_id:format": "uuid",
+        "$.starting_checkpoint_id:type": [
+          "string",
+          "null"
+        ],
+        "$.thread_id:format": "uuid",
+        "$.thread_id:type": "string",
+        "$.trace_id:pattern": "^[0-9a-f]{32}$",
+        "$.trace_id:type": "string",
+        "$.user_id:format": "uuid",
+        "$.user_id:type": "string",
+        "$:required": [
+          "conversation_id",
+          "delegation_grant_id",
+          "release_id",
+          "run_id",
+          "thread_id",
+          "trace_id",
+          "user_id"
+        ],
+        "$:type": "object"
+      },
+      "schema:SignedRunSpecification": {
+        "$.key_id:maxLength": 128,
+        "$.key_id:type": "string",
+        "$.payload:type": "object",
+        "$.payload_sha256:pattern": "^[0-9a-f]{64}$",
+        "$.payload_sha256:type": "string",
+        "$.run_id:format": "uuid",
+        "$.run_id:type": "string",
+        "$.signature:type": "string",
+        "$.specification_id:format": "uuid",
+        "$.specification_id:type": "string",
+        "$:required": [
+          "key_id",
+          "payload",
+          "payload_sha256",
+          "run_id",
+          "signature",
+          "specification_id"
+        ],
+        "$:type": "object"
+      }
+    },
+    "openapi/agent-runner-v1.json": {
+      "GET /health/live": {
+        "operationId": "liveness",
+        "responses": [
+          "200"
+        ]
+      },
+      "GET /health/ready": {
+        "operationId": "readiness",
+        "responses": [
+          "200",
+          "503"
+        ]
+      },
+      "GET /runs/{run_id}": {
+        "operationId": "getRun",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "POST /runs": {
+        "operationId": "admitRun",
+        "responses": [
+          "202",
+          "default"
+        ]
+      },
+      "POST /runs/{run_id}:cancel": {
+        "operationId": "cancelRun",
+        "responses": [
+          "202",
+          "default"
+        ]
+      },
+      "schema:Run": {
+        "$.active_attempt_id:format": "uuid",
+        "$.active_attempt_id:type": [
+          "string",
+          "null"
+        ],
+        "$.created_at:format": "date-time",
+        "$.created_at:type": "string",
+        "$.lease_epoch:minimum": 0,
+        "$.lease_epoch:type": "integer",
+        "$.run_id:format": "uuid",
+        "$.run_id:type": "string",
+        "$.state:enum": [
+          "accepted",
+          "cancelled",
+          "cancelling",
+          "completed",
+          "completion_reconciling",
+          "failed",
+          "requested",
+          "running",
+          "scheduled",
+          "starting",
+          "suspending",
+          "waiting_for_input"
+        ],
+        "$.terminal_code:maxLength": 64,
+        "$.terminal_code:type": [
+          "string",
+          "null"
+        ],
+        "$.updated_at:format": "date-time",
+        "$.updated_at:type": "string",
+        "$:required": [
+          "created_at",
+          "lease_epoch",
+          "run_id",
+          "state",
+          "updated_at"
+        ],
+        "$:type": "object"
+      },
+      "schema:RunAdmission": {
+        "$.configuration_revision_id:format": "uuid",
+        "$.configuration_revision_id:type": [
+          "string",
+          "null"
+        ],
+        "$.conversation_id:format": "uuid",
+        "$.conversation_id:type": "string",
+        "$.delegation_grant_id:format": "uuid",
+        "$.delegation_grant_id:type": "string",
+        "$.release_id:format": "uuid",
+        "$.release_id:type": "string",
+        "$.run_id:format": "uuid",
+        "$.run_id:type": "string",
+        "$.starting_checkpoint_id:format": "uuid",
+        "$.starting_checkpoint_id:type": [
+          "string",
+          "null"
+        ],
+        "$.thread_id:format": "uuid",
+        "$.thread_id:type": "string",
+        "$.trace_id:pattern": "^[0-9a-f]{32}$",
+        "$.trace_id:type": "string",
+        "$.trigger.id:format": "uuid",
+        "$.trigger.id:type": "string",
+        "$.trigger.type:enum": [
+          "resume",
+          "user_message",
+          "user_response"
+        ],
+        "$.trigger:required": [
+          "id",
+          "type"
+        ],
+        "$.trigger:type": "object",
+        "$.user_id:format": "uuid",
+        "$.user_id:type": "string",
+        "$:required": [
+          "conversation_id",
+          "delegation_grant_id",
+          "release_id",
+          "run_id",
+          "thread_id",
+          "trace_id",
+          "trigger",
+          "user_id"
+        ],
+        "$:type": "object"
+      }
+    },
+    "openapi/checkpoint-api-v1.json": {
+      "GET /threads/{thread_id}/checkpoints": {
+        "operationId": "listCheckpoints",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "GET /threads/{thread_id}/checkpoints/{checkpoint_id}": {
+        "operationId": "getCheckpoint",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "PUT /threads/{thread_id}/checkpoints/{checkpoint_id}": {
+        "operationId": "putCheckpoint",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "schema:Checkpoint": {
+        "$.allOf[1].payload:maxLength": 1398104,
+        "$.allOf[1].payload:type": "string",
+        "$.allOf[1]:required": [
+          "payload"
+        ],
+        "$.allOf[1]:type": "object"
+      },
+      "schema:CheckpointMetadata": {
+        "$.checkpoint_id:format": "uuid",
+        "$.checkpoint_id:type": "string",
+        "$.created_at:format": "date-time",
+        "$.created_at:type": "string",
+        "$.payload_sha256:pattern": "^[0-9a-f]{64}$",
+        "$.payload_sha256:type": "string",
+        "$.serialization_version:maxLength": 32,
+        "$.serialization_version:type": "string",
+        "$.thread_id:format": "uuid",
+        "$.thread_id:type": "string",
+        "$.version:minimum": 1,
+        "$.version:type": "integer",
+        "$:required": [
+          "checkpoint_id",
+          "created_at",
+          "payload_sha256",
+          "serialization_version",
+          "thread_id",
+          "version"
+        ],
+        "$:type": "object"
+      },
+      "schema:PutCheckpoint": {
+        "$.attempt_id:format": "uuid",
+        "$.attempt_id:type": "string",
+        "$.expected_version:minimum": 0,
+        "$.expected_version:type": "integer",
+        "$.lease_epoch:minimum": 1,
+        "$.lease_epoch:type": "integer",
+        "$.payload:maxLength": 1398104,
+        "$.payload:type": "string",
+        "$.payload_sha256:pattern": "^[0-9a-f]{64}$",
+        "$.payload_sha256:type": "string",
+        "$.run_id:format": "uuid",
+        "$.run_id:type": "string",
+        "$.serialization_version:maxLength": 32,
+        "$.serialization_version:type": "string",
+        "$:required": [
+          "attempt_id",
+          "expected_version",
+          "lease_epoch",
+          "payload",
+          "payload_sha256",
+          "run_id",
+          "serialization_version"
+        ],
+        "$:type": "object"
+      }
+    },
+    "openapi/configuration-service-v1.json": {
+      "GET /revisions/{revision_id}": {
+        "operationId": "getConfigurationRevision",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "POST /effective-configurations:resolve": {
+        "operationId": "resolveEffectiveConfiguration",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "POST /revisions": {
+        "operationId": "createConfigurationRevision",
+        "responses": [
+          "201",
+          "default"
+        ]
+      },
+      "schema:CreateRevision": {
+        "$.conversation_id:format": "uuid",
+        "$.conversation_id:type": [
+          "string",
+          "null"
+        ],
+        "$.release_id:format": "uuid",
+        "$.release_id:type": "string",
+        "$.schema_digest:pattern": "^[0-9a-f]{64}$",
+        "$.schema_digest:type": "string",
+        "$.scope:enum": [
+          "conversation",
+          "user"
+        ],
+        "$.secret_references:type": "object",
+        "$.values:type": "object",
+        "$:required": [
+          "release_id",
+          "schema_digest",
+          "scope",
+          "values"
+        ],
+        "$:type": "object"
+      },
+      "schema:EffectiveConfiguration": {
+        "$.content_sha256:pattern": "^[0-9a-f]{64}$",
+        "$.content_sha256:type": "string",
+        "$.effective_revision_id:format": "uuid",
+        "$.effective_revision_id:type": "string",
+        "$.schema_digest:pattern": "^[0-9a-f]{64}$",
+        "$.schema_digest:type": "string",
+        "$.secret_references:type": "object",
+        "$.values:type": "object",
+        "$:required": [
+          "content_sha256",
+          "effective_revision_id",
+          "schema_digest",
+          "secret_references",
+          "values"
+        ],
+        "$:type": "object"
+      },
+      "schema:ResolveConfiguration": {
+        "$.conversation_revision_id:format": "uuid",
+        "$.conversation_revision_id:type": [
+          "string",
+          "null"
+        ],
+        "$.release_defaults:type": "object",
+        "$.release_id:format": "uuid",
+        "$.release_id:type": "string",
+        "$.schema:type": "object",
+        "$.schema_digest:pattern": "^[0-9a-f]{64}$",
+        "$.schema_digest:type": "string",
+        "$.user_revision_id:format": "uuid",
+        "$.user_revision_id:type": [
+          "string",
+          "null"
+        ],
+        "$:required": [
+          "release_defaults",
+          "release_id",
+          "schema",
+          "schema_digest"
+        ],
+        "$:type": "object"
+      },
+      "schema:Revision": {
+        "$.conversation_id:format": "uuid",
+        "$.conversation_id:type": [
+          "string",
+          "null"
+        ],
+        "$.created_at:format": "date-time",
+        "$.created_at:type": "string",
+        "$.release_id:format": "uuid",
+        "$.release_id:type": "string",
+        "$.revision_id:format": "uuid",
+        "$.revision_id:type": "string",
+        "$.schema_digest:pattern": "^[0-9a-f]{64}$",
+        "$.schema_digest:type": "string",
+        "$.scope:enum": [
+          "conversation",
+          "user"
+        ],
+        "$.secret_references:type": "object",
+        "$.values:type": "object",
+        "$:required": [
+          "created_at",
+          "release_id",
+          "revision_id",
+          "schema_digest",
+          "scope",
+          "values"
+        ],
+        "$:type": "object"
+      }
+    },
+    "openapi/conversation-service-v1.json": {
+      "GET /conversations": {
+        "operationId": "listConversations",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "GET /conversations/{conversation_id}": {
+        "operationId": "getConversation",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "GET /conversations/{conversation_id}/events": {
+        "operationId": "streamConversationEvents",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "POST /conversations": {
+        "operationId": "createConversation",
+        "responses": [
+          "201",
+          "default"
+        ]
+      },
+      "POST /conversations/{conversation_id}/messages": {
+        "operationId": "createUserMessage",
+        "responses": [
+          "202",
+          "default"
+        ]
+      },
+      "POST /input-requests/{input_request_id}/responses": {
+        "operationId": "answerInputRequest",
+        "responses": [
+          "202",
+          "default"
+        ]
+      },
+      "schema:Conversation": {
+        "$.configuration_revision_id:format": "uuid",
+        "$.configuration_revision_id:type": [
+          "string",
+          "null"
+        ],
+        "$.conversation_id:format": "uuid",
+        "$.conversation_id:type": "string",
+        "$.created_at:format": "date-time",
+        "$.created_at:type": "string",
+        "$.release_id:format": "uuid",
+        "$.release_id:type": "string",
+        "$.thread_id:format": "uuid",
+        "$.thread_id:type": "string",
+        "$.title:type": "string",
+        "$.updated_at:format": "date-time",
+        "$.updated_at:type": "string",
+        "$:required": [
+          "conversation_id",
+          "created_at",
+          "release_id",
+          "thread_id",
+          "title",
+          "updated_at"
+        ],
+        "$:type": "object"
+      },
+      "schema:ConversationProjection": {
+        "$.allOf[1].input_requests:type": "array",
+        "$.allOf[1].input_requests[]:type": "object",
+        "$.allOf[1].last_sequence:minimum": 0,
+        "$.allOf[1].last_sequence:type": "integer",
+        "$.allOf[1].messages:type": "array",
+        "$.allOf[1].messages[]:type": "object",
+        "$.allOf[1]:required": [
+          "input_requests",
+          "last_sequence",
+          "messages"
+        ],
+        "$.allOf[1]:type": "object"
+      },
+      "schema:CreateConversation": {
+        "$.configuration_revision_id:format": "uuid",
+        "$.configuration_revision_id:type": [
+          "string",
+          "null"
+        ],
+        "$.release_id:format": "uuid",
+        "$.release_id:type": "string",
+        "$.thread_id:format": "uuid",
+        "$.thread_id:type": "string",
+        "$.title:maxLength": 200,
+        "$.title:minLength": 1,
+        "$.title:type": "string",
+        "$:required": [
+          "release_id",
+          "thread_id",
+          "title"
+        ],
+        "$:type": "object"
+      },
+      "schema:CreateUserMessage": {
+        "$.content:maxLength": 20000,
+        "$.content:minLength": 1,
+        "$.content:type": "string",
+        "$.delegation_grant_id:format": "uuid",
+        "$.delegation_grant_id:type": "string",
+        "$.message_id:format": "uuid",
+        "$.message_id:type": "string",
+        "$.run_id:format": "uuid",
+        "$.run_id:type": "string",
+        "$:required": [
+          "content",
+          "delegation_grant_id",
+          "message_id",
+          "run_id"
+        ],
+        "$:type": "object"
+      },
+      "schema:InputResponse": {
+        "$.run_id:format": "uuid",
+        "$.run_id:type": "string",
+        "$:required": [
+          "response",
+          "run_id"
+        ],
+        "$:type": "object"
+      },
+      "schema:MessageAccepted": {
+        "$.conversation_sequence:minimum": 1,
+        "$.conversation_sequence:type": "integer",
+        "$.message_id:format": "uuid",
+        "$.message_id:type": "string",
+        "$.run_id:format": "uuid",
+        "$.run_id:type": "string",
+        "$:required": [
+          "conversation_sequence",
+          "message_id",
+          "run_id"
+        ],
+        "$:type": "object"
+      }
+    },
+    "openapi/identity-delegation-v1.json": {
+      "POST /delegation-grants": {
+        "operationId": "createDelegationGrant",
+        "responses": [
+          "201",
+          "default"
+        ]
+      },
+      "POST /delegation-grants/{grant_id}:exchange": {
+        "operationId": "exchangeDelegationGrant",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "POST /delegation-grants/{grant_id}:renew": {
+        "operationId": "renewDelegatedToken",
+        "responses": [
+          "200",
+          "default"
+        ]
+      },
+      "POST /delegation-grants/{grant_id}:revoke": {
+        "operationId": "revokeDelegationGrant",
+        "responses": [
+          "204",
+          "default"
+        ]
+      },
+      "schema:CreateGrant": {
+        "$.conversation_id:format": "uuid",
+        "$.conversation_id:type": "string",
+        "$.maximum_scopes:type": "array",
+        "$.maximum_scopes[]:maxLength": 128,
+        "$.maximum_scopes[]:type": "string",
+        "$.release_id:format": "uuid",
+        "$.release_id:type": "string",
+        "$:required": [
+          "conversation_id",
+          "maximum_scopes",
+          "release_id"
+        ],
+        "$:type": "object"
+      },
+      "schema:DelegatedToken": {
+        "$.access_token:minLength": 1,
+        "$.access_token:type": "string",
+        "$.audience:const": "porfirium-mcp-gateway",
+        "$.expires_at:format": "date-time",
+        "$.expires_at:type": "string",
+        "$.scopes:type": "array",
+        "$.scopes[]:type": "string",
+        "$.token_type:const": "Bearer",
+        "$:required": [
+          "access_token",
+          "audience",
+          "expires_at",
+          "scopes",
+          "token_type"
+        ],
+        "$:type": "object"
+      },
+      "schema:ExchangeGrant": {
+        "$.attempt_id:format": "uuid",
+        "$.attempt_id:type": "string",
+        "$.audience:const": "porfirium-mcp-gateway",
+        "$.lease_epoch:minimum": 1,
+        "$.lease_epoch:type": "integer",
+        "$.run_id:format": "uuid",
+        "$.run_id:type": "string",
+        "$.scopes:type": "array",
+        "$.scopes[]:maxLength": 128,
+        "$.scopes[]:type": "string",
+        "$:required": [
+          "attempt_id",
+          "audience",
+          "lease_epoch",
+          "run_id",
+          "scopes"
+        ],
+        "$:type": "object"
+      },
+      "schema:Grant": {
+        "$.conversation_id:format": "uuid",
+        "$.conversation_id:type": "string",
+        "$.expires_at:format": "date-time",
+        "$.expires_at:type": "string",
+        "$.grant_id:format": "uuid",
+        "$.grant_id:type": "string",
+        "$.maximum_scopes:type": "array",
+        "$.maximum_scopes[]:type": "string",
+        "$.release_id:format": "uuid",
+        "$.release_id:type": "string",
+        "$.revoked:type": "boolean",
+        "$:required": [
+          "conversation_id",
+          "expires_at",
+          "grant_id",
+          "maximum_scopes",
+          "release_id",
+          "revoked"
+        ],
+        "$:type": "object"
+      }
+    }
+  },
+  "format_version": 1
+}

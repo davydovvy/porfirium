@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://porfirium.local/contracts/events/run-command-v1.schema.json", "title": "Run command data v1",
+  "type": "object", "required": ["run_id", "action", "idempotency_key"], "additionalProperties": false,
+  "properties": {"run_id": {"type": "string", "format": "uuid"}, "action": {"enum": ["schedule", "cancel", "pause", "resume"]}, "idempotency_key": {"type": "string", "minLength": 8, "maxLength": 128}, "reason_code": {"type": ["string", "null"], "maxLength": 64}}
+}

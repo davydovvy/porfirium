@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package porfirium.runtime.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// AgentRuntime terminates the only interactive platform channel available to an agent attempt.
+service AgentRuntime {
+  rpc Connect(stream AgentFrame) returns (stream PlatformFrame);
+}
+
+message FrameIdentity {
+  string protocol_version = 1;
+  string run_id = 2;
+  string attempt_id = 3;
+  uint64 lease_epoch = 4;
+  uint64 sequence = 5;
+  string idempotency_key = 6;
+  string traceparent = 7;
+}
+
+message AgentFrame {
+  FrameIdentity identity = 1;
+  oneof payload {
+    Hello hello = 10;
+    Heartbeat heartbeat = 11;
+    MessageStarted message_started = 12;
+    MessageDelta message_delta = 13;
+    MessageCompleted message_completed = 14;
+    MessageInterrupted message_interrupted = 15;
+    InputRequestProposed input_request_proposed = 16;
+    SuspensionCommitted suspension_committed = 17;
+    ResultProposed result_proposed = 18;
+  }
+}
+
+message PlatformFrame {
+  string run_id = 1;
+  string attempt_id = 2;
+  uint64 lease_epoch = 3;
+  uint64 sequence = 4;
+  oneof payload {
+    HelloAccepted hello_accepted = 10;
+    Acknowledgement acknowledgement = 11;
+    Cancellation cancellation = 12;
+    Deadline deadline = 13;
+    CapabilityRenewal capability_renewal = 14;
+    ProtocolError error = 15;
+  }
+}
+
+message Hello {
+  string run_capability = 1;
+  uint64 last_acknowledged_sequence = 2;
+  string sdk_version = 3;
+}
+
+message HelloAccepted {
+  uint64 resume_after_sequence = 1;
+  google.protobuf.Timestamp deadline = 2;
+  uint64 max_frame_bytes = 3;
+  uint64 max_in_flight_frames = 4;
+}
+
+message Heartbeat {}
+
+message Acknowledgement {
+  uint64 accepted_sequence = 1;
+  string durable_event_id = 2;
+}
+
+message MessageStarted {
+  string message_id = 1;
+  string content_type = 2;
+}
+
+message MessageDelta {
+  string message_id = 1;
+  uint64 chunk_sequence = 2;
+  bytes content_utf8 = 3;
+}
+
+message MessageCompleted {
+  string message_id = 1;
+  bytes canonical_content_utf8 = 2;
+  uint64 chunk_count = 3;
+  uint64 content_bytes = 4;
+  string content_sha256 = 5;
+  string finish_reason = 6;
+  google.protobuf.Struct usage = 7;
+}
+
+message MessageInterrupted {
+  string message_id = 1;
+  string code = 2;
+}
+
+message InputRequestProposed {
+  string suspension_id = 1;
+  string checkpoint_id = 2;
+  string prompt = 3;
+  google.protobuf.Struct response_schema = 4;
+}
+
+message SuspensionCommitted {
+  string suspension_id = 1;
+  string checkpoint_id = 2;
+  string input_request_id = 3;
+}
+
+message ResultProposed {
+  repeated string final_message_ids = 1;
+  string final_checkpoint_id = 2;
+}
+
+message Cancellation {
+  string reason_code = 1;
+  google.protobuf.Timestamp grace_deadline = 2;
+}
+
+message Deadline {
+  google.protobuf.Timestamp deadline = 1;
+}
+
+message CapabilityRenewal {
+  string delegated_user_token = 1;
+  google.protobuf.Timestamp expires_at = 2;
+}
+
+message ProtocolError {
+  string code = 1;
+  string safe_message = 2;
+  bool retryable = 3;
+  string correlation_id = 4;
+}
