@@ -1,0 +1,213 @@
+name: porfirium-target
+
+services:
+  postgres:
+    profiles: [target]
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: porfirium_admin
+      POSTGRES_PASSWORD: ${TARGET_POSTGRES_ADMIN_PASSWORD:?set TARGET_POSTGRES_ADMIN_PASSWORD}
+      POSTGRES_DB: postgres
+      CONVERSATION_DB_PASSWORD: ${CONVERSATION_DB_PASSWORD:?set CONVERSATION_DB_PASSWORD}
+      REGISTRY_DB_PASSWORD: ${REGISTRY_DB_PASSWORD:?set REGISTRY_DB_PASSWORD}
+      RUNNER_DB_PASSWORD: ${RUNNER_DB_PASSWORD:?set RUNNER_DB_PASSWORD}
+      RUNTIME_DB_PASSWORD: ${RUNTIME_DB_PASSWORD:?set RUNTIME_DB_PASSWORD}
+      DELEGATION_DB_PASSWORD: ${DELEGATION_DB_PASSWORD:?set DELEGATION_DB_PASSWORD}
+      CONFIGURATION_DB_PASSWORD: ${CONFIGURATION_DB_PASSWORD:?set CONFIGURATION_DB_PASSWORD}
+      CHECKPOINT_DB_PASSWORD: ${CHECKPOINT_DB_PASSWORD:?set CHECKPOINT_DB_PASSWORD}
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - target_postgres_data:/var/lib/postgresql/data
+      - ../postgres/init-service-databases.sh:/docker-entrypoint-initdb.d/10-service-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U porfirium_admin -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  nats:
+    profiles: [target]
+    image: nats:2.12.15-alpine
+    restart: unless-stopped
+    command: ["--config", "/etc/nats/nats.conf"]
+    environment:
+      NATS_BOOTSTRAP_PASSWORD: ${NATS_BOOTSTRAP_PASSWORD:?set NATS_BOOTSTRAP_PASSWORD}
+      NATS_CONVERSATION_PASSWORD: ${NATS_CONVERSATION_PASSWORD:?set NATS_CONVERSATION_PASSWORD}
+      NATS_RUNNER_PASSWORD: ${NATS_RUNNER_PASSWORD:?set NATS_RUNNER_PASSWORD}
+      NATS_RUNTIME_PASSWORD: ${NATS_RUNTIME_PASSWORD:?set NATS_RUNTIME_PASSWORD}
+      NATS_CHECKPOINT_PASSWORD: ${NATS_CHECKPOINT_PASSWORD:?set NATS_CHECKPOINT_PASSWORD}
+      NATS_REGISTRY_PASSWORD: ${NATS_REGISTRY_PASSWORD:?set NATS_REGISTRY_PASSWORD}
+      NATS_DELEGATION_PASSWORD: ${NATS_DELEGATION_PASSWORD:?set NATS_DELEGATION_PASSWORD}
+      NATS_CONFIGURATION_PASSWORD: ${NATS_CONFIGURATION_PASSWORD:?set NATS_CONFIGURATION_PASSWORD}
+    volumes:
+      - ../nats/nats.conf:/etc/nats/nats.conf:ro
+      - target_jetstream_data:/data/jetstream
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8222/healthz?js-enabled-only=true"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  nats-bootstrap:
+    profiles: [target]
+    image: natsio/nats-box:0.18.0
+    restart: "no"
+    depends_on:
+      nats:
+        condition: service_healthy
+    environment:
+      NATS_URL: nats://nats:4222
+      NATS_USER: bootstrap
+      NATS_PASSWORD: ${NATS_BOOTSTRAP_PASSWORD:?set NATS_BOOTSTRAP_PASSWORD}
+    volumes:
+      - ../nats/bootstrap.sh:/bootstrap.sh:ro
+    entrypoint: ["/bin/sh", "/bootstrap.sh"]
+
+  registry:
+    profiles: [target]
+    image: registry:2.8.3
+    restart: unless-stopped
+    environment:
+      REGISTRY_STORAGE_DELETE_ENABLED: "false"
+    volumes:
+      - target_registry_data:/var/lib/registry
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5000/v2/"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  otel-collector:
+    profiles: [target]
+    image: otel/opentelemetry-collector-contrib:0.132.0
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ../otel/collector.yaml:/etc/otelcol/config.yaml:ro
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "components"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  portal-bff:
+    <<: &target_service
+      profiles: [target]
+      restart: unless-stopped
+      read_only: true
+      tmpfs:
+        - /tmp:size=16m,mode=1777
+      security_opt:
+        - no-new-privileges:true
+      cap_drop:
+        - ALL
+    build:
+      context: ../../services/portal-bff
+    environment:
+      CONVERSATION_SERVICE_URL: http://conversation-service:8101
+      AGENT_REGISTRY_URL: http://agent-registry:8102
+      AGENT_RUNNER_URL: http://agent-runner:8103
+    healthcheck: &service_healthcheck
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/health/ready', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  conversation-service:
+    <<: *target_service
+    build:
+      context: ../../services/conversation-service
+    environment:
+      DATABASE_URL: postgresql://conversation_service:${CONVERSATION_DB_PASSWORD:?set CONVERSATION_DB_PASSWORD}@postgres:5432/conversation
+      NATS_URL: nats://nats:4222
+      NATS_USER: conversation_service
+      NATS_PASSWORD: ${NATS_CONVERSATION_PASSWORD:?set NATS_CONVERSATION_PASSWORD}
+    healthcheck:
+      <<: *service_healthcheck
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8101/health/ready', timeout=2)"]
+
+  agent-registry:
+    <<: *target_service
+    build:
+      context: ../../services/agent-registry
+    environment:
+      DATABASE_URL: postgresql://agent_registry:${REGISTRY_DB_PASSWORD:?set REGISTRY_DB_PASSWORD}@postgres:5432/registry
+      OCI_REGISTRY_URL: http://registry:5000
+      NATS_URL: nats://nats:4222
+      NATS_USER: agent_registry
+      NATS_PASSWORD: ${NATS_REGISTRY_PASSWORD:?set NATS_REGISTRY_PASSWORD}
+    healthcheck:
+      <<: *service_healthcheck
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8102/health/ready', timeout=2)"]
+
+  agent-runner:
+    <<: *target_service
+    build:
+      context: ../../services/agent-runner
+    environment:
+      DATABASE_URL: postgresql://agent_runner:${RUNNER_DB_PASSWORD:?set RUNNER_DB_PASSWORD}@postgres:5432/runner
+      NATS_URL: nats://nats:4222
+      NATS_USER: agent_runner
+      NATS_PASSWORD: ${NATS_RUNNER_PASSWORD:?set NATS_RUNNER_PASSWORD}
+    healthcheck:
+      <<: *service_healthcheck
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8103/health/ready', timeout=2)"]
+
+  agent-runtime-api:
+    <<: *target_service
+    build:
+      context: ../../services/agent-runtime-api
+    environment:
+      DATABASE_URL: postgresql://agent_runtime:${RUNTIME_DB_PASSWORD:?set RUNTIME_DB_PASSWORD}@postgres:5432/runtime
+      NATS_URL: nats://nats:4222
+      NATS_USER: agent_runtime_api
+      NATS_PASSWORD: ${NATS_RUNTIME_PASSWORD:?set NATS_RUNTIME_PASSWORD}
+    healthcheck:
+      <<: *service_healthcheck
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8104/health/ready', timeout=2)"]
+
+  identity-delegation:
+    <<: *target_service
+    build:
+      context: ../../services/identity-delegation
+    environment:
+      DATABASE_URL: postgresql://identity_delegation:${DELEGATION_DB_PASSWORD:?set DELEGATION_DB_PASSWORD}@postgres:5432/delegation
+      NATS_URL: nats://nats:4222
+      NATS_USER: identity_delegation
+      NATS_PASSWORD: ${NATS_DELEGATION_PASSWORD:?set NATS_DELEGATION_PASSWORD}
+    healthcheck:
+      <<: *service_healthcheck
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8105/health/ready', timeout=2)"]
+
+  configuration-service:
+    <<: *target_service
+    build:
+      context: ../../services/configuration-service
+    environment:
+      DATABASE_URL: postgresql://configuration_service:${CONFIGURATION_DB_PASSWORD:?set CONFIGURATION_DB_PASSWORD}@postgres:5432/configuration
+      NATS_URL: nats://nats:4222
+      NATS_USER: configuration_service
+      NATS_PASSWORD: ${NATS_CONFIGURATION_PASSWORD:?set NATS_CONFIGURATION_PASSWORD}
+    healthcheck:
+      <<: *service_healthcheck
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8106/health/ready', timeout=2)"]
+
+  checkpoint-api:
+    <<: *target_service
+    build:
+      context: ../../services/checkpoint-api
+    environment:
+      DATABASE_URL: postgresql://checkpoint_api:${CHECKPOINT_DB_PASSWORD:?set CHECKPOINT_DB_PASSWORD}@postgres:5432/checkpoint
+      NATS_URL: nats://nats:4222
+      NATS_USER: checkpoint_api
+      NATS_PASSWORD: ${NATS_CHECKPOINT_PASSWORD:?set NATS_CHECKPOINT_PASSWORD}
+    healthcheck:
+      <<: *service_healthcheck
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8107/health/ready', timeout=2)"]
+
+volumes:
+  target_postgres_data:
+  target_jetstream_data:
+  target_registry_data:

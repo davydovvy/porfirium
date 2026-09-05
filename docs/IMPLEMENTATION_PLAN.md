@@ -96,6 +96,16 @@ sharing persistence abstractions. Compose uses separate `legacy` and `target` pr
 Exit gate: every service starts independently; database and NATS ownership is enforced; a durable
 test event survives publisher, consumer, and NATS restart.
 
+Implementation status: the target infrastructure and eight independently buildable FastAPI
+service skeletons are present. The topology provides service-owned PostgreSQL databases,
+persistent JetStream stream bootstrap, a private OCI registry, and an OTLP collector.
+`./scripts/target-phase2/verify.sh` validates this structure. NATS uses separate authenticated
+identities with subject-level permissions. The Runner owns initial transactional outbox/inbox
+tables, and `./scripts/target-phase2/verify-durability.sh` proves publication and deduplicated
+consumption survive NATS and consumer restarts. Dependency-aware readiness and cross-database
+connection denial are verified for every target service. `./scripts/target-phase2/acceptance.sh`
+passes; this phase is complete in the current tree.
+
 ## Phase 3 — Agent Registry MVP
 
 Implement immutable agent identities and releases, digest-pinned OCI references, manifest and

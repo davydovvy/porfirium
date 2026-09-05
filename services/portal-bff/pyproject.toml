@@ -1,0 +1,33 @@
+[project]
+name = "porfirium-portal-bff"
+version = "0.1.0"
+description = "Portal BFF service"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi==0.116.1",
+  "httpx==0.28.1",
+  "uvicorn==0.35.0",
+]
+
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["portal_bff"]
+
+[dependency-groups]
+dev = [
+  "pytest==8.4.2",
+  "ruff==0.12.11",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
