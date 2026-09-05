@@ -1,149 +1,187 @@
-# Porfirium specification
+# Porfirium platform specification
 
-Status: current as-built contract
+Status: target product and engineering contract
 
 ## Purpose
 
-Porfirium demonstrates a multi-user, locally deployed agent platform with authenticated chat,
-durable execution, policy-controlled tools, immutable agent releases, portal authoring, and
-observable model/tool activity.
+Porfirium runs independently developed LangGraph agents for authenticated users. The platform
+provides discovery, isolated execution, durable conversations, human interaction, model and tool
+access, checkpoints, and telemetry without giving agent code infrastructure credentials.
+Every conversation selects an agent release. There is no separate Direct LLM execution mode; a
+simple model-only experience is implemented as a platform-provided agent under the same contracts.
 
-## Product behavior
+## Required products
 
-- Users authenticate through Keycloak using Authorization Code with PKCE.
-- The portal offers persistent Direct and Agent conversations.
-- Direct mode streams a model response through the Portal API and Agentgateway.
-- Agent mode executes a selected immutable release through Temporal and persists ordered status,
-  tool, and final-response events.
-- Users can reconnect to an in-progress turn without starting duplicate work.
-- Conversations, drafts, test sessions, releases, and audit data are owner-scoped unless an
-  explicit privileged operation requires broader access.
-- Authorized authors can create, revise, validate, and privately test declarative agents.
-- Separately authorized publishers can publish and deprecate releases.
-- Operators can validate and publish repository agent packages with the `porfirium` CLI.
+### User portal
 
-## System boundaries
+The portal lets users authenticate, browse only agents they can access, select an immutable agent
+version, create conversations, send messages, answer agent input requests, observe live progress,
+cancel runs, and reopen durable history. A backend-for-frontend protects all internal services.
 
-The browser calls only the Portal API through the same-origin TLS endpoint. It never calls
-Temporal, Agentgateway, an MCP server, Langfuse, a database, or Yandex Cloud directly.
+### Conversation Service
 
-The Portal API owns authentication, authorization, conversation persistence, catalog selection,
-authoring, publication, and streaming. Temporal workflows own deterministic orchestration;
-activities perform database, model, tool, and tracing I/O. Agentgateway is the only model and MCP
-gateway. PostgreSQL stores product state independently of Temporal history. Langfuse receives
-observability data and is not a source of product truth.
+The Conversation Service owns conversation history, partial and final messages, input requests and
+responses, user visibility, and presentation ordering. It creates run-request intent through a
+transactional outbox and does not start containers directly.
 
-See [Architecture](docs/ARCHITECTURE.md) for component relationships and trust boundaries.
+### Agent Registry
 
-## Agent release contract
+The registry stores agent metadata, immutable versions, digest-pinned OCI artifact locations,
+configuration schemas, SDK compatibility, resource policy, model/tool requests, publication state,
+and user/group access grants. It authorizes selection and produces a signed immutable run
+specification. It does not execute agent code.
 
-An agent release has a stable agent ID, semantic version, schema version, display metadata,
-instructions, model alias, reviewed tool declarations, and behavioral limits. Its canonical
-artifact and digest cover every execution-relevant field.
+### Agent Runner
 
-Publication is atomic and immutable:
+The runner accepts idempotent run and cancellation requests, resolves an authorized run
+specification, and runs each attempt in one isolated container. It injects only platform-derived
+configuration, a short-lived run capability, and a delegated user access token for MCP calls. It
+enforces resource, filesystem, process, network, time, and cleanup policy and publishes lifecycle
+events.
 
-- the same identity and identical content is idempotent;
-- changed content under an existing version is rejected;
-- publication does not change the default release;
-- deprecation blocks new selection but does not alter accepted work;
-- runtime execution uses persisted artifacts and snapshots, not a mutable source directory;
-- changes require a new semantic version.
+### Agent Runtime API
 
-Each accepted Agent turn stores a self-contained snapshot containing the exact release identity
-and digest, model target, instructions, reviewed tool definitions and grants, and execution limits.
-Retries and recovery reuse that snapshot without consulting mutable defaults or catalogs.
+The Runtime API terminates the SDK's authenticated gRPC bidirectional channel. It validates the
+active run and attempt, handles acknowledgement and deduplication, delivers control frames, and
+converts accepted agent frames into durable platform events. Agents receive no NATS credentials.
 
-## Durable execution
+### Porfirium Agent SDK
 
-`AgentRunWorkflow` executes declarative agents on `porfirium-agent-runtime-v1`. Workflow code must
-remain deterministic. External calls and persistence occur in activities with bounded retries,
-timeouts, and idempotency.
+Every supported agent uses the SDK to:
 
-A turn has exactly one terminal outcome. The application persists ordered events and one atomic
-assistant response. Cancellation and worker restart must not create a second accepted turn,
-snapshot, tool side effect, or final answer.
+- send user-visible messages and progress;
+- request and receive correlated user responses;
+- invoke models through the LLM Gateway;
+- discover and invoke granted tools through the MCP Gateway;
+- store and restore LangGraph checkpoints through the State API;
+- observe cancellation and deadlines;
+- emit structured logs, metrics, traces, and Langfuse telemetry.
 
-## Model and tool access
+Direct NATS, database, gateway, or Langfuse access from agent application code is unsupported.
 
-Application adapters call Agentgateway for model inference and MCP execution. Provider-specific
-wire behavior stays behind those adapters. The platform database remains authoritative for
-conversation history; provider response IDs may be stored only as trace metadata.
+### Event bus
 
-Tool access is deny-by-default. Before every call, the application validates the exact tool name,
-enabled state, grant, JSON schema, arguments, result size, call count, and read-only policy.
-Agentgateway authorization is defense in depth, not the primary policy boundary. Only explicit
-reviewed tool definitions are sent to the model.
+NATS JetStream durably transports run commands, lifecycle events, conversation events, user input,
+and audit events. Delivery is at-least-once. All messages use versioned schemas, stable IDs,
+correlation/causation IDs, per-aggregate sequences, user/run context, and W3C trace context.
 
-Current demo tools provide time lookup and a dated MTG catalog snapshot. Catalog prices are not
-live quotes. Data provenance is documented in
-[the catalog data notes](services/mtg-catalog-mcp/data/README.md).
+### State, identity, and telemetry services
 
-## Identity and authorization
+The State API owns LangGraph checkpoints. Identity Delegation Service owns user-token exchange,
+renewal, and revocation. Telemetry Collector receives OTLP and exports to Langfuse without exposing
+Langfuse credentials to agents.
 
-The Portal API validates Keycloak JWTs locally using cached JWKS and enforces issuer, audience,
-expiry, roles, ownership, and resource state server-side. Browser bearer tokens and
-browser-controlled user identifiers are never forwarded to internal services.
+### Configuration Service
 
-Roles used by the current platform are:
+Configuration Service owns versioned user and conversation configuration values and secret
+references. Registry owns schemas/defaults and Conversation Service pins the selected revision.
 
-- `genai-user` for ordinary portal use;
-- `genai-agent-author` for owned drafts, revisions, validation, and private tests;
-- `genai-agent-publisher` for publication and deprecation;
-- `genai-admin` for administrative access where explicitly implemented.
+## Agent development contract
 
-Roles do not imply one another unless the API explicitly defines that relationship.
+- Agents are Python applications built on LangGraph.
+- Agent packages contain code, locked dependencies, graph entrypoint, manifest, and compatible SDK.
+- Releases are immutable OCI images addressed by digest.
+- Agents may use only SDK-mediated platform interactions.
+- Graph state is checkpointed at resumable and human-input boundaries.
+- Human-input suspension ends the current container attempt; a response creates a new run that
+  restores the same thread.
+- Agents must handle cancellation and respect platform deadlines.
+- A release declares requested models, tools, configuration, and resources; platform policy grants
+  an equal or narrower effective set.
 
-## Persistence and isolation
+## Functional requirements
 
-Product state lives in PostgreSQL with foreign keys and uniqueness constraints supporting owner
-isolation, idempotency, version immutability, and ordered events. Temporal history supports durable
-orchestration but is not the query model for the portal.
+1. A user cannot discover, select, start, inspect, answer, or cancel an agent run without access to
+   its agent and conversation.
+2. The same idempotency key cannot create more than one conversation or run.
+3. An accepted run pins its release image digest, SDK protocol, effective configuration, grants,
+   resource policy, user, and trace identity.
+4. Publishing or deprecating a release cannot alter an accepted run or existing conversation.
+5. A run can emit multiple progress and structured messages but exactly one terminal outcome.
+6. A user-input request has a stable ID and accepts at most one effective response; duplicates are
+   harmless and unauthorized responses are rejected.
+7. Restarting the portal, runner, NATS consumer, or agent host does not lose acknowledged durable
+   events or create a second run container for the same active lease.
+8. Agent containers can reach only approved platform endpoints and cannot access the runtime socket,
+   host filesystem, metadata endpoints, internal databases, or another run.
+9. SDK model, tool, message, checkpoint, and telemetry operations propagate the run trace context.
+10. Telemetry failure does not fail a run; authorization, gateway, or checkpoint failure is exposed
+    as a bounded typed error.
+11. One conversation normally owns one LangGraph thread and may contain many bounded runs. Each run
+    has at most one active attempt and each attempt has one new container.
+12. Streaming deltas are ordered, bounded, deduplicated, and short-lived. Only a validated
+    completion with canonical content becomes the durable assistant message.
+13. Attempt lease epochs fence stale containers at Runtime, State, LLM, and MCP APIs.
+14. Human-input suspension uses an idempotent checkpoint/input-request saga and is not visible or
+    resumable until both records are committed.
+15. Runner alone owns run terminal state and requires the pinned message/checkpoint confirmations;
+    a container exit code alone cannot declare completion.
 
-Every user-controlled prompt, manifest field, tool argument, tool result, provider payload, and
-artifact is untrusted input. Responses and diagnostics must be bounded before persistence or
-streaming. Secrets and credentials must not appear in source control, agent manifests, prompts,
-events, logs, traces, or artifacts.
+## API and event compatibility
 
-## Observability
+HTTP APIs are versioned under `/v1`. Event types end in a schema major version such as
+`porfirium.run.started.v1`. Additive fields are allowed within a major version and consumers ignore
+unknown fields. Removing or changing meaning requires a new major version and a migration window.
 
-The accepted turn correlation ID is propagated as the W3C trace ID across application, model, and
-tool calls. Langfuse records model generations and application observations. Logs, persisted
-events, audits, and traces must use stable identifiers and redact credentials and bearer tokens.
-Observability failure must not corrupt product state.
+All mutating APIs accept an idempotency key. Errors use stable machine-readable codes, a safe user
+message, correlation ID, and retryability indicator. Internal stack traces and credentials are
+never returned.
 
-## Deployment
+## Data ownership
 
-The supported development topology is Docker Compose on Linux. `compose.yaml` and `deploy/` own
-runtime configuration. External images are pinned by digest where practical. Internal services
-remain on private Compose networks unless a documented operator interface requires a localhost
-binding.
+- Portal BFF: browser sessions and disposable composed-view caches.
+- Conversation Service: authoritative conversations, messages, input requests, and presentation
+  sequence.
+- Configuration Service: user/conversation values and versioned secret references.
+- Agent Registry: agents, releases, artifacts, grants, and publication audit.
+- Agent Runner: run admission, leases, container lifecycle, and terminal status.
+- Agent Runtime API: protocol frames and delivery state, but no product entity ownership.
+- State API: LangGraph checkpoint data and checkpoint retention metadata.
+- JetStream: durable transport, not the only system of record for business entities.
+- Langfuse: observability backend, not product state.
 
-Configuration and secrets are supplied through environment variables. `.env`, tokens, provider
-payloads, and production data must never be committed.
+Services do not write another service's tables. Cross-service views are composed through APIs and
+events. Database migrations are owned and deployed with their service.
 
-## Verification requirements
+## Security requirements
 
-Every defect fix requires a regression test. Changes to authorization, persistence, publication,
-workflow behavior, isolation, or migrations require explicit tests for both allowed and rejected
-paths. Use narrow backend or frontend suites while developing, then run the relevant repository
-verification scripts.
+- Browser access uses Keycloak Authorization Code with PKCE and same-origin TLS.
+- Internal APIs require audience-scoped workload or delegated tokens.
+- Agent capabilities are short-lived, revocable, and scoped to one run.
+- The browser token is exchanged for a short-lived, down-scoped user token whose audience is the
+  MCP Gateway. Raw browser access tokens and refresh tokens never enter agent containers.
+- Asynchronous admission carries only a revocable, non-secret delegation grant ID. Minting a token
+  also requires the authorized Identity Delegation Service and a matching active run.
+- The SDK presents the delegated token to the MCP Gateway. The gateway authorizes the intersection
+  of user scopes and pinned run grants and exchanges again for a downstream MCP audience when
+  necessary.
+- NATS uses TLS, authenticated accounts/users, least-privilege subject permissions, payload limits,
+  quotas, and JetStream encryption/storage controls appropriate to the environment.
+- Tool execution is deny-by-default and validated against the pinned run grants on every call.
+- Agent-supplied prompts, messages, checkpoints, tool data, files, and telemetry are untrusted and
+  bounded.
+- Secrets never appear in manifests, images, events, checkpoints, logs, traces, or browser payloads.
 
-The main current gates are:
+## Operational requirements
 
-```bash
-./scripts/phase4/verify.sh
-./scripts/increment8/verify.sh
-./scripts/increment9/verify.sh
-```
+- Components are independently buildable, deployable, health-checked, observable, and scalable.
+- Contract and integration tests verify each API/event boundary.
+- Runner capacity is bounded globally and per user, with explicit admission backpressure.
+- Consumers have retry limits and dead-letter handling; operators can inspect and safely replay
+  failed messages.
+- Reconciliation repairs divergence among run state, leases, containers, and events.
+- Backup and restore cover each owning database, JetStream durable state, OCI artifacts, and
+  required encryption/signing keys.
 
-Live provider checks are deliberate operations because they require credentials, external state,
-and may incur cost. Operational procedures are in [Operations](docs/OPERATIONS.md).
+## Acceptance baseline
 
-## Deferred scope
+The target architecture is accepted when two independently packaged LangGraph agents can be
+published without rebuilding platform services, access can be granted to different users, and each
+can complete a multi-step conversation with every attempt in its own constrained container using
+SDK model, MCP, checkpoint, user-input, and Langfuse capabilities. Restart, duplicate delivery,
+cancellation, unauthorized access, malformed messages, and container escape probes must produce
+bounded outcomes without cross-user or cross-run effects.
 
-The current runtime supports declarative agents only. Executable third-party agent code, arbitrary
-images or dependencies, write-capable tools, delegated user credentials, approval UI, live price
-feeds, multi-host scheduling, and production Kubernetes deployment are outside the as-built
-contract. The bounded executable-agent proposal is documented separately in
-[Executable agent isolation](docs/architecture/INCREMENT10_PLAN.md).
+The detailed boundaries are indexed by [Architecture](docs/ARCHITECTURE.md). The accepted decisions
+and prerequisites for a future implementation plan are summarized in
+[Implementation planning handoff](docs/architecture/IMPLEMENTATION_HANDOFF.md).

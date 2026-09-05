@@ -1,8 +1,9 @@
 # Porfirium
 
-Porfirium is a local-first platform for building and running durable LLM agents. It provides a
-React portal, a FastAPI control plane, Temporal orchestration, Agentgateway-backed model and MCP
-access, immutable versioned agent releases, and self-hosted observability.
+Porfirium is a multi-user platform for developing and running LangGraph agents in isolated
+containers. The target platform separates the user portal, Agent Registry, Agent Runner,
+Porfirium Agent SDK, checkpoint service, model/tool gateways, and a NATS JetStream event backbone.
+All conversations use agents; the target product has no separate Direct LLM mode.
 
 ## Start and verify
 
@@ -24,26 +25,35 @@ Open <https://portal.local:8444>. Supporting interfaces are available at:
 
 See [Operations](docs/OPERATIONS.md) for startup, authoring, publication, recovery, and rollback.
 
-## Current architecture
+## Target architecture
 
-Agentgateway is the sole model and MCP gateway. Direct conversations call it through the Portal
-API. Agent conversations are accepted against an immutable agent release and a self-contained run
-snapshot, then executed by the platform-owned `AgentRunWorkflow` on Temporal queue
-`porfirium-agent-runtime-v1`. Application code remains authoritative for identity, ownership,
-tool policy, persistence, and audit.
+Each agent is an immutable, digest-pinned OCI release built on LangGraph. The Agent Runner starts
+each run attempt in its own constrained container. Agent code uses the Porfirium Agent SDK for user
+messages and responses, LLM calls, MCP tools, durable LangGraph checkpoints, cancellation, and
+Langfuse telemetry. For MCP calls it receives a short-lived, audience-restricted OIDC token
+delegated from the user; the original browser and refresh tokens remain outside the container. It
+never receives direct database, NATS, or infrastructure access.
 
-Declarative agents can be published from version directories or authored in the portal. Published
-versions, grants, artifacts, and accepted run snapshots are immutable. Publication never silently
-changes a default, and existing conversations never follow a newer release.
+The portal is the only browser-facing boundary. The Agent Registry owns releases and access
+grants, the Agent Runner owns isolated execution, and NATS JetStream carries durable commands and
+events. Service-owned databases and versioned contracts allow components to evolve independently.
+
+The repository still runs the previous Portal API and Temporal worker. A future implementation
+plan will define the transition after the target architecture contracts are accepted.
 
 The authoritative documents are:
 
 - [Architecture](docs/ARCHITECTURE.md) — system boundaries and invariants
-- [Specification](SPECIFICATION.md) — current product and engineering contract
-- [Operations](docs/OPERATIONS.md) — supported operator workflows
+- [Specification](SPECIFICATION.md) — target product and engineering contract
+- [Runtime model](docs/architecture/RUNTIME_MODEL.md) — conversations, threads, runs, and attempts
+- [Service contracts](docs/architecture/SERVICE_CONTRACTS.md) — APIs, ownership, and workflows
+- [Messaging and streaming](docs/architecture/MESSAGING.md) — JetStream and token delivery
+- [Identity and security](docs/architecture/IDENTITY_AND_SECURITY.md) — delegated OIDC and isolation
+- [Agent configuration](docs/architecture/CONFIGURATION.md) — values, revisions, and secret handling
+- [Agent SDK](docs/architecture/AGENT_SDK.md) — supported agent-facing interface
+- [Planning handoff](docs/architecture/IMPLEMENTATION_HANDOFF.md) — accepted decisions and inputs
+- [Operations](docs/OPERATIONS.md) — currently deployed stack procedures
 - [Glossary](docs/architecture/GLOSSARY.md) — domain terminology
-- [Executable-agent isolation proposal](docs/architecture/INCREMENT10_PLAN.md) — unimplemented
-  design
 
 ## Development
 

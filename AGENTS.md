@@ -7,8 +7,9 @@ live in `apps/portal-api/portal_api`; backend tests are in `apps/portal-api/test
 migrations are in `apps/portal-api/migrations`. The React/Vite portal is under `apps/web/src`.
 Independent MCP servers are in `services/`, while immutable versioned agent packages live under
 `agents/<agent-id>/<version>/`. Deployment configuration belongs in `compose.yaml` and `deploy/`.
-Current architecture and operator guidance are maintained in `docs/`; repeatable verification
-entry points belong in `scripts/`. Avoid accumulating completed-phase narratives in source docs.
+Target architecture, migration, and operator guidance are maintained in `docs/`; repeatable
+verification entry points belong in `scripts/`. Avoid accumulating completed-phase narratives in
+source docs.
 
 ## Build, Test, and Development Commands
 

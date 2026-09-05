@@ -1,5 +1,11 @@
 # Porfirium operations
 
+Status: current pre-migration deployment
+
+These procedures operate the existing Portal API and Temporal-based runtime. The target Agent
+Registry, Agent Runner, SDK, and JetStream architecture is documented but not yet implemented.
+Future target-service procedures will replace this document during an accepted transition.
+
 ## Start
 
 Ensure standalone Keycloak is running, `portal.local` resolves to `127.0.0.1`, and the uncommitted
@@ -15,9 +21,8 @@ Open <https://portal.local:8444>. For local demo data, sign in as `alise` or `bo
 
 ## Use and inspect
 
-Direct mode sends a model request without durable agent orchestration. Agent mode creates a
-conversation against a selected immutable release and executes turns with `AgentRunWorkflow` on
-`porfirium-agent-runtime-v1`.
+Create a conversation against a selected immutable agent release. The current pre-migration stack
+executes turns with `AgentRunWorkflow` on `porfirium-agent-runtime-v1`.
 
 Useful interfaces and logs:
 
