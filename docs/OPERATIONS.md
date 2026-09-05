@@ -3,8 +3,9 @@
 Status: current pre-migration deployment
 
 These procedures operate the existing Portal API and Temporal-based runtime. The target Agent
-Registry, Agent Runner, SDK, and JetStream architecture is documented but not yet implemented.
-Future target-service procedures will replace this document during an accepted transition.
+Registry, Agent Runner, SDK, and JetStream architecture has completed its contract foundation and
+feasibility phase but is not yet the deployed runtime. Target-service procedures will replace this
+document during an accepted transition.
 
 ## Start
 
@@ -98,6 +99,47 @@ These gates cover backend and MCP tests, Python lint, frontend lint/tests/build,
 secret scanning, declarative runtime behavior, filesystem publication, and portal authoring.
 Provider-backed smoke tests are intentionally separate because they use credentials, external
 state, and paid APIs.
+
+## Target-platform feasibility gates
+
+Phase 1 feasibility probes are independent of the legacy verification suite. Run them when
+changing the corresponding target-platform boundary. Each directory contains the accepted
+behavior, prerequisites, and focused troubleshooting guidance.
+
+```bash
+./scripts/feasibility/rootless-container-isolation/verify.sh
+./scripts/feasibility/langgraph-state-api/verify.sh
+./scripts/feasibility/grpc-reconnect/verify.sh
+./scripts/feasibility/jetstream-outbox-inbox/verify.sh
+./scripts/feasibility/otel-langfuse/verify.sh
+```
+
+The isolation probe requires rootless Podman. The JetStream probe starts a temporary NATS
+container through Podman. The LangGraph and gRPC probes create isolated Python virtual
+environments under `/tmp`. Their first run may download pinned dependencies.
+
+The OpenTelemetry probe requires Docker Compose and the local Langfuse dependencies. It starts a
+temporary Collector, sends SDK and gateway spans through it, verifies one correlated trace in
+Langfuse, and stops the Collector. Existing Langfuse dependency containers remain running.
+
+The token-exchange probe targets standalone Keycloak 26.2.5 or newer. Configure its dedicated
+realm clients once, using local administrator credentials without storing them in the repository,
+then run the probe with its generated client secret:
+
+```bash
+python3 scripts/feasibility/keycloak-token-exchange/configure_and_probe.py \
+  --base-url https://keycloak.local:8443 \
+  --admin-user "$KEYCLOAK_ADMIN_USER" \
+  --admin-password "$KEYCLOAK_ADMIN_PASSWORD"
+
+KEYCLOAK_EXCHANGE_CLIENT_SECRET='<generated-secret>' \
+  ./scripts/feasibility/keycloak-token-exchange/verify.sh
+```
+
+Use environment variables or an external secret manager for live values. Do not add generated
+secrets, probe environments, or provider payloads to Git. The accepted evidence and limitations
+for every gate are recorded in its `README.md` and summarized in the Phase 1 section of the
+implementation plan.
 
 ## Recovery
 

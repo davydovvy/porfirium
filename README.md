@@ -38,8 +38,9 @@ The portal is the only browser-facing boundary. The Agent Registry owns releases
 grants, the Agent Runner owns isolated execution, and NATS JetStream carries durable commands and
 events. Service-owned databases and versioned contracts allow components to evolve independently.
 
-The repository still runs the previous Portal API and Temporal worker. A future implementation
-plan will define the transition after the target architecture contracts are accepted.
+The repository still runs the previous Portal API and Temporal worker. The target implementation
+has completed the contract foundation and Phase 1 feasibility gates. Phase 2 infrastructure and
+service skeletons are next; the legacy runtime remains authoritative until the planned cutover.
 
 The authoritative documents are:
 

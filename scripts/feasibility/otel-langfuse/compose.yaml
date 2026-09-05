@@ -1,0 +1,13 @@
+services:
+  feasibility-otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.132.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    environment:
+      LANGFUSE_AUTH: ${LANGFUSE_AUTH}
+    volumes:
+      - ./scripts/feasibility/otel-langfuse/collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:4318:4318"
+    depends_on:
+      langfuse-web:
+        condition: service_healthy

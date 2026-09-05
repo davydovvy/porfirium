@@ -68,18 +68,24 @@ change is rejected. This gate is complete in the current tree.
 
 Build disposable, executable spikes for the six decisions that can invalidate downstream work:
 
-1. Keycloak exchange, MCP audience restriction, scope narrowing, renewal, logout, and revocation.
+1. Keycloak exchange, MCP audience restriction, scope narrowing, renewal, logout, and revocation
+   (complete on Keycloak 26.2.5).
 2. Rootless container filesystem, capability, syscall, network, resource, timeout, and exact cleanup
-   controls.
-3. LangGraph checkpoint serialization plus interrupt/resume through an HTTP State API boundary.
+   controls (complete on rootless Podman 6.1.0 with `runc`).
+3. LangGraph checkpoint serialization plus interrupt/resume through an HTTP State API boundary
+   (complete on LangGraph 1.2.11).
 4. gRPC reconnect, ordered acknowledgement, retransmission, and deduplication across Runtime API
-   restart.
-5. JetStream outbox/inbox handling of duplicate, delayed, poison, and replayed messages.
-6. SDK and gateway OTLP correlation in Langfuse without agent-held Langfuse credentials.
+   restart (complete on gRPC Python 1.83.1).
+5. JetStream outbox/inbox handling of duplicate, delayed, poison, and replayed messages
+   (complete on NATS Server 2.12.15 with nats-py 2.15.0).
+6. SDK and gateway OTLP correlation in Langfuse without agent-held Langfuse credentials
+   (complete on OpenTelemetry Python 1.44.0 and Collector 0.132.0).
 
 Each spike gets a script under `scripts/feasibility/<gate>/`, bounded fixtures, documented actual
 results, and an accepted or rejected decision. Dependent service work starts only after its gate
 passes.
+
+All six feasibility gates are complete in the current tree.
 
 ## Phase 2 — Target infrastructure and service skeletons
 
