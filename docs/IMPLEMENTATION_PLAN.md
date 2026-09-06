@@ -228,6 +228,14 @@ Implement the stable suspension ID, checkpoint/input-request saga, commitment ev
 attempt exit, reconciliation, exactly one effective response, and a new run restoring the same
 thread.
 
+Implementation status: complete. The SDK derives stable checkpoint and input-request identities
+from one suspension ID, persists the checkpoint before proposing input, commits the saga, and ends
+the activation with a typed suspension. Conversation Service hides reservations until commitment,
+repairs either event order, accepts one owner-authorized effective response, and emits a new run
+intent pinned to the committed checkpoint and original thread. Runner fences the exact attempt,
+removes its container, and records the durable `waiting_for_input` state.
+`./scripts/target-phase10/verify.sh` is the focused gate.
+
 Exit gate: no container waits for a person, crashes between saga writes are repaired, and duplicate
 or unauthorized responses cannot create another effective run.
 

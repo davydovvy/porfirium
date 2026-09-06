@@ -3,6 +3,7 @@ from porfirium_agent_sdk.context import AgentContext, RunIdentity
 from porfirium_agent_sdk.errors import PlatformError
 from porfirium_agent_sdk.langgraph import LangGraphCheckpointer
 from porfirium_agent_sdk.runtime import MessageStream, RuntimeClient
+from porfirium_agent_sdk.suspension import InputSuspended, request_input
 
 __all__ = [
     "AgentContext",
@@ -14,4 +15,6 @@ __all__ = [
     "LangGraphCheckpointer",
     "MessageStream",
     "RuntimeClient",
+    "InputSuspended",
+    "request_input",
 ]

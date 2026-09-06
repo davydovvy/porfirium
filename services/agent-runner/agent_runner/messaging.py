@@ -10,7 +10,7 @@ from agent_runner.models import RunAdmission
 from agent_runner.outbox import publish_pending
 
 
-async def consume_completion_events(pool: Any, subscription: Any) -> None:
+async def consume_completion_events(runner: Any, subscription: Any) -> None:
     async for message in subscription.messages:
         try:
             envelope = json.loads(message.data)
@@ -19,9 +19,13 @@ async def consume_completion_events(pool: Any, subscription: Any) -> None:
                 "porfirium.run.messages_committed.v1",
                 "porfirium.run.checkpoint_committed.v1",
                 "porfirium.message.started.v1",
+                "porfirium.run.suspension_committed.v1",
             }
             if envelope.get("type") in supported:
-                await consume_run_event(pool, envelope)
+                if envelope.get("type") == "porfirium.run.suspension_committed.v1":
+                    await runner.suspend(envelope)
+                else:
+                    await consume_run_event(runner.pool, envelope)
         except Exception:
             await message.nak()
         else:

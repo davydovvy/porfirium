@@ -77,6 +77,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         durable="conversation-service-results-v1",
         manual_ack=True,
     )
+    suspension_subscription = await jetstream.subscribe(
+        "porfirium.run.event.suspension_committed",
+        durable="conversation-service-suspensions-v1",
+        manual_ack=True,
+    )
 
     async def publish_loop() -> None:
         while True:
@@ -88,6 +93,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         asyncio.create_task(consume_runtime_events(store, conversation_subscription)),
         asyncio.create_task(consume_runtime_events(store, delta_subscription)),
         asyncio.create_task(consume_runtime_events(store, result_subscription)),
+        asyncio.create_task(consume_runtime_events(store, suspension_subscription)),
     ]
     app.state.store = store
     try:

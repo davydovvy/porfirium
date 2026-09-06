@@ -6,7 +6,7 @@ These procedures operate the existing Portal API and Temporal-based runtime. The
 Registry, Agent Runner, SDK, and JetStream architecture has completed its contract foundation,
 feasibility gates, infrastructure foundation, Registry, Checkpoint API, Runtime API, SDK, isolated
 Runner MVP, configuration, delegation, gateway policy, durable conversations, and end-to-end
-completion phases, but is not yet the deployed runtime.
+completion and human-input suspension phases, but is not yet the deployed runtime.
 Target-service procedures will replace this document during an accepted transition.
 
 ## Start
@@ -113,6 +113,7 @@ Target-platform verification is independent of the deployed legacy runtime:
 ./scripts/target-phase7/verify.sh
 ./scripts/target-phase8/verify.sh
 ./scripts/target-phase9/verify.sh
+./scripts/target-phase10/verify.sh
 ```
 
 These gates require Docker with Compose and remove their isolated containers and volumes on exit.
@@ -126,6 +127,8 @@ conversations, idempotent message and Runtime-event handling, canonical completi
 and presentation-sequence replay for SSE reconnects. Phase 9 verifies durable run admission,
 message/checkpoint confirmation publication, order-independent completion convergence,
 cancellation, interruption after visible output, and safe pre-output recovery.
+Phase 10 verifies stable suspension identity, hidden partial saga state, commitment in either event
+order, one effective owner-authorized response, exact attempt teardown, and checkpoint-bound resume.
 
 Target Phase 7 requires `DELEGATION_SIGNING_SECRET` in addition to the target database and NATS
 secrets. Supply it through deployment secret management. Never place that secret or an issued
@@ -158,6 +161,11 @@ JetStream consumers. A container exit is diagnostic only and must never mark a r
 During incident recovery, inspect `run_completion`, `run_confirmations`, and `run_event_inbox`
 before replaying an event. Replays are safe with the original event ID. Do not edit a terminal run:
 the first valid terminal transition is authoritative.
+
+For a run in `suspending`, redeliver its original suspension event; never fabricate a new
+`suspension_id`. Runner retries removal of the persisted container and Conversation Service
+reconciles the existing reservation. A `waiting_for_input` run has no active container. Resume only
+through the committed input request so the new run retains the thread and starting checkpoint.
 
 ## Target-platform feasibility gates
 

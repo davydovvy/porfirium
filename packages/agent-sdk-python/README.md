@@ -5,6 +5,10 @@ errors, a bounded Checkpoint API client, an async LangGraph checkpointer, and re
 message streaming. It requires only a short-lived run capability and never accepts database or
 NATS credentials.
 
+`request_input` uses one stable suspension ID to write a deterministic checkpoint, propose the
+input request, commit both identities through Runtime API, and raise `InputSuspended`. Agent code
+must let that exception end the activation; it must not wait in the container for a response.
+
 ```python
 from porfirium_agent_sdk import CheckpointClient, LangGraphCheckpointer
 

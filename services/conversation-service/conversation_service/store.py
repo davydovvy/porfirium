@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import os
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import asyncpg
 
@@ -186,6 +186,10 @@ class PostgresStore:
                     409, "message_exists", "Message ID already exists"
                 ) from exc
             message = self.message(row)
+            await connection.execute(
+                "UPDATE conversations SET delegation_grant_id=$2 WHERE conversation_id=$1",
+                conversation_id, payload["delegation_grant_id"],
+            )
             sequence = await self._present(
                 connection, conversation_id, "message.completed", message_json(message)
             )
@@ -283,6 +287,31 @@ class PostgresStore:
                     "INSERT INTO inbox_events(event_id,event_type) VALUES($1,$2)", event_id, kind
                 )
                 return sequence
+            if kind == "porfirium.run.suspension_committed.v1":
+                suspension_id = UUID(str(data["suspension_id"]))
+                await connection.execute(
+                    "INSERT INTO suspension_commitments(suspension_id,event_id,run_id,"
+                    "checkpoint_id,input_request_id) VALUES($1,$2,$3,$4,$5) "
+                    "ON CONFLICT(suspension_id) DO NOTHING",
+                    suspension_id, event_id, run_id, UUID(str(data["checkpoint_id"])),
+                    UUID(str(data["input_request_id"])),
+                )
+                commitment = await connection.fetchrow(
+                    "SELECT * FROM suspension_commitments WHERE suspension_id=$1", suspension_id
+                )
+                if (
+                    commitment["run_id"] != run_id
+                    or commitment["checkpoint_id"] != UUID(str(data["checkpoint_id"]))
+                    or commitment["input_request_id"] != UUID(str(data["input_request_id"]))
+                ):
+                    raise ConversationProblem(
+                        409, "suspension_conflict", "Suspension identity conflicts"
+                    )
+                sequence = await self._reconcile_suspension(connection, suspension_id)
+                await connection.execute(
+                    "INSERT INTO inbox_events(event_id,event_type) VALUES($1,$2)", event_id, kind
+                )
+                return sequence
             if kind == "porfirium.message.started.v1":
                 await connection.execute(
                     "INSERT INTO messages(message_id,conversation_id,run_id,role,status,content) VALUES($1,$2,$3,'assistant','streaming','') ON CONFLICT(message_id) DO NOTHING",
@@ -352,16 +381,27 @@ class PostgresStore:
                     content,
                 )
             elif kind == "porfirium.input.request_proposed.v1":
+                suspension_id = UUID(str(data["suspension_id"]))
+                request_id = uuid5(NAMESPACE_URL, f"porfirium:suspension:{suspension_id}")
                 await connection.execute(
-                    "INSERT INTO input_requests(input_request_id,conversation_id,run_id,suspension_id,checkpoint_id,prompt,schema) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb) ON CONFLICT(input_request_id) DO NOTHING",
-                    UUID(str(data["input_request_id"])),
+                    "INSERT INTO input_requests(input_request_id,conversation_id,run_id,"
+                    "suspension_id,checkpoint_id,prompt,schema,state,delegation_grant_id) "
+                    "VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,'reserved',"
+                    "(SELECT delegation_grant_id FROM conversations WHERE conversation_id=$2)) "
+                    "ON CONFLICT(suspension_id) DO NOTHING",
+                    request_id,
                     conversation_id,
                     run_id,
-                    UUID(str(data["suspension_id"])),
+                    suspension_id,
                     UUID(str(data["checkpoint_id"])),
                     str(data["prompt"]),
-                    canonical_json(data.get("schema") or {}).decode(),
+                    canonical_json(data.get("response_schema") or data.get("schema") or {}).decode(),
                 )
+                committed_sequence = await self._reconcile_suspension(connection, suspension_id)
+                await connection.execute(
+                    "INSERT INTO inbox_events(event_id,event_type) VALUES($1,$2)", event_id, kind
+                )
+                return committed_sequence
             else:
                 raise ConversationProblem(
                     422, "event_unsupported", "Runtime event type is unsupported"
@@ -371,6 +411,35 @@ class PostgresStore:
                 "INSERT INTO inbox_events(event_id,event_type) VALUES($1,$2)", event_id, kind
             )
             return sequence
+
+    async def _reconcile_suspension(
+        self, connection: asyncpg.Connection, suspension_id: UUID
+    ) -> int | None:
+        row = await connection.fetchrow(
+            "SELECT r.*,c.input_request_id committed_request_id,c.checkpoint_id committed_checkpoint,"
+            "c.run_id committed_run_id "
+            "FROM input_requests r JOIN suspension_commitments c USING(suspension_id) "
+            "WHERE r.suspension_id=$1 FOR UPDATE OF r", suspension_id
+        )
+        if row is None:
+            return None
+        if (
+            row["input_request_id"] != row["committed_request_id"]
+            or row["checkpoint_id"] != row["committed_checkpoint"]
+            or row["run_id"] != row["committed_run_id"]
+        ):
+            raise ConversationProblem(409, "suspension_conflict", "Suspension identity conflicts")
+        if row["state"] != "reserved":
+            return None
+        await connection.execute(
+            "UPDATE input_requests SET state='pending' WHERE suspension_id=$1", suspension_id
+        )
+        data = {
+            "input_request_id": str(row["input_request_id"]),
+            "suspension_id": str(suspension_id), "checkpoint_id": str(row["checkpoint_id"]),
+            "prompt": row["prompt"], "response_schema": row["schema"], "expires_at": None,
+        }
+        return await self._present(connection, row["conversation_id"], "input.request_created", data)
 
     async def _confirm_messages(
         self, connection: asyncpg.Connection, run_id: UUID, message_ids: list[UUID]
@@ -423,7 +492,9 @@ class PostgresStore:
         operation = f"input:{request_id}"
         async with self.pool.acquire() as connection, connection.transaction():
             row = await connection.fetchrow(
-                "SELECT r.*,c.owner_id,c.thread_id,c.release_id FROM input_requests r JOIN conversations c USING(conversation_id) WHERE input_request_id=$1 AND c.owner_id=$2 FOR UPDATE",
+                "SELECT r.*,c.owner_id,c.thread_id,c.release_id,c.configuration_revision_id "
+                "FROM input_requests r JOIN conversations c USING(conversation_id) "
+                "WHERE input_request_id=$1 AND c.owner_id=$2 FOR UPDATE",
                 request_id,
                 owner_id,
             )
@@ -468,7 +539,15 @@ class PostgresStore:
                 "thread_id": str(row["thread_id"]),
                 "release_id": str(row["release_id"]),
                 "run_id": str(run_id),
+                "delegation_grant_id": str(row["delegation_grant_id"]),
+                "configuration_revision_id": (
+                    str(row["configuration_revision_id"])
+                    if row["configuration_revision_id"] else None
+                ),
+                "starting_checkpoint_id": str(row["checkpoint_id"]),
                 "trigger": {"type": "user_response", "id": str(request_id)},
+                "trace_id": event_id.hex,
+                "schema_version": 1,
             }
             await connection.execute(
                 "INSERT INTO outbox_events(event_id,subject,payload) VALUES($1,'porfirium.run.command.requested',$2::jsonb)",

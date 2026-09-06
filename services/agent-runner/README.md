@@ -11,6 +11,10 @@ proposal, and emits `run.completed` only after every pinned requirement is satis
 exit code alone is never success. A lost attempt is retried only before visible output; otherwise
 the partial message is interrupted and the run fails.
 
+A committed human-input suspension moves the run through `suspending`, removes the exact persisted
+container, ends the attempt, and leaves the run in `waiting_for_input`. Redelivery resumes an
+incomplete teardown without creating another suspension or container.
+
 Apply migrations before starting the service:
 
 ```bash

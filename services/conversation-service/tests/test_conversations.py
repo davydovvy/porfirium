@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import pytest
 from fastapi.testclient import TestClient
@@ -256,3 +256,48 @@ async def test_replay_after_sequence_has_no_gap() -> None:
     replay = await store.replay(OWNER, conversation.conversation_id, 1)
     assert [item.sequence for item in replay] == [2, 3]
     assert sse(replay[0]).startswith("id: 2\nevent: message.completed\n")
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("commit_first", [False, True])
+async def test_input_saga_is_hidden_until_commit_and_order_independent(
+    commit_first: bool,
+) -> None:
+    store = MemoryStore()
+    conversation = await store.create_conversation(
+        OWNER, "conversation-saga",
+        {"title": "Demo", "release_id": uuid4(), "thread_id": uuid4(),
+         "configuration_revision_id": None},
+    )
+    grant_id, run_id, suspension_id, checkpoint_id = uuid4(), uuid4(), uuid4(), uuid4()
+    await store.create_message(
+        OWNER, conversation.conversation_id, "saga-message",
+        {"message_id": uuid4(), "run_id": run_id, "content": "start",
+         "delegation_grant_id": grant_id},
+    )
+    request_id = uuid5(NAMESPACE_URL, f"porfirium:suspension:{suspension_id}")
+    view = {"conversation_id": str(conversation.conversation_id)}
+    proposed = envelope(
+        view, "porfirium.input.request_proposed.v1",
+        {"suspension_id": str(suspension_id), "checkpoint_id": str(checkpoint_id),
+         "prompt": "Approve?", "response_schema": {"type": "boolean"}}, run_id=run_id,
+    )
+    committed = envelope(
+        view, "porfirium.run.suspension_committed.v1",
+        {"run_id": str(run_id), "suspension_id": str(suspension_id),
+         "checkpoint_id": str(checkpoint_id), "input_request_id": str(request_id)}, run_id=run_id,
+    )
+    first, second = (committed, proposed) if commit_first else (proposed, committed)
+    assert await store.project(first) is None
+    assert not [event for event in store.events[conversation.conversation_id]
+                if event.event_type == "input.request_created"]
+    assert await store.project(second) is not None
+    assert store.inputs[request_id].state == "pending"
+
+    response_run_id = uuid4()
+    result = await store.answer_input(OWNER, request_id, "response-key", response_run_id, True)
+    assert await store.answer_input(
+        OWNER, request_id, "response-key", response_run_id, True
+    ) == result
+    with pytest.raises(ConversationProblem, match="already answered"):
+        await store.answer_input(OWNER, request_id, "another-key", uuid4(), False)

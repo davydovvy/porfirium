@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from conversation_service.problems import ConversationProblem
 
@@ -29,6 +29,7 @@ class Conversation:
     release_id: UUID
     title: str
     configuration_revision_id: UUID | None = None
+    delegation_grant_id: UUID | None = None
     created_at: datetime = field(default_factory=now_utc)
     updated_at: datetime = field(default_factory=now_utc)
     last_sequence: int = 0
@@ -57,6 +58,7 @@ class InputRequest:
     checkpoint_id: UUID
     prompt: str
     schema: dict[str, Any]
+    delegation_grant_id: UUID | None = None
     state: str = "pending"
     response: Any = None
     response_run_id: UUID | None = None
@@ -126,6 +128,7 @@ class MemoryStore:
         self.conversations: dict[UUID, Conversation] = {}
         self.messages: dict[UUID, Message] = {}
         self.inputs: dict[UUID, InputRequest] = {}
+        self.suspensions: dict[UUID, tuple[UUID, UUID, UUID]] = {}
         self.events: dict[UUID, list[PresentationEvent]] = {}
         self.chunks: dict[UUID, dict[int, str]] = {}
         self.idempotency: dict[tuple[UUID, str, str], tuple[str, Any]] = {}
@@ -197,6 +200,7 @@ class MemoryStore:
             message_id, conversation_id, payload["run_id"], "user", "completed", payload["content"]
         )
         self.messages[message_id] = message
+        item.delegation_grant_id = payload["delegation_grant_id"]
         sequence = self._event(item, "message.completed", message_json(message))
         self.outbox.append(
             {
@@ -279,23 +283,59 @@ class MemoryStore:
             )
             message.status = "interrupted" if "interrupted" in event_type else "failed"
         elif event_type == "porfirium.input.request_proposed.v1":
-            request_id = UUID(str(data["input_request_id"]))
+            suspension_id = UUID(str(data["suspension_id"]))
+            request_id = uuid5(NAMESPACE_URL, f"porfirium:suspension:{suspension_id}")
             self.inputs.setdefault(
                 request_id,
                 InputRequest(
                     request_id,
                     conversation_id,
                     run_id,
-                    UUID(str(data["suspension_id"])),
+                    suspension_id,
                     UUID(str(data["checkpoint_id"])),
                     str(data["prompt"]),
-                    data.get("schema") or {},
+                    data.get("response_schema") or data.get("schema") or {},
+                    item.delegation_grant_id,
+                    "reserved",
                 ),
             )
+            commitment = self.suspensions.get(suspension_id)
+            if commitment:
+                self._commit_input(self.inputs[request_id], commitment)
+                self.inbox.add(event_id)
+                return self._event(
+                    item, "input.request_created", input_json(self.inputs[request_id])
+                )
+            self.inbox.add(event_id)
+            return None
+        elif event_type == "porfirium.run.suspension_committed.v1":
+            suspension_id = UUID(str(data["suspension_id"]))
+            commitment = (
+                run_id, UUID(str(data["checkpoint_id"])), UUID(str(data["input_request_id"]))
+            )
+            self.suspensions.setdefault(suspension_id, commitment)
+            request = next(
+                (value for value in self.inputs.values() if value.suspension_id == suspension_id),
+                None,
+            )
+            self.inbox.add(event_id)
+            if request is None:
+                return None
+            self._commit_input(request, commitment)
+            return self._event(item, "input.request_created", input_json(request))
         else:
             raise ConversationProblem(422, "event_unsupported", "Runtime event type is unsupported")
         self.inbox.add(event_id)
         return self._event(item, event_type, data)
+
+    @staticmethod
+    def _commit_input(request: InputRequest, commitment: tuple[UUID, UUID, UUID]) -> None:
+        run_id, checkpoint_id, request_id = commitment
+        if (request.run_id, request.checkpoint_id, request.input_request_id) != (
+            run_id, checkpoint_id, request_id,
+        ):
+            raise ConversationProblem(409, "suspension_conflict", "Suspension identity conflicts")
+        request.state = "pending"
 
     async def answer_input(
         self, owner_id: UUID, request_id: UUID, idempotency_key: str, run_id: UUID, response: Any
@@ -324,8 +364,17 @@ class MemoryStore:
         self.outbox.append(
             {
                 "type": "porfirium.run.requested.v1",
+                "user_id": str(owner_id),
+                "conversation_id": str(item.conversation_id),
+                "thread_id": str(item.thread_id),
+                "release_id": str(item.release_id),
                 "run_id": str(run_id),
-                "trigger": "user_response",
+                "delegation_grant_id": str(request.delegation_grant_id),
+                "configuration_revision_id": (
+                    str(item.configuration_revision_id) if item.configuration_revision_id else None
+                ),
+                "starting_checkpoint_id": str(request.checkpoint_id),
+                "trigger": {"type": "user_response", "id": str(request_id)},
             }
         )
         result = (request_id, sequence)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import re
@@ -222,6 +223,55 @@ class RunnerService:
                 },
             )
             return _run(await _get_run(connection, run_id))
+
+    async def suspend(self, envelope: dict[str, Any]) -> bool:
+        try:
+            event_id = UUID(str(envelope["id"]))
+            run_id = UUID(str(envelope["run_id"]))
+            attempt_id = UUID(str(envelope["attempt_id"]))
+            lease_epoch = int(envelope["lease_epoch"])
+            data = envelope["data"]
+            UUID(str(data["suspension_id"]))
+            UUID(str(data["checkpoint_id"]))
+            UUID(str(data["input_request_id"]))
+        except (KeyError, TypeError, ValueError) as exc:
+            raise RunnerError("suspension_invalid") from exc
+        async with self.pool.acquire() as connection, connection.transaction():
+            inserted = await connection.fetchval(
+                "INSERT INTO run_event_inbox(event_id,event_type) "
+                "VALUES($1,'porfirium.run.suspension_committed.v1') ON CONFLICT DO NOTHING "
+                "RETURNING event_id", event_id,
+            )
+            run = await connection.fetchrow("SELECT * FROM runs WHERE run_id=$1 FOR UPDATE", run_id)
+            if inserted is None and run is not None and run["state"] == "waiting_for_input":
+                return False
+            if (
+                run is None or run["active_attempt_id"] != attempt_id
+                or run["lease_epoch"] != lease_epoch
+                or run["state"] not in {"running", "suspending"}
+            ):
+                raise RunnerError("suspension_stale")
+            attempt = await connection.fetchrow(
+                "SELECT * FROM attempts WHERE attempt_id=$1", attempt_id
+            )
+            if run["state"] == "running":
+                await connection.execute(
+                    "UPDATE runs SET state='suspending',updated_at=now() WHERE run_id=$1", run_id
+                )
+            await connection.execute(
+                "UPDATE attempts SET state='stopping' WHERE attempt_id=$1", attempt_id
+            )
+        if attempt["container_id"] and await self.backend.exists(attempt["container_id"]):
+            await asyncio.wait_for(self.backend.remove(attempt["container_id"]), timeout=5)
+        async with self.pool.acquire() as connection, connection.transaction():
+            await connection.execute(
+                "UPDATE attempts SET state='exited',ended_at=now() WHERE attempt_id=$1", attempt_id
+            )
+            await connection.execute(
+                "UPDATE runs SET state='waiting_for_input',active_attempt_id=NULL,updated_at=now() "
+                "WHERE run_id=$1 AND state='suspending'", run_id
+            )
+        return True
 
     async def reconcile(self) -> int:
         rows = await self.pool.fetch(

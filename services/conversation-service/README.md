@@ -19,3 +19,6 @@ from the repository root:
 ```
 
 Never renumber presentation events or reconstruct a completed message from retained deltas.
+Input proposals remain in `reserved` state and are not presented until their matching suspension
+commitment arrives. Replaying either event repairs partial saga state. Exactly one response changes
+the request to `answered` and produces the checkpoint-bound resume intent.

@@ -87,8 +87,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     scheduler = asyncio.create_task(_scheduler(app))
     messaging_tasks = [
         asyncio.create_task(publish_loop(pool, jetstream)),
-        asyncio.create_task(consume_completion_events(pool, completion_subscription)),
-        asyncio.create_task(consume_completion_events(pool, message_subscription)),
+        asyncio.create_task(consume_completion_events(app.state.runner, completion_subscription)),
+        asyncio.create_task(consume_completion_events(app.state.runner, message_subscription)),
         asyncio.create_task(consume_admissions(app, admission_subscription)),
     ]
     try:
