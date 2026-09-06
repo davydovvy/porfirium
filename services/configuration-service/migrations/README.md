@@ -1,4 +1,5 @@
 # Configuration Service migrations
 
-This directory is reserved for the service-owned Alembic migration chain. No other service may
-import its persistence models or write its database.
+These ordered SQL migrations are applied by `python -m configuration_service.migrate`. The initial
+migration creates immutable owner-scoped revisions and idempotency records. No other service may
+import this service's persistence models or write its database.

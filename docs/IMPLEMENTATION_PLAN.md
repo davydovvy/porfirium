@@ -179,6 +179,14 @@ Implement immutable configuration revisions and deterministic resolution; delega
 creation, exchange, renewal, expiry, and revocation; and run-aware LLM/MCP authorization around the
 gateway implementation. MCP requires both delegated user scope and a pinned run tool grant.
 
+Implementation status: complete. Configuration revisions are owner-scoped, immutable, bounded,
+idempotent, schema-digest checked, and deterministically resolved with release/user/conversation
+precedence. Delegation grants are durable, short-lived, revocable, scope-narrowing, and bound on
+exchange and renewal to an active run attempt and lease epoch. Gateway policy independently checks
+pinned model/tool grants, requires delegated user scope for MCP, rejects cancelled runs, and applies
+recursive credential redaction. `./scripts/target-phase7/verify.sh` is the focused verification
+entry point.
+
 Exit gate: allowed model and tool calls succeed, either missing authorization dimension denies a
 tool call, cancellation blocks new work, and token redaction tests cover every output channel.
 

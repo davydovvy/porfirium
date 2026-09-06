@@ -1,4 +1,5 @@
 # Identity Delegation migrations
 
-This directory is reserved for the service-owned Alembic migration chain. No other service may
-import its persistence models or write its database.
+These ordered SQL migrations are applied by `python -m identity_delegation.migrate`. The initial
+migration creates delegation grants and idempotency records. No other service may import this
+service's persistence models or write its database.

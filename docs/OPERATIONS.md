@@ -4,9 +4,9 @@ Status: current pre-migration deployment
 
 These procedures operate the existing Portal API and Temporal-based runtime. The target Agent
 Registry, Agent Runner, SDK, and JetStream architecture has completed its contract foundation,
-feasibility gates, infrastructure foundation, Registry, Checkpoint API, Runtime API, SDK, and
-isolated Runner MVP phases, but is not yet the deployed runtime. Target-service procedures will
-replace this document during an accepted transition.
+feasibility gates, infrastructure foundation, Registry, Checkpoint API, Runtime API, SDK, isolated
+Runner MVP, configuration, delegation, and gateway-policy phases, but is not yet the deployed
+runtime. Target-service procedures will replace this document during an accepted transition.
 
 ## Start
 
@@ -109,13 +109,20 @@ Target-platform verification is independent of the deployed legacy runtime:
 ./scripts/target-phase3/acceptance.sh
 ./scripts/target-phase4/acceptance.sh
 ./scripts/target-phase5/acceptance.sh
+./scripts/target-phase7/verify.sh
 ```
 
 These gates require Docker with Compose and remove their isolated containers and volumes on exit.
 Phase 3 builds temporary OCI fixtures. Phase 4 proves checkpoint restore in a second agent process.
 Phase 5 starts PostgreSQL, JetStream, the Runtime API, and an unprivileged local-agent harness; it
 restarts Runtime during an active message stream and verifies durable deduplication, completion
-hashes, and lease fencing. None of the target acceptance harnesses use production credentials.
+hashes, and lease fencing. Phase 7 verifies immutable configuration resolution, scoped delegation,
+both MCP authorization dimensions, cancellation denial, and credential redaction. None of the
+target acceptance harnesses use production credentials.
+
+Target Phase 7 requires `DELEGATION_SIGNING_SECRET` in addition to the target database and NATS
+secrets. Supply it through deployment secret management. Never place that secret or an issued
+delegated token in Compose files, logs, events, checkpoints, traces, or error responses.
 
 Phase 6 Runner checks are focused in the service and the accepted real-runtime isolation gate:
 
