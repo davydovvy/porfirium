@@ -4,8 +4,9 @@ Status: current pre-migration deployment
 
 These procedures operate the existing Portal API and Temporal-based runtime. The target Agent
 Registry, Agent Runner, SDK, and JetStream architecture has completed its contract foundation,
-feasibility gates, infrastructure foundation, and Agent Registry MVP, but is not yet the deployed
-runtime. Target-service procedures will replace this document during an accepted transition.
+feasibility gates, infrastructure foundation, Registry, Checkpoint API, Runtime API, SDK, and
+isolated Runner MVP phases, but is not yet the deployed runtime. Target-service procedures will
+replace this document during an accepted transition.
 
 ## Start
 
@@ -115,6 +116,21 @@ Phase 3 builds temporary OCI fixtures. Phase 4 proves checkpoint restore in a se
 Phase 5 starts PostgreSQL, JetStream, the Runtime API, and an unprivileged local-agent harness; it
 restarts Runtime during an active message stream and verifies durable deduplication, completion
 hashes, and lease fencing. None of the target acceptance harnesses use production credentials.
+
+Phase 6 Runner checks are focused in the service and the accepted real-runtime isolation gate:
+
+```bash
+cd services/agent-runner
+uv run ruff check .
+uv run pytest -q
+cd ../..
+./scripts/feasibility/rootless-container-isolation/verify.sh
+```
+
+The Runner must execute as an unprivileged host service with access to its own rootless Podman
+runtime. Do not expose that runtime socket, host mounts, infrastructure credentials, or caller-
+controlled Podman flags to agent containers. Registry run-signing public keys and the Runtime API
+capability secret must be supplied through the deployment secret mechanism, never committed.
 
 ## Target-platform feasibility gates
 

@@ -175,14 +175,39 @@ services:
     <<: *target_service
     build:
       context: ../../services/agent-runner
+    depends_on:
+      runner-migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://agent_runner:${RUNNER_DB_PASSWORD:?set RUNNER_DB_PASSWORD}@postgres:5432/runner
       NATS_URL: nats://nats:4222
       NATS_USER: agent_runner
       NATS_PASSWORD: ${NATS_RUNNER_PASSWORD:?set NATS_RUNNER_PASSWORD}
+      AGENT_REGISTRY_URL: http://agent-registry:8102
+      AGENT_RUNTIME_URL: http://agent-runtime-api:8104
+      REGISTRY_RESOLVER_TOKEN: ${REGISTRY_RESOLVER_TOKEN:?set REGISTRY_RESOLVER_TOKEN}
+      REGISTRY_RUN_PUBLIC_KEYS: ${REGISTRY_RUN_PUBLIC_KEYS:?set REGISTRY_RUN_PUBLIC_KEYS}
+      RUN_CAPABILITY_SECRET: ${RUN_CAPABILITY_SECRET:?set RUN_CAPABILITY_SECRET}
     healthcheck:
       <<: *service_healthcheck
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8103/health/ready', timeout=2)"]
+
+  runner-migrate:
+    profiles: [target]
+    build:
+      context: ../../services/agent-runner
+    restart: "no"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://agent_runner:${RUNNER_DB_PASSWORD:?set RUNNER_DB_PASSWORD}@postgres:5432/runner
+    command: ["python", "-m", "agent_runner.migrate"]
 
   agent-runtime-api:
     <<: *target_service

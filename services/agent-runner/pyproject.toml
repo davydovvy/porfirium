@@ -1,11 +1,13 @@
 [project]
 name = "porfirium-agent-runner"
-version = "0.1.0"
+version = "0.2.0"
 description = "Agent Runner service"
 requires-python = ">=3.12"
 dependencies = [
   "asyncpg==0.30.0",
+  "cryptography==45.0.7",
   "fastapi==0.116.1",
+  "httpx==0.28.1",
   "nats-py==2.15.0",
   "uvicorn==0.35.0",
 ]
@@ -19,7 +21,6 @@ packages = ["agent_runner"]
 
 [dependency-groups]
 dev = [
-  "httpx==0.28.1",
   "pytest==8.4.2",
   "ruff==0.12.11",
 ]

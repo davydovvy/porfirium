@@ -161,6 +161,15 @@ increasing leases, scheduling, one rootless container per attempt, capability is
 cancellation, cleanup, and reconciliation. Begin with a fixed-response agent and do not silently
 recover after visible output.
 
+Implementation status: complete. The Runner admits Registry-resolved signed specifications
+idempotently, persists one active attempt lease with a monotonically increasing epoch, issues
+attempt-bound Runtime capabilities, and creates a new fixed-profile rootless Podman container for
+each attempt. Deadlines, idempotent cancellation by the exact persisted container ID, failed-start
+handling, and restart reconciliation are enforced without accepting caller-controlled container
+settings. The focused Runner suite and the real rootless-container isolation probe cover signed
+specification tampering, attempt capability binding, fail-closed sandbox arguments, elapsed-time
+cleanup, and preservation of unrelated containers.
+
 Exit gate: one admission creates one run, at most one attempt lease is active, cancellation removes
 the exact container, and the complete isolation probe suite fails closed.
 

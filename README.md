@@ -41,8 +41,8 @@ events. Service-owned databases and versioned contracts allow components to evol
 The repository still runs the previous Portal API and Temporal worker. The target implementation
 has completed the contract foundation, feasibility gates, Phase 2 infrastructure/service
 foundation, Phase 3 Agent Registry MVP, Phase 4 Checkpoint API and SDK core, and Phase 5 Runtime API
-and message SDK. Phase 6 Runner MVP is next; the legacy runtime remains authoritative until the
-planned cutover.
+and message SDK. Phase 6 adds the isolated Runner MVP. The legacy runtime remains authoritative
+until the planned cutover.
 
 The authoritative documents are:
 
