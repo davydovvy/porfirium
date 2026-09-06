@@ -19,9 +19,14 @@ Application identities are limited to their owned subjects; none receives the bo
 or an unrestricted publish/subscribe grant. Supply all passwords through `.env.target`, never in
 the Compose or NATS configuration committed to the repository.
 
-The eight target control-plane services are independently buildable FastAPI packages. Their
-readiness endpoints currently report process readiness only; dependency-specific readiness is
-added with each service's persistence and messaging implementation.
+The eight target control-plane services are independently buildable FastAPI packages. Implemented
+services report dependency-aware readiness. The Conversation Service waits for its migration job
+and verifies both its PostgreSQL and NATS dependencies before becoming ready.
+
+Conversation commands require the authenticated user identity in `X-User-ID` at the current
+internal service boundary and an `Idempotency-Key` for state-changing requests. Browser clients do
+not call this service directly; the Portal BFF will authenticate browser sessions and supply the
+trusted internal identity when Phase 11 connects the user-facing path.
 
 Run `./scripts/target-phase2/verify.sh` for offline structural validation. Run
 `./scripts/target-phase2/verify-nats.sh` to create an isolated, temporary Compose project and prove

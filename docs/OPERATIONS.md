@@ -6,7 +6,8 @@ These procedures operate the existing Portal API and Temporal-based runtime. The
 Registry, Agent Runner, SDK, and JetStream architecture has completed its contract foundation,
 feasibility gates, infrastructure foundation, Registry, Checkpoint API, Runtime API, SDK, isolated
 Runner MVP, configuration, delegation, and gateway-policy phases, but is not yet the deployed
-runtime. Target-service procedures will replace this document during an accepted transition.
+runtime. The target Conversation Service is also implemented and independently verifiable.
+Target-service procedures will replace this document during an accepted transition.
 
 ## Start
 
@@ -110,6 +111,7 @@ Target-platform verification is independent of the deployed legacy runtime:
 ./scripts/target-phase4/acceptance.sh
 ./scripts/target-phase5/acceptance.sh
 ./scripts/target-phase7/verify.sh
+./scripts/target-phase8/verify.sh
 ```
 
 These gates require Docker with Compose and remove their isolated containers and volumes on exit.
@@ -118,11 +120,20 @@ Phase 5 starts PostgreSQL, JetStream, the Runtime API, and an unprivileged local
 restarts Runtime during an active message stream and verifies durable deduplication, completion
 hashes, and lease fencing. Phase 7 verifies immutable configuration resolution, scoped delegation,
 both MCP authorization dimensions, cancellation denial, and credential redaction. None of the
-target acceptance harnesses use production credentials.
+target acceptance harnesses use production credentials. Phase 8 verifies owner-scoped
+conversations, idempotent message and Runtime-event handling, canonical completion persistence,
+and presentation-sequence replay for SSE reconnects.
 
 Target Phase 7 requires `DELEGATION_SIGNING_SECRET` in addition to the target database and NATS
 secrets. Supply it through deployment secret management. Never place that secret or an issued
 delegated token in Compose files, logs, events, checkpoints, traces, or error responses.
+
+The Conversation Service owns the `conversation` database and starts only after
+`conversation-migrate` applies its ordered SQL migrations. It consumes Runtime message events with
+durable JetStream consumers and publishes run intents from its transactional outbox. Treat
+`presentation_events` and completed `messages` as authoritative reconnect and history state;
+short-lived `message_chunks` may be expired only after canonical completion has committed. Never
+renumber presentation sequences or reconstruct completed messages from retained deltas.
 
 Phase 6 Runner checks are focused in the service and the accepted real-runtime isolation gate:
 

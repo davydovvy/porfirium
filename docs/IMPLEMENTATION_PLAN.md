@@ -196,6 +196,13 @@ Implement conversations bound to one release and thread, durable messages, input
 responses, presentation sequencing, message/run-intent outbox transactions, Runtime event
 projection, canonical completion validation, replay, and the SSE-oriented event API.
 
+Implementation status: complete. Conversation state is owner-scoped and bound to an immutable
+release/thread pair. User messages and input responses atomically create presentation events and
+run-intent outbox records. Runtime events use an inbox transaction, allocate per-conversation
+presentation order, validate bounded contiguous deltas and canonical completion hashes, and retain
+canonical terminal content independently of delta retention. Replay-first SSE uses presentation
+sequence IDs for gap-free reconnect. `./scripts/target-phase8/verify.sh` is the focused gate.
+
 Exit gate: duplicate requests and events are harmless, completed messages survive delta expiry,
 SSE reconnect has no gap, and user ownership is enforced server-side.
 

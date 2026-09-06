@@ -119,6 +119,9 @@ services:
     <<: *target_service
     build:
       context: ../../services/conversation-service
+    depends_on:
+      conversation-migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://conversation_service:${CONVERSATION_DB_PASSWORD:?set CONVERSATION_DB_PASSWORD}@postgres:5432/conversation
       NATS_URL: nats://nats:4222
@@ -127,6 +130,18 @@ services:
     healthcheck:
       <<: *service_healthcheck
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8101/health/ready', timeout=2)"]
+
+  conversation-migrate:
+    profiles: [target]
+    build:
+      context: ../../services/conversation-service
+    command: ["python", "-m", "conversation_service.migrate"]
+    environment:
+      DATABASE_URL: postgresql://conversation_service:${CONVERSATION_DB_PASSWORD:?set CONVERSATION_DB_PASSWORD}@postgres:5432/conversation
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
 
   agent-registry:
     <<: *target_service
