@@ -3,8 +3,9 @@ set -euo pipefail
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 compose_file="$repo_dir/deploy/compose/target.yaml"
-project_name="porfirium-durability-check-$$"
-check_secret="phase2-$(date +%s)-$$"
+acceptance_compose_file="$repo_dir/scripts/target-phase4/compose.yaml"
+project_name="porfirium-phase4-acceptance-$$"
+check_secret="phase4-$(date +%s)-$$"
 
 export TARGET_POSTGRES_ADMIN_PASSWORD="$check_secret-admin"
 export CONVERSATION_DB_PASSWORD="$check_secret-conversation-db"
@@ -23,29 +24,28 @@ export NATS_CHECKPOINT_PASSWORD="$check_secret-checkpoint"
 export NATS_REGISTRY_PASSWORD="$check_secret-registry"
 export NATS_DELEGATION_PASSWORD="$check_secret-delegation"
 export NATS_CONFIGURATION_PASSWORD="$check_secret-configuration"
+export THREAD_ID RUN_ID ATTEMPT_ONE_ID ATTEMPT_TWO_ID CHECKPOINT_ONE_ID CHECKPOINT_TWO_ID
+readarray -t ids < <(python3 -c 'import uuid; print(*[uuid.uuid4() for _ in range(6)], sep="\n")')
+THREAD_ID=${ids[0]}
+RUN_ID=${ids[1]}
+ATTEMPT_ONE_ID=${ids[2]}
+ATTEMPT_TWO_ID=${ids[3]}
+CHECKPOINT_ONE_ID=${ids[4]}
+CHECKPOINT_TWO_ID=${ids[5]}
 
-compose=(docker compose -p "$project_name" --profile target -f "$compose_file")
-
-cleanup() {
-  "${compose[@]}" down -v >/dev/null 2>&1 || true
-}
+compose=(
+  docker compose -p "$project_name" --profile target
+  -f "$compose_file" -f "$acceptance_compose_file"
+)
+cleanup() { "${compose[@]}" down -v >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
-"${compose[@]}" up -d --wait postgres nats
-"${compose[@]}" run --rm nats-bootstrap
-"${compose[@]}" build agent-runner
+"${compose[@]}" up -d --wait postgres nats checkpoint-api
+for mode in write resume; do
+  "${compose[@]}" run --rm --no-deps \
+    -e "HARNESS_MODE=$mode" -e THREAD_ID -e RUN_ID -e ATTEMPT_ONE_ID -e ATTEMPT_TWO_ID \
+    -e CHECKPOINT_ONE_ID -e CHECKPOINT_TWO_ID -e RUN_CAPABILITY_SECRET \
+    phase4-harness
+done
 
-"${compose[@]}" run --rm agent-runner python -m agent_runner.phase2_probe publish
-
-# The event is durable in JetStream but not consumed when the server restarts.
-"${compose[@]}" restart nats
-"${compose[@]}" up -d --wait nats
-
-# Commit the inbox and effect first, then exit without acknowledging. The restarted consumer must
-# receive the redelivery, see the inbox record, and acknowledge without repeating the effect.
-"${compose[@]}" run --rm agent-runner python -m agent_runner.phase2_probe consume-unacked
-sleep 2
-"${compose[@]}" run --rm agent-runner python -m agent_runner.phase2_probe consume-ack
-"${compose[@]}" run --rm agent-runner python -m agent_runner.phase2_probe assert
-
-echo "Outbox publication, NATS restart, consumer restart, and inbox deduplication verified."
+echo "Target Phase 4 Checkpoint API and SDK acceptance passed."

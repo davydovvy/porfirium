@@ -227,14 +227,35 @@ services:
     <<: *target_service
     build:
       context: ../../services/checkpoint-api
+    depends_on:
+      checkpoint-migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://checkpoint_api:${CHECKPOINT_DB_PASSWORD:?set CHECKPOINT_DB_PASSWORD}@postgres:5432/checkpoint
       NATS_URL: nats://nats:4222
       NATS_USER: checkpoint_api
       NATS_PASSWORD: ${NATS_CHECKPOINT_PASSWORD:?set NATS_CHECKPOINT_PASSWORD}
+      RUN_CAPABILITY_SECRET: ${RUN_CAPABILITY_SECRET:?set RUN_CAPABILITY_SECRET}
     healthcheck:
       <<: *service_healthcheck
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8107/health/ready', timeout=2)"]
+
+  checkpoint-migrate:
+    profiles: [target]
+    build:
+      context: ../../services/checkpoint-api
+    restart: "no"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://checkpoint_api:${CHECKPOINT_DB_PASSWORD:?set CHECKPOINT_DB_PASSWORD}@postgres:5432/checkpoint
+    command: ["python", "-m", "checkpoint_api.migrate"]
 
 volumes:
   target_postgres_data:

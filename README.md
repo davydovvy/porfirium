@@ -40,8 +40,8 @@ events. Service-owned databases and versioned contracts allow components to evol
 
 The repository still runs the previous Portal API and Temporal worker. The target implementation
 has completed the contract foundation, feasibility gates, Phase 2 infrastructure/service
-foundation, and Phase 3 Agent Registry MVP. Phase 4 Checkpoint API and SDK core is next; the legacy
-runtime remains authoritative until the planned cutover.
+foundation, Phase 3 Agent Registry MVP, and Phase 4 Checkpoint API and SDK core. Phase 5 Runtime API
+and message SDK is next; the legacy runtime remains authoritative until the planned cutover.
 
 The authoritative documents are:
 
@@ -71,6 +71,7 @@ Focused commands:
 ./scripts/contracts/verify.sh
 ./scripts/target-phase2/acceptance.sh
 ./scripts/target-phase3/acceptance.sh
+./scripts/target-phase4/acceptance.sh
 
 cd apps/portal-api
 uv run pytest -q

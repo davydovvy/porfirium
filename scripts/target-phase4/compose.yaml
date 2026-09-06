@@ -1,0 +1,13 @@
+services:
+  phase4-harness:
+    profiles: [target]
+    build:
+      context: ../..
+      dockerfile: scripts/target-phase4/Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

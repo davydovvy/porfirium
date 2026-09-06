@@ -127,6 +127,13 @@ Implement checkpoint put/get/list, namespace authorization, optimistic concurren
 versions, payload bounds, idempotency, and lease fencing. Build the SDK identity, deadline,
 configuration, error, and LangGraph checkpointer surfaces plus a local harness.
 
+Implementation status: complete. The Checkpoint API owns immutable per-thread checkpoint versions,
+bounded opaque payloads, namespace-scoped signed run capabilities, idempotency records, and
+monotonic attempt fencing. The Python SDK provides run context, deadlines, immutable configuration,
+typed errors, the checkpoint client, and an asynchronous LangGraph adapter. The disposable
+`./scripts/target-phase4/acceptance.sh` gate proves checkpoint/replay, conflict rejection,
+cross-process restore and continuation, and stale-epoch rejection without agent database access.
+
 Exit gate: a graph checkpoints, exits, and resumes in another process without receiving a database
 credential; stale lease epochs and conflicting versions are rejected.
 
