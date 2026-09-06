@@ -2,6 +2,7 @@ from porfirium_agent_sdk.checkpoints import Checkpoint, CheckpointClient, Checkp
 from porfirium_agent_sdk.context import AgentContext, RunIdentity
 from porfirium_agent_sdk.errors import PlatformError
 from porfirium_agent_sdk.langgraph import LangGraphCheckpointer
+from porfirium_agent_sdk.runtime import MessageStream, RuntimeClient
 
 __all__ = [
     "AgentContext",
@@ -11,4 +12,6 @@ __all__ = [
     "PlatformError",
     "RunIdentity",
     "LangGraphCheckpointer",
+    "MessageStream",
+    "RuntimeClient",
 ]

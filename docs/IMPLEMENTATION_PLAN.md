@@ -143,6 +143,14 @@ Implement gRPC bootstrap, capability validation, ordered frames, acknowledgement
 reconnect, heartbeat, cancellation, message streaming, bounds, backpressure, and the Runtime event
 outbox. Exercise it first with a local agent process and fake downstream consumers.
 
+Implementation status: complete. The Runtime API terminates the v1 bidirectional gRPC stream,
+validates signed attempt capabilities, fences superseded lease epochs, durably accepts ordered and
+idempotent frames, and publishes accepted message/run events through a transactional outbox. The
+Python SDK provides bounded message streams, canonical completion hashes, acknowledgement-based
+buffer release, and reconnect/retransmission. `./scripts/target-phase5/acceptance.sh` proves
+continuation across a Runtime restart, unique durable events, final-content hash integrity, and
+old-epoch rejection without exposing NATS credentials to the agent process.
+
 Exit gate: Runtime restart does not duplicate accepted chunks, final hashes validate, old epochs
 fail, and no NATS credential reaches the agent.
 

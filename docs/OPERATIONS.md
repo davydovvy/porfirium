@@ -100,17 +100,21 @@ secret scanning, declarative runtime behavior, filesystem publication, and porta
 Provider-backed smoke tests are intentionally separate because they use credentials, external
 state, and paid APIs.
 
-Target-platform foundation and Registry verification are independent of the deployed legacy
-runtime:
+Target-platform verification is independent of the deployed legacy runtime:
 
 ```bash
 ./scripts/contracts/verify.sh
 ./scripts/target-phase2/acceptance.sh
 ./scripts/target-phase3/acceptance.sh
+./scripts/target-phase4/acceptance.sh
+./scripts/target-phase5/acceptance.sh
 ```
 
-The Phase 3 gate builds temporary OCI fixtures and removes its isolated containers and volumes on
-exit. It requires Docker with Compose and an available local loopback port.
+These gates require Docker with Compose and remove their isolated containers and volumes on exit.
+Phase 3 builds temporary OCI fixtures. Phase 4 proves checkpoint restore in a second agent process.
+Phase 5 starts PostgreSQL, JetStream, the Runtime API, and an unprivileged local-agent harness; it
+restarts Runtime during an active message stream and verifies durable deduplication, completion
+hashes, and lease fencing. None of the target acceptance harnesses use production credentials.
 
 ## Target-platform feasibility gates
 

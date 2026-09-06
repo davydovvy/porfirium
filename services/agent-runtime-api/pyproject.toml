@@ -6,7 +6,9 @@ requires-python = ">=3.12"
 dependencies = [
   "asyncpg==0.30.0",
   "fastapi==0.116.1",
+  "grpcio==1.74.0",
   "nats-py==2.15.0",
+  "protobuf==7.35.1",
   "uvicorn==0.35.0",
 ]
 
@@ -21,15 +23,18 @@ packages = ["agent_runtime_api"]
 dev = [
   "httpx==0.28.1",
   "pytest==8.4.2",
+  "pytest-asyncio==1.1.0",
   "ruff==0.12.11",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = ["agent_runtime_api/proto/runtime_pb2.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

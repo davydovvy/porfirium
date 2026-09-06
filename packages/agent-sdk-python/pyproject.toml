@@ -1,9 +1,9 @@
 [project]
 name = "porfirium-agent-sdk"
-version = "0.1.0"
+version = "0.2.0"
 description = "Porfirium Python Agent SDK"
 requires-python = ">=3.12"
-dependencies = ["httpx==0.28.1"]
+dependencies = ["grpcio==1.74.0", "httpx==0.28.1", "protobuf==7.35.1"]
 
 [build-system]
 requires = ["hatchling==1.27.0"]
@@ -22,6 +22,7 @@ asyncio_mode = "auto"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = ["porfirium_agent_sdk/proto/runtime_pb2.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

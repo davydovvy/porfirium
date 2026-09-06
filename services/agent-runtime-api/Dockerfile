@@ -3,6 +3,7 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim@sha256:531f855bda2c73cd6ef67d
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY agent_runtime_api agent_runtime_api
+COPY migrations migrations
 RUN uv sync --frozen --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH" \
@@ -10,5 +11,5 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1
 
 USER 65532:65532
-EXPOSE 8104
+EXPOSE 8104 50051
 CMD ["uvicorn", "agent_runtime_api.main:app", "--host", "0.0.0.0", "--port", "8104"]
