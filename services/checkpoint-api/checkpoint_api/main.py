@@ -1,20 +1,23 @@
+import asyncio
 import base64
 import binascii
 import hashlib
 import os
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime
 from typing import Annotated, Literal, TypedDict
 from uuid import UUID
 
 import asyncpg
+import nats
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from checkpoint_api.auth import RunCapability, authenticated_capability
+from checkpoint_api.messaging import publish_loop
 from checkpoint_api.problems import CheckpointProblem, problem_response
 from checkpoint_api.readiness import check_dependencies
 from checkpoint_api.store import CheckpointRecord, get_checkpoint, list_checkpoints, put_checkpoint
@@ -61,9 +64,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if pool is None:
         raise RuntimeError("database pool creation failed")
     app.state.pool = pool
+    client = await nats.connect(
+        os.environ["NATS_URL"], user=os.environ["NATS_USER"], password=os.environ["NATS_PASSWORD"]
+    )
+    publisher = asyncio.create_task(publish_loop(pool, client.jetstream()))
     try:
         yield
     finally:
+        publisher.cancel()
+        with suppress(asyncio.CancelledError):
+            await publisher
+        await client.close()
         await pool.close()
 
 

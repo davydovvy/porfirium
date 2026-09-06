@@ -5,8 +5,8 @@ Status: current pre-migration deployment
 These procedures operate the existing Portal API and Temporal-based runtime. The target Agent
 Registry, Agent Runner, SDK, and JetStream architecture has completed its contract foundation,
 feasibility gates, infrastructure foundation, Registry, Checkpoint API, Runtime API, SDK, isolated
-Runner MVP, configuration, delegation, and gateway-policy phases, but is not yet the deployed
-runtime. The target Conversation Service is also implemented and independently verifiable.
+Runner MVP, configuration, delegation, gateway policy, durable conversations, and end-to-end
+completion phases, but is not yet the deployed runtime.
 Target-service procedures will replace this document during an accepted transition.
 
 ## Start
@@ -112,6 +112,7 @@ Target-platform verification is independent of the deployed legacy runtime:
 ./scripts/target-phase5/acceptance.sh
 ./scripts/target-phase7/verify.sh
 ./scripts/target-phase8/verify.sh
+./scripts/target-phase9/verify.sh
 ```
 
 These gates require Docker with Compose and remove their isolated containers and volumes on exit.
@@ -122,7 +123,9 @@ hashes, and lease fencing. Phase 7 verifies immutable configuration resolution, 
 both MCP authorization dimensions, cancellation denial, and credential redaction. None of the
 target acceptance harnesses use production credentials. Phase 8 verifies owner-scoped
 conversations, idempotent message and Runtime-event handling, canonical completion persistence,
-and presentation-sequence replay for SSE reconnects.
+and presentation-sequence replay for SSE reconnects. Phase 9 verifies durable run admission,
+message/checkpoint confirmation publication, order-independent completion convergence,
+cancellation, interruption after visible output, and safe pre-output recovery.
 
 Target Phase 7 requires `DELEGATION_SIGNING_SECRET` in addition to the target database and NATS
 secrets. Supply it through deployment secret management. Never place that secret or an issued
@@ -149,6 +152,12 @@ The Runner must execute as an unprivileged host service with access to its own r
 runtime. Do not expose that runtime socket, host mounts, infrastructure credentials, or caller-
 controlled Podman flags to agent containers. Registry run-signing public keys and the Runtime API
 capability secret must be supplied through the deployment secret mechanism, never committed.
+
+Runner consumes `porfirium.run.command.requested` and the completion handshake on durable
+JetStream consumers. A container exit is diagnostic only and must never mark a run completed.
+During incident recovery, inspect `run_completion`, `run_confirmations`, and `run_event_inbox`
+before replaying an event. Replays are safe with the original event ID. Do not edit a terminal run:
+the first valid terminal transition is authoritative.
 
 ## Target-platform feasibility gates
 

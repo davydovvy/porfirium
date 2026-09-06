@@ -17,11 +17,14 @@ The HTTP surface follows `packages/contracts/openapi/checkpoint-api-v1.json`:
 
 Writes require `Idempotency-Key`, the expected current thread version, payload serialization
 version, and SHA-256 digest. Payloads are opaque to the service and limited to 1 MiB after base64
-decoding.
+decoding. A successful new checkpoint write atomically records a
+`porfirium.run.checkpoint_committed.v1` outbox event. Publication may be retried; Runner deduplicates
+the confirmation by event ID and validates it against the proposed final checkpoint.
 
 Apply migrations with `python -m checkpoint_api.migrate`. The target Compose topology runs that
 step before service startup. The full checkpoint and SDK gate is:
 
 ```bash
 ./scripts/target-phase4/acceptance.sh
+./scripts/target-phase9/verify.sh
 ```

@@ -1,9 +1,15 @@
 # Agent Runner
 
 The Runner owns idempotent run admission, attempt leases, rootless Podman containers, cancellation,
-deadlines, and reconciliation. Callers provide only run identity and an immutable release selection;
-the Registry resolves and signs the complete run specification and the Runner derives all container
-settings.
+deadlines, completion reconciliation, and terminal run state. Durable Conversation Service intents
+are admitted through JetStream. The Registry resolves and signs the complete run specification and
+the Runner derives all container settings.
+
+Agents propose results through Runtime API; they cannot complete runs directly. Runner records
+message and checkpoint confirmations idempotently, tolerates confirmations arriving before the
+proposal, and emits `run.completed` only after every pinned requirement is satisfied. Container
+exit code alone is never success. A lost attempt is retried only before visible output; otherwise
+the partial message is interrupted and the run fails.
 
 Apply migrations before starting the service:
 
@@ -28,4 +34,5 @@ Run focused checks with:
 uv run ruff check .
 uv run pytest -q
 ../../scripts/feasibility/rootless-container-isolation/verify.sh
+../../scripts/target-phase9/verify.sh
 ```

@@ -9,10 +9,12 @@ from uuid import UUID
 
 import asyncpg
 import httpx
+import nats
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 
 from agent_runner.container import PodmanBackend
+from agent_runner.messaging import consume_admissions, consume_completion_events, publish_loop
 from agent_runner.models import RunAdmission, RunResponse
 from agent_runner.readiness import check_dependencies
 from agent_runner.registry import RegistryClient, RegistryResolutionError
@@ -62,13 +64,45 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         runtime_url=os.environ["AGENT_RUNTIME_URL"],
         attempt_timeout_seconds=int(os.environ.get("RUNNER_ATTEMPT_TIMEOUT_SECONDS", "300")),
     )
+    app.state.verify_specification = lambda specification: verify_specification(
+        specification, app.state.registry_public_keys
+    )
+    nats_client = await nats.connect(
+        os.environ["NATS_URL"], user=os.environ["NATS_USER"], password=os.environ["NATS_PASSWORD"]
+    )
+    jetstream = nats_client.jetstream()
+    completion_subscription = await jetstream.subscribe(
+        "porfirium.run.event.*", durable="agent-runner-completion-v1", manual_ack=True
+    )
+    message_subscription = await jetstream.subscribe(
+        "porfirium.conversation.event.message_started",
+        durable="agent-runner-visible-output-v1",
+        manual_ack=True,
+    )
+    admission_subscription = await jetstream.subscribe(
+        "porfirium.run.command.requested",
+        durable="agent-runner-admission-v1",
+        manual_ack=True,
+    )
     scheduler = asyncio.create_task(_scheduler(app))
+    messaging_tasks = [
+        asyncio.create_task(publish_loop(pool, jetstream)),
+        asyncio.create_task(consume_completion_events(pool, completion_subscription)),
+        asyncio.create_task(consume_completion_events(pool, message_subscription)),
+        asyncio.create_task(consume_admissions(app, admission_subscription)),
+    ]
     try:
         yield
     finally:
         scheduler.cancel()
+        for task in messaging_tasks:
+            task.cancel()
         with suppress(asyncio.CancelledError):
             await scheduler
+        for task in messaging_tasks:
+            with suppress(asyncio.CancelledError):
+                await task
+        await nats_client.close()
         await client.aclose()
         await pool.close()
 

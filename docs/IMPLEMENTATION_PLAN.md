@@ -212,6 +212,13 @@ Connect admission and event consumers. Implement result proposal, message/checkp
 Runner-owned terminal transitions, completion reconciliation, interrupted output, cancellation, and
 safe pre-output attempt recovery.
 
+Implementation status: complete. Conversation run intents are admitted through a durable Runner
+consumer. Runtime result proposals converge with transactionally published message and checkpoint
+commit confirmations; Runner alone commits and publishes the run terminal outcome. Confirmation
+delivery is idempotent and order-independent. Cancellation publishes one terminal outcome, missing
+containers recover only before visible output, and visible partial messages are interrupted rather
+than regenerated. `./scripts/target-phase9/verify.sh` is the focused verification entry point.
+
 Exit gate: a message completes through a fresh isolated container; exit code alone cannot complete
 a run; missing or reordered confirmations converge without rewriting terminal state.
 

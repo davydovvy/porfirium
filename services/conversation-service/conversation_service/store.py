@@ -203,6 +203,13 @@ class PostgresStore:
                 "run_id": str(payload["run_id"]),
                 "message_id": str(payload["message_id"]),
                 "delegation_grant_id": str(payload["delegation_grant_id"]),
+                "configuration_revision_id": (
+                    str(conversation["configuration_revision_id"])
+                    if conversation["configuration_revision_id"] else None
+                ),
+                "starting_checkpoint_id": None,
+                "trigger": {"type": "user_message", "id": str(payload["message_id"])},
+                "trace_id": event_id.hex,
                 "schema_version": 1,
             }
             await connection.execute(
@@ -252,6 +259,30 @@ class PostgresStore:
             await self._owned(connection, owner_id, conversation_id, lock=True)
             kind = str(envelope.get("type"))
             mid = UUID(str(data["message_id"])) if data.get("message_id") else None
+            if kind == "porfirium.run.result_proposed.v1":
+                message_ids = [UUID(str(value)) for value in data.get("final_message_ids", [])]
+                if not message_ids or "messages" not in data.get("required_confirmations", []):
+                    await connection.execute(
+                        "INSERT INTO inbox_events(event_id,event_type) VALUES($1,$2)", event_id, kind
+                    )
+                    return None
+                count = await connection.fetchval(
+                    "SELECT count(*) FROM messages WHERE conversation_id=$1 AND run_id=$2 "
+                    "AND message_id=ANY($3::uuid[]) AND status='completed'",
+                    conversation_id, run_id, message_ids,
+                )
+                await connection.execute(
+                    "INSERT INTO result_proposals(run_id,event_id,conversation_id,final_message_ids) "
+                    "VALUES($1,$2,$3,$4) ON CONFLICT(run_id) DO NOTHING",
+                    run_id, event_id, conversation_id, message_ids,
+                )
+                if count == len(message_ids):
+                    await self._confirm_messages(connection, run_id, message_ids)
+                sequence = await self._present(connection, conversation_id, kind, data)
+                await connection.execute(
+                    "INSERT INTO inbox_events(event_id,event_type) VALUES($1,$2)", event_id, kind
+                )
+                return sequence
             if kind == "porfirium.message.started.v1":
                 await connection.execute(
                     "INSERT INTO messages(message_id,conversation_id,run_id,role,status,content) VALUES($1,$2,$3,'assistant','streaming','') ON CONFLICT(message_id) DO NOTHING",
@@ -293,6 +324,19 @@ class PostgresStore:
                     str(data.get("finish_reason", "stop")),
                     canonical_json(data.get("usage") or {}).decode(),
                 )
+                proposal = await connection.fetchrow(
+                    "SELECT final_message_ids FROM result_proposals WHERE run_id=$1", run_id
+                )
+                if proposal:
+                    completed = await connection.fetchval(
+                        "SELECT count(*) FROM messages WHERE run_id=$1 AND "
+                        "message_id=ANY($2::uuid[]) AND status='completed'",
+                        run_id, proposal["final_message_ids"],
+                    )
+                    if completed == len(proposal["final_message_ids"]):
+                        await self._confirm_messages(
+                            connection, run_id, list(proposal["final_message_ids"])
+                        )
             elif kind in {"porfirium.message.interrupted.v1", "porfirium.message.failed.v1"}:
                 await self._require_streaming(connection, mid, conversation_id)
                 rows = await connection.fetch(
@@ -327,6 +371,35 @@ class PostgresStore:
                 "INSERT INTO inbox_events(event_id,event_type) VALUES($1,$2)", event_id, kind
             )
             return sequence
+
+    async def _confirm_messages(
+        self, connection: asyncpg.Connection, run_id: UUID, message_ids: list[UUID]
+    ) -> None:
+        existing = await connection.fetchval(
+            "SELECT confirmation_event_id FROM result_proposals WHERE run_id=$1", run_id
+        )
+        if existing:
+            return
+        event_id = uuid4()
+        sequence = await connection.fetchval(
+            "SELECT max(sequence) FROM presentation_events p JOIN result_proposals r "
+            "USING(conversation_id) WHERE r.run_id=$1", run_id
+        )
+        payload = {
+            "specversion": "1.0", "type": "porfirium.run.messages_committed.v1",
+            "id": str(event_id), "source": "conversation-service", "run_id": str(run_id),
+            "schema_version": 1,
+            "data": {"run_id": str(run_id), "message_ids": [str(value) for value in message_ids],
+                     "conversation_sequence": max(1, int(sequence or 1))},
+        }
+        await connection.execute(
+            "INSERT INTO outbox_events(event_id,subject,payload) "
+            "VALUES($1,'porfirium.run.event.messages_committed',$2::jsonb)",
+            event_id, canonical_json(payload).decode(),
+        )
+        await connection.execute(
+            "UPDATE result_proposals SET confirmation_event_id=$2 WHERE run_id=$1", run_id, event_id
+        )
 
     async def _require_streaming(
         self, connection: asyncpg.Connection, message_id: UUID | None, conversation_id: UUID

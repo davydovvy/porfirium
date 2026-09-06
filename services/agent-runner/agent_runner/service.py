@@ -209,11 +209,25 @@ class RunnerService:
                 "active_attempt_id=NULL,"
                 "updated_at=now() WHERE run_id=$1 AND state='cancelling'", run_id
             )
+            event_id = uuid4()
+            await enqueue(
+                connection, event_id=event_id, subject="porfirium.run.event.cancelled",
+                payload={
+                    "specversion": "1.0", "type": "porfirium.run.cancelled.v1",
+                    "id": str(event_id), "source": "agent-runner", "run_id": str(run_id),
+                    "schema_version": 1,
+                    "data": {"run_id": str(run_id), "state": "cancelled",
+                             "attempt_id": str(attempt["attempt_id"]) if attempt else None,
+                             "lease_epoch": row["lease_epoch"] or None, "code": "cancelled"},
+                },
+            )
             return _run(await _get_run(connection, run_id))
 
     async def reconcile(self) -> int:
         rows = await self.pool.fetch(
-            "SELECT r.run_id,a.attempt_id,a.container_id FROM runs r JOIN attempts a "
+            "SELECT r.run_id,r.user_id,r.conversation_id,r.thread_id,r.lease_epoch,"
+            "a.attempt_id,a.container_id,a.visible_output,a.active_message_id "
+            "FROM runs r JOIN attempts a "
             "ON a.attempt_id=r.active_attempt_id "
             "WHERE r.state IN ('starting','running','cancelling')"
         )
@@ -221,9 +235,46 @@ class RunnerService:
         for row in rows:
             exists = bool(row["container_id"]) and await self.backend.exists(row["container_id"])
             if not exists:
-                await self._fail_start(row["run_id"], row["attempt_id"])
+                await self._handle_attempt_loss(row)
                 repaired += 1
         return repaired
+
+    async def _handle_attempt_loss(self, attempt: Any) -> None:
+        async with self.pool.acquire() as connection, connection.transaction():
+            await connection.execute(
+                "UPDATE attempts SET state='failed',ended_at=now() WHERE attempt_id=$1",
+                attempt["attempt_id"],
+            )
+            if not attempt["visible_output"]:
+                await connection.execute(
+                    "UPDATE runs SET state='scheduled',active_attempt_id=NULL,updated_at=now() "
+                    "WHERE run_id=$1 AND active_attempt_id=$2",
+                    attempt["run_id"], attempt["attempt_id"],
+                )
+                return
+            await connection.execute(
+                "UPDATE runs SET state='failed',terminal_code='attempt_lost_after_output',"
+                "active_attempt_id=NULL,updated_at=now() WHERE run_id=$1 AND active_attempt_id=$2",
+                attempt["run_id"], attempt["attempt_id"],
+            )
+            if attempt["active_message_id"]:
+                event_id = uuid4()
+                await enqueue(
+                    connection, event_id=event_id,
+                    subject="porfirium.conversation.event.message_interrupted",
+                    payload={
+                        "specversion": "1.0", "type": "porfirium.message.interrupted.v1",
+                        "id": str(event_id), "source": "agent-runner",
+                        "user_id": str(attempt["user_id"]),
+                        "conversation_id": str(attempt["conversation_id"]),
+                        "thread_id": str(attempt["thread_id"]),
+                        "run_id": str(attempt["run_id"]),
+                        "attempt_id": str(attempt["attempt_id"]),
+                        "lease_epoch": attempt["lease_epoch"],
+                        "data": {"message_id": str(attempt["active_message_id"]),
+                                 "code": "attempt_lost"}, "schema_version": 1,
+                    },
+                )
 
 
 async def _get_run(connection: Any, run_id: UUID) -> Any:

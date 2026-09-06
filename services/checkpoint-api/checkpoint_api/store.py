@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import asyncpg
 
@@ -114,6 +115,19 @@ async def put_checkpoint(
             idempotency_key,
             request_hash,
             checkpoint_id,
+        )
+        event_id = uuid4()
+        envelope = {
+            "specversion": "1.0", "type": "porfirium.run.checkpoint_committed.v1",
+            "id": str(event_id), "source": "checkpoint-api", "run_id": str(capability.run_id),
+            "schema_version": 1,
+            "data": {"run_id": str(capability.run_id), "checkpoint_id": str(checkpoint_id),
+                     "checkpoint_version": current + 1, "payload_sha256": payload_sha256},
+        }
+        await connection.execute(
+            "INSERT INTO outbox_events(event_id,subject,payload) "
+            "VALUES($1,'porfirium.run.event.checkpoint_committed',$2::jsonb)",
+            event_id, json.dumps(envelope, separators=(",", ":")),
         )
         return _record(row)
 

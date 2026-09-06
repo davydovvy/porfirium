@@ -72,6 +72,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         durable="conversation-service-deltas-v1",
         manual_ack=True,
     )
+    result_subscription = await jetstream.subscribe(
+        "porfirium.run.event.result_proposed",
+        durable="conversation-service-results-v1",
+        manual_ack=True,
+    )
 
     async def publish_loop() -> None:
         while True:
@@ -82,6 +87,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         asyncio.create_task(publish_loop()),
         asyncio.create_task(consume_runtime_events(store, conversation_subscription)),
         asyncio.create_task(consume_runtime_events(store, delta_subscription)),
+        asyncio.create_task(consume_runtime_events(store, result_subscription)),
     ]
     app.state.store = store
     try:
