@@ -1,16 +1,59 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
 import hashlib
+import json
+import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from types import TracebackType
 from typing import Self
 from uuid import UUID, uuid4
 
 import grpc
+from google.protobuf.json_format import MessageToDict
 
 from porfirium_agent_sdk.errors import PlatformError
 from porfirium_agent_sdk.proto import runtime_pb2 as pb
+
+
+@dataclass(frozen=True, slots=True)
+class RunInput:
+    trigger_type: str
+    trigger_id: UUID
+    value: object
+    starting_checkpoint_id: UUID | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ModelResponse:
+    content: str
+    finish_reason: str
+    usage: dict[str, object]
+
+
+def decode_run_input(value: pb.RunInput) -> RunInput | None:
+    if not value.trigger_type:
+        return None
+    serialized = {
+        "trigger_type": value.trigger_type,
+        "trigger_id": value.trigger_id,
+        "value": MessageToDict(value.value),
+        "starting_checkpoint_id": value.starting_checkpoint_id or None,
+    }
+    if len(json.dumps(serialized).encode()) > 24576:
+        raise PlatformError("run_input_too_large", "Run input exceeds the SDK limit")
+    try:
+        return RunInput(
+            value.trigger_type,
+            UUID(value.trigger_id),
+            serialized["value"],
+            UUID(value.starting_checkpoint_id) if value.starting_checkpoint_id else None,
+        )
+    except ValueError as error:
+        raise PlatformError("run_input_invalid", "Run input identity is invalid") from error
 
 
 class RuntimeClient:
@@ -45,6 +88,40 @@ class RuntimeClient:
         self._slots = asyncio.Semaphore(buffer_frames)
         self.cancelled = asyncio.Event()
         self.deadline_epoch_seconds: float | None = None
+        self.run_input: RunInput | None = None
+
+    @classmethod
+    def from_environment(cls, environment: Mapping[str, str] | None = None) -> Self:
+        values = os.environ if environment is None else environment
+        endpoint = values.get("PORFIRIUM_RUNTIME_URL", "")
+        capability = values.get("PORFIRIUM_RUN_CAPABILITY", "")
+        if not endpoint or len(endpoint) > 512 or not capability or len(capability) > 32768:
+            raise PlatformError("bootstrap_invalid", "Runtime bootstrap configuration is invalid")
+        try:
+            encoded, signature = capability.split(".")
+            if not encoded or not signature:
+                raise ValueError
+            payload = json.loads(
+                base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4))
+            )
+            if not isinstance(payload, dict):
+                raise ValueError
+            run_id = UUID(payload["run_id"])
+            attempt_id = UUID(payload["attempt_id"])
+            lease_epoch = int(payload["lease_epoch"])
+            if lease_epoch < 1:
+                raise ValueError
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError, binascii.Error) as error:
+            raise PlatformError(
+                "bootstrap_invalid", "Runtime bootstrap capability is invalid"
+            ) from error
+        return cls(
+            endpoint,
+            run_id=run_id,
+            attempt_id=attempt_id,
+            lease_epoch=lease_epoch,
+            run_capability=capability,
+        )
 
     def _identity(self, sequence: int, idempotency_key: str | None = None) -> pb.FrameIdentity:
         return pb.FrameIdentity(
@@ -87,6 +164,8 @@ class RuntimeClient:
             await self._raise_response(response)
         self._last_ack = response.hello_accepted.resume_after_sequence
         self.deadline_epoch_seconds = response.hello_accepted.deadline.seconds
+        received_input = response.hello_accepted.run_input
+        self.run_input = decode_run_input(received_input)
         for sequence in sorted(self._pending):
             if sequence > self._last_ack:
                 await self._call.write(self._pending[sequence])
@@ -146,6 +225,78 @@ class RuntimeClient:
                         ) from exc
                     await asyncio.sleep(0.1 * (2**attempt))
             raise AssertionError("unreachable")
+
+    async def model(
+        self,
+        prompt: str,
+        *,
+        model: str = "default",
+        max_output_tokens: int = 2048,
+        request_id: UUID | None = None,
+    ) -> ModelResponse:
+        if (
+            not prompt
+            or len(prompt.encode()) > 12 * 1024
+            or not model
+            or len(model) > 128
+            or not 1 <= max_output_tokens <= 4096
+        ):
+            raise ValueError("model request exceeds SDK bounds")
+        stable_request_id = request_id or uuid4()
+        async with self._slots, self._lock:
+            if self._call is None:
+                await self.connect()
+            sequence = max([self._last_ack, *self._pending], default=0) + 1
+            frame = pb.AgentFrame(
+                identity=self._identity(sequence, str(stable_request_id)),
+                model_call=pb.ModelCall(
+                    request_id=str(stable_request_id),
+                    model=model,
+                    prompt=prompt,
+                    max_output_tokens=max_output_tokens,
+                ),
+            )
+            self._pending[sequence] = frame
+            await self._call.write(frame)
+            result: ModelResponse | None = None
+            while True:
+                response = await self._call.read()
+                kind = response.WhichOneof("payload") if response else None
+                if kind == "cancellation":
+                    self.cancelled.set()
+                    continue
+                if kind == "error":
+                    await self._raise_response(response)
+                if kind == "model_result":
+                    received = response.model_result
+                    if received.request_id != str(stable_request_id):
+                        raise PlatformError("model_response_mismatch", "Model response mismatched")
+                    try:
+                        content = bytes(received.content_utf8).decode("utf-8")
+                    except UnicodeDecodeError as error:
+                        raise PlatformError(
+                            "model_response_invalid", "Model response was not UTF-8"
+                        ) from error
+                    if not content or len(content.encode()) > 12 * 1024:
+                        raise PlatformError(
+                            "model_response_invalid", "Model response exceeded bounds"
+                        )
+                    result = ModelResponse(
+                        content,
+                        received.finish_reason,
+                        MessageToDict(received.usage),
+                    )
+                    continue
+                if kind == "acknowledgement":
+                    accepted = response.acknowledgement.accepted_sequence
+                    self._last_ack = max(self._last_ack, accepted)
+                    for sent in [value for value in self._pending if value <= accepted]:
+                        self._pending.pop(sent)
+                    if result is None:
+                        raise PlatformError(
+                            "model_response_missing", "Model gateway returned no response"
+                        )
+                    return result
 
     def message(
         self, message_id: UUID | None = None, content_type: str = "text/plain"

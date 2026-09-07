@@ -36,9 +36,15 @@ def token(secret: str, **overrides) -> str:
 
 
 def test_valid_capability_is_bound_to_attempt_epoch_and_runtime_audience() -> None:
-    capability = decode_capability(token("secret"), "secret")
+    run_input = {
+        "trigger_type": "user_message",
+        "trigger_id": str(uuid4()),
+        "value": "hello",
+    }
+    capability = decode_capability(token("secret", run_input=run_input), "secret")
     assert capability.lease_epoch == 3
     assert capability.deadline > time.time()
+    assert capability.run_input == run_input
 
 
 @pytest.mark.parametrize(
@@ -48,6 +54,8 @@ def test_valid_capability_is_bound_to_attempt_epoch_and_runtime_audience() -> No
         {"audience": "checkpoint-api"},
         {"operations": ["checkpoint:read"]},
         {"lease_epoch": "invalid"},
+        {"run_input": "not-an-object"},
+        {"run_input": {"value": "x" * 25000}},
     ],
 )
 def test_invalid_capabilities_fail_closed(overrides: dict[str, object]) -> None:
@@ -57,5 +65,7 @@ def test_invalid_capabilities_fail_closed(overrides: dict[str, object]) -> None:
 
 def test_modified_signature_fails_closed() -> None:
     value = token("secret")
+    payload, signature = value.split(".", 1)
+    modified = ("A" if signature[0] != "A" else "B") + signature[1:]
     with pytest.raises(CapabilityError):
-        decode_capability(value[:-1] + ("A" if value[-1] != "A" else "B"), "secret")
+        decode_capability(f"{payload}.{modified}", "secret")

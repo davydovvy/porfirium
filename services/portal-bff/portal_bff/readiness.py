@@ -5,7 +5,12 @@ import os
 import httpx
 from fastapi import HTTPException, status
 
-URL_ENVIRONMENTS = ("CONVERSATION_SERVICE_URL", "AGENT_REGISTRY_URL", "AGENT_RUNNER_URL")
+URL_ENVIRONMENTS = (
+    "CONVERSATION_SERVICE_URL",
+    "AGENT_REGISTRY_URL",
+    "AGENT_RUNNER_URL",
+    "IDENTITY_DELEGATION_URL",
+)
 
 
 async def check_dependencies() -> None:

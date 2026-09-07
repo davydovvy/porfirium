@@ -88,6 +88,11 @@ def test_create_and_message_are_idempotent_and_atomic(client: TestClient) -> Non
     assert first.status_code == second.status_code == 202
     assert first.json() == second.json()
     assert len(app.state.store.outbox) == 1
+    assert app.state.store.outbox[0]["run_input"] == {
+        "trigger_type": "user_message",
+        "trigger_id": body["message_id"],
+        "value": "hello",
+    }
     assert first.json()["conversation_sequence"] == 1
 
     conflict = client.post(

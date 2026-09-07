@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import time
 from collections.abc import Awaitable, Callable
 
 import httpx
@@ -9,6 +11,43 @@ from agent_runner.models import RunAdmission, SignedSpecification
 
 class RegistryResolutionError(RuntimeError):
     pass
+
+
+class ClientCredentialsTokenProvider:
+    def __init__(
+        self, client: httpx.AsyncClient, token_url: str, client_id: str, client_secret: str
+    ) -> None:
+        self.client = client
+        self.token_url = token_url
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self._token = ""
+        self._expires_at = 0.0
+        self._lock = asyncio.Lock()
+
+    async def __call__(self, _: RunAdmission) -> str:
+        async with self._lock:
+            if self._token and time.monotonic() < self._expires_at - 30:
+                return self._token
+            try:
+                response = await self.client.post(
+                    self.token_url,
+                    data={"grant_type": "client_credentials"},
+                    auth=(self.client_id, self.client_secret),
+                )
+                response.raise_for_status()
+                payload = response.json()
+                token = payload["access_token"]
+                expires_in = int(payload.get("expires_in", 60))
+                if not isinstance(token, str) or not token or expires_in < 1:
+                    raise ValueError
+            except (httpx.HTTPError, KeyError, TypeError, ValueError) as error:
+                raise RegistryResolutionError(
+                    "Registry identity token acquisition failed"
+                ) from error
+            self._token = token
+            self._expires_at = time.monotonic() + expires_in
+            return token
 
 
 class RegistryClient:
@@ -37,4 +76,3 @@ class RegistryClient:
         if specification.run_id != admission.run_id:
             raise RegistryResolutionError("Registry returned a specification for another run")
         return specification
-

@@ -1,0 +1,27 @@
+{
+  "apiVersion": "porfirium.ai/v1",
+  "kind": "Agent",
+  "metadata": {
+    "name": "model-only",
+    "version": "1.0.0",
+    "displayName": "Model-only Assistant",
+    "description": "Platform-owned conversational agent with model access and no tools"
+  },
+  "spec": {
+    "image": "${IMAGE}",
+    "entrypoint": "model_only_agent:main",
+    "sdk": ">=1.0.0,<2.0.0",
+    "models": ["default"],
+    "tools": [],
+    "configSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "resources": {
+      "cpu": "500m",
+      "memory": "128Mi",
+      "timeoutSeconds": 180
+    }
+  }
+}

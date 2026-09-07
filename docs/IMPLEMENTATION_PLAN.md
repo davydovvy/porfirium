@@ -243,16 +243,50 @@ or unauthorized responses cannot create another effective run.
 
 Move browser operations behind a thin BFF that composes owning-service APIs and provides SSE replay
 and live delivery. Remove Direct LLM mode and provide a platform-owned model-only agent. Adapt
-catalog, conversation, cancellation, input, and authoring views to target contracts.
+catalog, new-conversation, cancellation, input, and authoring views to target contracts. Do not
+surface legacy conversations in the migrated portal; users start new conversations against newly
+published target agent releases.
+
+Implementation status: complete. The BFF validates browser identity, exchanges browser tokens
+for audience-restricted Registry tokens, forwards owner identity only to owning services, composes
+new conversation/message/input/cancellation operations, and proxies replay-first conversation SSE.
+The portal uses target release-bound conversations only and can recover an active stream after a
+reload. Target publication accepts only independently built, digest-pinned images with signed
+provenance and leaves validation and lifecycle ownership in Registry.
+
+The immutable run-input surface is now implemented: Conversation includes the bounded trigger
+snapshot in its durable intent, Runner persists and signs it into the attempt capability, Runtime
+returns it after capability validation, and the SDK exposes a typed value. The Runtime-mediated
+model-call interface is also present: an agent can request only a model alias
+pinned in its signed run specification, Runtime applies request/response bounds, and only Runtime
+knows the platform gateway topology. Runner now creates a rootless Podman internal network for each
+attempt, attaches only the platform Runtime endpoint, records the exact network in durable Runner
+state and on the container, and removes it during exact cleanup. Failed creation, cancellation,
+suspension, and reconciliation also remove a recorded network when no container ID survived. The
+executable feasibility gate confirms that public, metadata, host, foreign-attempt, and
+container-runtime access remain denied. The deployment overlay now keeps Runner on the host under
+the same unprivileged Podman owner, pins the Runtime container identity, exposes Runner dependencies
+only on loopback, and routes BFF to a non-wildcard Podman bridge listener. The immutable model-only
+1.0.0 package bootstraps its identity from the signed capability, requests only the `default` model
+through Runtime, and streams bounded output without tools or credentials. Its trusted-host
+publication command builds and pushes the image, resolves the registry digest, renders the manifest
+outside the immutable version directory, signs canonical provenance, publishes idempotently, and
+can select the resulting release as default. The target topology has been exercised through BFF
+authentication, durable admission, exact-digest image pull, isolated attempt startup, Runtime model
+mediation, and gateway routing. Provider-backed response completion still requires outbound DNS
+and HTTPS access to the configured provider; a provider outage now terminates after at most three
+attempts (or the earlier run deadline) with `attempt_retry_exhausted` and cleans up its container
+and network.
+`./scripts/target-phase11/verify.sh` is the focused verification entry point.
 
 Exit gate: the browser reaches only the portal origin, internal credentials and topology remain
 private, and two users cannot discover or operate each other's resources.
 
 ## Phase 12 — Hardening and acceptance
 
-Add bounded retries, dead-letter operations and safe replay, capacity controls, Runner
-reconciliation, retention, malformed-input tests, protocol compatibility, supply-chain enforcement,
-backup/restore exercises, and full trace correlation.
+Extend the bounded attempt retry policy with dead-letter operations and safe replay, capacity
+controls, Runner reconciliation, retention, malformed-input tests, protocol compatibility,
+supply-chain enforcement, backup/restore exercises, and full trace correlation.
 
 Exit gate: the acceptance baseline in `SPECIFICATION.md` passes with two independently packaged
 agents, including restart, duplicate delivery, cancellation, authorization, malformed input, and
@@ -261,12 +295,13 @@ isolation tests.
 ## Phase 13 — Offline migration and cutover
 
 Freeze legacy authoring and new conversations, drain active Temporal workflows, and back up all
-legacy state. Import Registry data first, rebuilding executable releases as signed OCI images.
-Import users by Keycloak subject and migrate compatible conversations and completed messages.
-Archive records that cannot satisfy target invariants; do not fabricate run specifications for
-historical executions.
+legacy state. Rebuild the agents selected for continued use as new signed OCI releases and publish
+them through the target Registry. Preserve Keycloak identities, but do not import legacy
+conversations, messages, runs, checkpoints, or Temporal history. After cutover, every conversation
+starts fresh against a target release.
 
-Switch the BFF after count, ownership, digest, and identifier reconciliation. Keep the frozen
-legacy stack and Temporal state read-only during the rollback window. Rollback switches traffic to
-that frozen stack; it does not reverse-sync target writes. Retire Temporal only after target
-acceptance and backup/restore tests pass.
+Switch the BFF after identity, release, ownership, and digest reconciliation. Keep the frozen legacy
+stack and Temporal state read-only during the rollback window only for operational rollback; it is
+not exposed as history by the target portal. Rollback switches traffic to that frozen stack; it
+does not reverse-sync target writes. Retire Temporal only after target acceptance and
+backup/restore tests pass.

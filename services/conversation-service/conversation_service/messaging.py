@@ -7,6 +7,12 @@ import asyncpg
 from nats.js import JetStreamContext
 
 
+def encode_payload(payload: Any) -> bytes:
+    if isinstance(payload, str):
+        return payload.encode()
+    return json.dumps(payload, separators=(",", ":")).encode()
+
+
 async def publish_pending(pool: asyncpg.Pool, jetstream: JetStreamContext) -> int:
     rows = await pool.fetch(
         "SELECT event_id,subject,payload FROM outbox_events WHERE published_at IS NULL "
@@ -17,7 +23,7 @@ async def publish_pending(pool: asyncpg.Pool, jetstream: JetStreamContext) -> in
         event_id = str(row["event_id"])
         await jetstream.publish(
             row["subject"],
-            json.dumps(row["payload"], separators=(",", ":")).encode(),
+            encode_payload(row["payload"]),
             headers={"Nats-Msg-Id": event_id, "Event-Id": event_id},
         )
         result = await pool.execute(

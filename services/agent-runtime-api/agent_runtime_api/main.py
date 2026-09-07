@@ -7,9 +7,11 @@ from typing import Literal, TypedDict
 
 import asyncpg
 import grpc
+import httpx
 import nats
 from fastapi import Depends, FastAPI
 
+from agent_runtime_api.model_gateway import ModelGateway
 from agent_runtime_api.outbox import publish_pending
 from agent_runtime_api.readiness import check_dependencies
 from agent_runtime_api.runtime import RuntimeService, add_runtime_service
@@ -42,7 +44,11 @@ async def lifespan(app: FastAPI):
             ("grpc.max_send_message_length", 16 * 1024),
         ]
     )
-    add_runtime_service(server, RuntimeService(pool))
+    model_client = httpx.AsyncClient(
+        timeout=httpx.Timeout(float(os.environ.get("MODEL_TIMEOUT_SECONDS", "120")), connect=5)
+    )
+    model_gateway = ModelGateway(model_client, os.environ["MODEL_GATEWAY_URL"])
+    add_runtime_service(server, RuntimeService(pool, model_gateway))
     server.add_insecure_port(f"0.0.0.0:{os.environ.get('RUNTIME_GRPC_PORT', '50051')}")
     await server.start()
     publisher = asyncio.create_task(_publish_loop(pool, nats_client.jetstream()))
@@ -55,6 +61,7 @@ async def lifespan(app: FastAPI):
             await publisher
         await server.stop(grace=3)
         await nats_client.close()
+        await model_client.aclose()
         await pool.close()
 
 

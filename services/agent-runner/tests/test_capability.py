@@ -15,6 +15,11 @@ def test_capability_is_bound_to_exact_attempt_and_epoch() -> None:
         "run_id": str(uuid4()),
         "attempt_id": str(uuid4()),
         "lease_epoch": 7,
+        "run_input": {
+            "trigger_type": "user_message",
+            "trigger_id": str(uuid4()),
+            "value": "hello",
+        },
     }
     token = issue_run_capability(claims, "test-secret", datetime.now(UTC) + timedelta(minutes=1))
     encoded, _ = token.split(".", 1)
@@ -24,3 +29,4 @@ def test_capability_is_bound_to_exact_attempt_and_epoch() -> None:
     assert decoded["lease_epoch"] == 7
     assert decoded["deadline"] > int(time.time())
     assert decoded["operations"] == ["runtime:connect"]
+    assert decoded["run_input"] == claims["run_input"]

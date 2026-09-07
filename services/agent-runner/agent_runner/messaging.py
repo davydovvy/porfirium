@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from contextlib import suppress
 from typing import Any
 
 from agent_runner.completion import consume_run_event
 from agent_runner.models import RunAdmission
 from agent_runner.outbox import publish_pending
+
+logger = logging.getLogger(__name__)
 
 
 async def consume_completion_events(runner: Any, subscription: Any) -> None:
@@ -27,7 +30,8 @@ async def consume_completion_events(runner: Any, subscription: Any) -> None:
                 else:
                     await consume_run_event(runner.pool, envelope)
         except Exception:
-            await message.nak()
+            logger.exception("run completion event failed; message will be retried")
+            await message.nak(delay=1)
         else:
             await message.ack()
 
@@ -36,6 +40,10 @@ async def consume_admissions(app: Any, subscription: Any) -> None:
     async for message in subscription.messages:
         try:
             envelope = json.loads(message.data)
+            if not isinstance(envelope, dict):
+                logger.error("discarding malformed run admission: JSON root is not an object")
+                await message.ack()
+                continue
             admission = RunAdmission.model_validate(
                 {
                     key: envelope.get(key)
@@ -47,7 +55,8 @@ async def consume_admissions(app: Any, subscription: Any) -> None:
             app.state.verify_specification(specification)
             await app.state.runner.admit(admission, idempotency_key, specification)
         except Exception:
-            await message.nak()
+            logger.exception("run admission failed; message will be retried")
+            await message.nak(delay=1)
         else:
             await message.ack()
 

@@ -32,6 +32,7 @@ message AgentFrame {
     InputRequestProposed input_request_proposed = 16;
     SuspensionCommitted suspension_committed = 17;
     ResultProposed result_proposed = 18;
+    ModelCall model_call = 19;
   }
 }
 
@@ -47,6 +48,7 @@ message PlatformFrame {
     Deadline deadline = 13;
     CapabilityRenewal capability_renewal = 14;
     ProtocolError error = 15;
+    ModelResult model_result = 16;
   }
 }
 
@@ -61,6 +63,15 @@ message HelloAccepted {
   google.protobuf.Timestamp deadline = 2;
   uint64 max_frame_bytes = 3;
   uint64 max_in_flight_frames = 4;
+  RunInput run_input = 5;
+}
+
+// RunInput is the immutable, bounded trigger snapshot authorized for one attempt.
+message RunInput {
+  string trigger_type = 1;
+  string trigger_id = 2;
+  google.protobuf.Value value = 3;
+  string starting_checkpoint_id = 4;
 }
 
 message Heartbeat {}
@@ -112,6 +123,20 @@ message SuspensionCommitted {
 message ResultProposed {
   repeated string final_message_ids = 1;
   string final_checkpoint_id = 2;
+}
+
+message ModelCall {
+  string request_id = 1;
+  string model = 2;
+  string prompt = 3;
+  uint32 max_output_tokens = 4;
+}
+
+message ModelResult {
+  string request_id = 1;
+  bytes content_utf8 = 2;
+  string finish_reason = 3;
+  google.protobuf.Struct usage = 4;
 }
 
 message Cancellation {

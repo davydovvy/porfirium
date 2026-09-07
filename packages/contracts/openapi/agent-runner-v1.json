@@ -60,6 +60,15 @@
             "type": "object", "required": ["type", "id"], "additionalProperties": false,
             "properties": {"type": {"enum": ["user_message", "user_response", "resume"]}, "id": {"type": "string", "format": "uuid"}}
           },
+          "run_input": {
+            "type": ["object", "null"], "additionalProperties": false,
+            "required": ["trigger_type", "trigger_id", "value"],
+            "properties": {
+              "trigger_type": {"enum": ["user_message", "user_response", "resume"]},
+              "trigger_id": {"type": "string", "format": "uuid"},
+              "value": {}
+            }
+          },
           "trace_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"}
         }
       },

@@ -37,12 +37,14 @@ class RunnerService:
         capability_secret: str,
         runtime_url: str,
         attempt_timeout_seconds: int = 300,
+        max_attempts: int = 3,
     ) -> None:
         self.pool = pool
         self.backend = backend
         self.capability_secret = capability_secret
         self.runtime_url = runtime_url
         self.attempt_timeout_seconds = attempt_timeout_seconds
+        self.max_attempts = max_attempts
 
     async def admit(
         self, admission: RunAdmission, idempotency_key: str, spec: SignedSpecification
@@ -69,21 +71,24 @@ class RunnerService:
             await connection.execute(
                 """INSERT INTO runs
                    (run_id,user_id,conversation_id,thread_id,release_id,delegation_grant_id,
-                    configuration_revision_id,starting_checkpoint_id,trigger,trace_id,
+                    configuration_revision_id,starting_checkpoint_id,trigger,run_input,trace_id,
                     specification,specification_sha256,deadline_at)
-                   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11::jsonb,$12,$13)""",
+                   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10::jsonb,$11,$12::jsonb,$13,$14)""",
                 admission.run_id, admission.user_id, admission.conversation_id,
                 admission.thread_id, admission.release_id, admission.delegation_grant_id,
                 admission.configuration_revision_id, admission.starting_checkpoint_id,
-                json.dumps(admission.trigger.model_dump(mode="json")), admission.trace_id,
-                json.dumps(spec.model_dump(mode="json")), spec.payload_sha256, deadline,
+                json.dumps(admission.trigger.model_dump(mode="json")),
+                json.dumps(admission.run_input.model_dump(mode="json"))
+                if admission.run_input else None,
+                admission.trace_id, json.dumps(spec.model_dump(mode="json")),
+                spec.payload_sha256, deadline,
             )
             await connection.execute(
                 "INSERT INTO run_idempotency(operation,idempotency_key,request_sha256,run_id) "
                 "VALUES('admit',$1,$2,$3)", idempotency_key, request_digest, admission.run_id
             )
             await enqueue(
-                connection, event_id=uuid4(), subject="runner.run.schedule.v1",
+                connection, event_id=uuid4(), subject="porfirium.run.command.schedule",
                 payload={"run_id": str(admission.run_id)},
             )
             return _run(await _get_run(connection, admission.run_id))
@@ -105,10 +110,11 @@ class RunnerService:
                 "SELECT coalesce(max(attempt_number),0)+1 FROM attempts WHERE run_id=$1", run_id
             )
             name = f"porfirium-run-{run_id}-attempt-{number}"
+            network_name = f"porfirium-attempt-{attempt_id}"
             await connection.execute(
                 "INSERT INTO attempts(attempt_id,run_id,attempt_number,lease_epoch,container_name,"
-                "deadline_at) VALUES($1,$2,$3,$4,$5,$6)",
-                attempt_id, run_id, number, epoch, name, row["deadline_at"]
+                "network_name,deadline_at) VALUES($1,$2,$3,$4,$5,$6,$7)",
+                attempt_id, run_id, number, epoch, name, network_name, row["deadline_at"]
             )
             await connection.execute(
                 "UPDATE runs SET state='starting',active_attempt_id=$2,lease_epoch=$3,"
@@ -121,7 +127,8 @@ class RunnerService:
     async def _start_attempt(self, run_id: UUID, attempt_id: UUID) -> None:
         async with self.pool.acquire() as connection:
             row = await connection.fetchrow(
-                "SELECT r.*,a.container_name,a.attempt_id FROM runs r JOIN attempts a "
+                "SELECT r.*,a.container_name,a.network_name,a.attempt_id "
+                "FROM runs r JOIN attempts a "
                 "ON a.attempt_id=r.active_attempt_id WHERE r.run_id=$1 AND a.attempt_id=$2",
                 run_id, attempt_id,
             )
@@ -135,7 +142,12 @@ class RunnerService:
         capability = issue_run_capability(
             {"user_id": str(row["user_id"]), "conversation_id": str(row["conversation_id"]),
              "thread_id": str(row["thread_id"]), "run_id": str(run_id),
-             "attempt_id": str(attempt_id), "lease_epoch": row["lease_epoch"]},
+             "attempt_id": str(attempt_id), "lease_epoch": row["lease_epoch"],
+             "run_input": _object(row["run_input"]) if row["run_input"] else None,
+             "models": payload.get("requested_models", []),
+             "starting_checkpoint_id": (
+                 str(row["starting_checkpoint_id"]) if row["starting_checkpoint_id"] else None
+             )},
             self.capability_secret, row["deadline_at"],
         )
         container = AttemptContainer(
@@ -143,7 +155,9 @@ class RunnerService:
             min(_memory_bytes(resources.get("memory", "256Mi")), 268435456),
             min(_cpu(resources.get("cpu", "1")), 1.0),
             min(int(resources.get("pids", 64)), 64),
+            row["network_name"],
         )
+        container_id = None
         try:
             container_id = await self.backend.create(container)
             async with self.pool.acquire() as connection:
@@ -163,6 +177,7 @@ class RunnerService:
                     "AND active_attempt_id=$2", run_id, attempt_id
                 )
         except Exception:
+            await self.backend.remove(container_id, container.network_name)
             await self._fail_start(run_id, attempt_id)
             raise
 
@@ -197,8 +212,8 @@ class RunnerService:
                 "UPDATE runs SET state='cancelling',cancellation_requested_at=coalesce("
                 "cancellation_requested_at,now()),updated_at=now() WHERE run_id=$1", run_id
             )
-        if attempt and attempt["container_id"]:
-            await self.backend.remove(attempt["container_id"])
+        if attempt:
+            await self.backend.remove(attempt["container_id"], attempt["network_name"])
         async with self.pool.acquire() as connection, connection.transaction():
             if attempt:
                 await connection.execute(
@@ -261,8 +276,10 @@ class RunnerService:
             await connection.execute(
                 "UPDATE attempts SET state='stopping' WHERE attempt_id=$1", attempt_id
             )
-        if attempt["container_id"] and await self.backend.exists(attempt["container_id"]):
-            await asyncio.wait_for(self.backend.remove(attempt["container_id"]), timeout=5)
+        if not attempt["container_id"] or await self.backend.exists(attempt["container_id"]):
+            await asyncio.wait_for(
+                self.backend.remove(attempt["container_id"], attempt["network_name"]), timeout=5
+            )
         async with self.pool.acquire() as connection, connection.transaction():
             await connection.execute(
                 "UPDATE attempts SET state='exited',ended_at=now() WHERE attempt_id=$1", attempt_id
@@ -276,15 +293,19 @@ class RunnerService:
     async def reconcile(self) -> int:
         rows = await self.pool.fetch(
             "SELECT r.run_id,r.user_id,r.conversation_id,r.thread_id,r.lease_epoch,"
-            "a.attempt_id,a.container_id,a.visible_output,a.active_message_id "
+            "r.deadline_at,a.attempt_id,a.attempt_number,a.container_id,a.network_name,"
+            "a.visible_output,a.active_message_id "
             "FROM runs r JOIN attempts a "
             "ON a.attempt_id=r.active_attempt_id "
             "WHERE r.state IN ('starting','running','cancelling')"
         )
         repaired = 0
         for row in rows:
-            exists = bool(row["container_id"]) and await self.backend.exists(row["container_id"])
-            if not exists:
+            running = bool(row["container_id"]) and await self.backend.is_running(
+                row["container_id"]
+            )
+            if not running:
+                await self.backend.remove(row["container_id"], row["network_name"])
                 await self._handle_attempt_loss(row)
                 repaired += 1
         return repaired
@@ -295,17 +316,24 @@ class RunnerService:
                 "UPDATE attempts SET state='failed',ended_at=now() WHERE attempt_id=$1",
                 attempt["attempt_id"],
             )
-            if not attempt["visible_output"]:
+            if not attempt["visible_output"] and _retry_allowed(
+                attempt["attempt_number"], attempt["deadline_at"], self.max_attempts
+            ):
                 await connection.execute(
                     "UPDATE runs SET state='scheduled',active_attempt_id=NULL,updated_at=now() "
                     "WHERE run_id=$1 AND active_attempt_id=$2",
                     attempt["run_id"], attempt["attempt_id"],
                 )
                 return
+            terminal_code = (
+                "attempt_lost_after_output"
+                if attempt["visible_output"]
+                else "attempt_retry_exhausted"
+            )
             await connection.execute(
-                "UPDATE runs SET state='failed',terminal_code='attempt_lost_after_output',"
+                "UPDATE runs SET state='failed',terminal_code=$3,"
                 "active_attempt_id=NULL,updated_at=now() WHERE run_id=$1 AND active_attempt_id=$2",
-                attempt["run_id"], attempt["attempt_id"],
+                attempt["run_id"], attempt["attempt_id"], terminal_code,
             )
             if attempt["active_message_id"]:
                 event_id = uuid4()
@@ -345,6 +373,10 @@ def _parse_time(value: object) -> datetime:
     if parsed <= datetime.now(UTC):
         raise RunnerError("specification_expired")
     return parsed
+
+
+def _retry_allowed(attempt_number: int, deadline_at: datetime, max_attempts: int) -> bool:
+    return attempt_number < max_attempts and deadline_at > datetime.now(UTC)
 
 
 def _object(value: object) -> dict[str, Any]:

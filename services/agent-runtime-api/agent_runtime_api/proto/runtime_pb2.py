@@ -26,7 +26,7 @@ from google.protobuf import struct_pb2 as google_dot_protobuf_dot_struct__pb2
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\"porfirium/runtime/v1/runtime.proto\x12\x14porfirium.runtime.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa2\x01\n\rFrameIdentity\x12\x18\n\x10protocol_version\x18\x01 \x01(\t\x12\x0e\n\x06run_id\x18\x02 \x01(\t\x12\x12\n\nattempt_id\x18\x03 \x01(\t\x12\x13\n\x0blease_epoch\x18\x04 \x01(\x04\x12\x10\n\x08sequence\x18\x05 \x01(\x04\x12\x17\n\x0fidempotency_key\x18\x06 \x01(\t\x12\x13\n\x0btraceparent\x18\x07 \x01(\t\"\x98\x05\n\nAgentFrame\x12\x35\n\x08identity\x18\x01 \x01(\x0b\x32#.porfirium.runtime.v1.FrameIdentity\x12,\n\x05hello\x18\n \x01(\x0b\x32\x1b.porfirium.runtime.v1.HelloH\x00\x12\x34\n\theartbeat\x18\x0b \x01(\x0b\x32\x1f.porfirium.runtime.v1.HeartbeatH\x00\x12?\n\x0fmessage_started\x18\x0c \x01(\x0b\x32$.porfirium.runtime.v1.MessageStartedH\x00\x12;\n\rmessage_delta\x18\r \x01(\x0b\x32\".porfirium.runtime.v1.MessageDeltaH\x00\x12\x43\n\x11message_completed\x18\x0e \x01(\x0b\x32&.porfirium.runtime.v1.MessageCompletedH\x00\x12G\n\x13message_interrupted\x18\x0f \x01(\x0b\x32(.porfirium.runtime.v1.MessageInterruptedH\x00\x12L\n\x16input_request_proposed\x18\x10 \x01(\x0b\x32*.porfirium.runtime.v1.InputRequestProposedH\x00\x12I\n\x14suspension_committed\x18\x11 \x01(\x0b\x32).porfirium.runtime.v1.SuspensionCommittedH\x00\x12?\n\x0fresult_proposed\x18\x12 \x01(\x0b\x32$.porfirium.runtime.v1.ResultProposedH\x00\x42\t\n\x07payload\"\xd3\x03\n\rPlatformFrame\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x12\n\nattempt_id\x18\x02 \x01(\t\x12\x13\n\x0blease_epoch\x18\x03 \x01(\x04\x12\x10\n\x08sequence\x18\x04 \x01(\x04\x12=\n\x0ehello_accepted\x18\n \x01(\x0b\x32#.porfirium.runtime.v1.HelloAcceptedH\x00\x12@\n\x0f\x61\x63knowledgement\x18\x0b \x01(\x0b\x32%.porfirium.runtime.v1.AcknowledgementH\x00\x12:\n\x0c\x63\x61ncellation\x18\x0c \x01(\x0b\x32\".porfirium.runtime.v1.CancellationH\x00\x12\x32\n\x08\x64\x65\x61\x64line\x18\r \x01(\x0b\x32\x1e.porfirium.runtime.v1.DeadlineH\x00\x12\x45\n\x12\x63\x61pability_renewal\x18\x0e \x01(\x0b\x32\'.porfirium.runtime.v1.CapabilityRenewalH\x00\x12\x34\n\x05\x65rror\x18\x0f \x01(\x0b\x32#.porfirium.runtime.v1.ProtocolErrorH\x00\x42\t\n\x07payload\"X\n\x05Hello\x12\x16\n\x0erun_capability\x18\x01 \x01(\t\x12\"\n\x1alast_acknowledged_sequence\x18\x02 \x01(\x04\x12\x13\n\x0bsdk_version\x18\x03 \x01(\t\"\x93\x01\n\rHelloAccepted\x12\x1d\n\x15resume_after_sequence\x18\x01 \x01(\x04\x12,\n\x08\x64\x65\x61\x64line\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x17\n\x0fmax_frame_bytes\x18\x03 \x01(\x04\x12\x1c\n\x14max_in_flight_frames\x18\x04 \x01(\x04\"\x0b\n\tHeartbeat\"F\n\x0f\x41\x63knowledgement\x12\x19\n\x11\x61\x63\x63\x65pted_sequence\x18\x01 \x01(\x04\x12\x18\n\x10\x64urable_event_id\x18\x02 \x01(\t\":\n\x0eMessageStarted\x12\x12\n\nmessage_id\x18\x01 \x01(\t\x12\x14\n\x0c\x63ontent_type\x18\x02 \x01(\t\"P\n\x0cMessageDelta\x12\x12\n\nmessage_id\x18\x01 \x01(\t\x12\x16\n\x0e\x63hunk_sequence\x18\x02 \x01(\x04\x12\x14\n\x0c\x63ontent_utf8\x18\x03 \x01(\x0c\"\xc9\x01\n\x10MessageCompleted\x12\x12\n\nmessage_id\x18\x01 \x01(\t\x12\x1e\n\x16\x63\x61nonical_content_utf8\x18\x02 \x01(\x0c\x12\x13\n\x0b\x63hunk_count\x18\x03 \x01(\x04\x12\x15\n\rcontent_bytes\x18\x04 \x01(\x04\x12\x16\n\x0e\x63ontent_sha256\x18\x05 \x01(\t\x12\x15\n\rfinish_reason\x18\x06 \x01(\t\x12&\n\x05usage\x18\x07 \x01(\x0b\x32\x17.google.protobuf.Struct\"6\n\x12MessageInterrupted\x12\x12\n\nmessage_id\x18\x01 \x01(\t\x12\x0c\n\x04\x63ode\x18\x02 \x01(\t\"\x86\x01\n\x14InputRequestProposed\x12\x15\n\rsuspension_id\x18\x01 \x01(\t\x12\x15\n\rcheckpoint_id\x18\x02 \x01(\t\x12\x0e\n\x06prompt\x18\x03 \x01(\t\x12\x30\n\x0fresponse_schema\x18\x04 \x01(\x0b\x32\x17.google.protobuf.Struct\"]\n\x13SuspensionCommitted\x12\x15\n\rsuspension_id\x18\x01 \x01(\t\x12\x15\n\rcheckpoint_id\x18\x02 \x01(\t\x12\x18\n\x10input_request_id\x18\x03 \x01(\t\"H\n\x0eResultProposed\x12\x19\n\x11\x66inal_message_ids\x18\x01 \x03(\t\x12\x1b\n\x13\x66inal_checkpoint_id\x18\x02 \x01(\t\"W\n\x0c\x43\x61ncellation\x12\x13\n\x0breason_code\x18\x01 \x01(\t\x12\x32\n\x0egrace_deadline\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"8\n\x08\x44\x65\x61\x64line\x12,\n\x08\x64\x65\x61\x64line\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"a\n\x11\x43\x61pabilityRenewal\x12\x1c\n\x14\x64\x65legated_user_token\x18\x01 \x01(\t\x12.\n\nexpires_at\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"^\n\rProtocolError\x12\x0c\n\x04\x63ode\x18\x01 \x01(\t\x12\x14\n\x0csafe_message\x18\x02 \x01(\t\x12\x11\n\tretryable\x18\x03 \x01(\x08\x12\x16\n\x0e\x63orrelation_id\x18\x04 \x01(\t2d\n\x0c\x41gentRuntime\x12T\n\x07\x43onnect\x12 .porfirium.runtime.v1.AgentFrame\x1a#.porfirium.runtime.v1.PlatformFrame(\x01\x30\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\"porfirium/runtime/v1/runtime.proto\x12\x14porfirium.runtime.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa2\x01\n\rFrameIdentity\x12\x18\n\x10protocol_version\x18\x01 \x01(\t\x12\x0e\n\x06run_id\x18\x02 \x01(\t\x12\x12\n\nattempt_id\x18\x03 \x01(\t\x12\x13\n\x0blease_epoch\x18\x04 \x01(\x04\x12\x10\n\x08sequence\x18\x05 \x01(\x04\x12\x17\n\x0fidempotency_key\x18\x06 \x01(\t\x12\x13\n\x0btraceparent\x18\x07 \x01(\t\"\xcf\x05\n\nAgentFrame\x12\x35\n\x08identity\x18\x01 \x01(\x0b\x32#.porfirium.runtime.v1.FrameIdentity\x12,\n\x05hello\x18\n \x01(\x0b\x32\x1b.porfirium.runtime.v1.HelloH\x00\x12\x34\n\theartbeat\x18\x0b \x01(\x0b\x32\x1f.porfirium.runtime.v1.HeartbeatH\x00\x12?\n\x0fmessage_started\x18\x0c \x01(\x0b\x32$.porfirium.runtime.v1.MessageStartedH\x00\x12;\n\rmessage_delta\x18\r \x01(\x0b\x32\".porfirium.runtime.v1.MessageDeltaH\x00\x12\x43\n\x11message_completed\x18\x0e \x01(\x0b\x32&.porfirium.runtime.v1.MessageCompletedH\x00\x12G\n\x13message_interrupted\x18\x0f \x01(\x0b\x32(.porfirium.runtime.v1.MessageInterruptedH\x00\x12L\n\x16input_request_proposed\x18\x10 \x01(\x0b\x32*.porfirium.runtime.v1.InputRequestProposedH\x00\x12I\n\x14suspension_committed\x18\x11 \x01(\x0b\x32).porfirium.runtime.v1.SuspensionCommittedH\x00\x12?\n\x0fresult_proposed\x18\x12 \x01(\x0b\x32$.porfirium.runtime.v1.ResultProposedH\x00\x12\x35\n\nmodel_call\x18\x13 \x01(\x0b\x32\x1f.porfirium.runtime.v1.ModelCallH\x00\x42\t\n\x07payload\"\x8e\x04\n\rPlatformFrame\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x12\n\nattempt_id\x18\x02 \x01(\t\x12\x13\n\x0blease_epoch\x18\x03 \x01(\x04\x12\x10\n\x08sequence\x18\x04 \x01(\x04\x12=\n\x0ehello_accepted\x18\n \x01(\x0b\x32#.porfirium.runtime.v1.HelloAcceptedH\x00\x12@\n\x0f\x61\x63knowledgement\x18\x0b \x01(\x0b\x32%.porfirium.runtime.v1.AcknowledgementH\x00\x12:\n\x0c\x63\x61ncellation\x18\x0c \x01(\x0b\x32\".porfirium.runtime.v1.CancellationH\x00\x12\x32\n\x08\x64\x65\x61\x64line\x18\r \x01(\x0b\x32\x1e.porfirium.runtime.v1.DeadlineH\x00\x12\x45\n\x12\x63\x61pability_renewal\x18\x0e \x01(\x0b\x32\'.porfirium.runtime.v1.CapabilityRenewalH\x00\x12\x34\n\x05\x65rror\x18\x0f \x01(\x0b\x32#.porfirium.runtime.v1.ProtocolErrorH\x00\x12\x39\n\x0cmodel_result\x18\x10 \x01(\x0b\x32!.porfirium.runtime.v1.ModelResultH\x00\x42\t\n\x07payload\"X\n\x05Hello\x12\x16\n\x0erun_capability\x18\x01 \x01(\t\x12\"\n\x1alast_acknowledged_sequence\x18\x02 \x01(\x04\x12\x13\n\x0bsdk_version\x18\x03 \x01(\t\"\xc6\x01\n\rHelloAccepted\x12\x1d\n\x15resume_after_sequence\x18\x01 \x01(\x04\x12,\n\x08\x64\x65\x61\x64line\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x17\n\x0fmax_frame_bytes\x18\x03 \x01(\x04\x12\x1c\n\x14max_in_flight_frames\x18\x04 \x01(\x04\x12\x31\n\trun_input\x18\x05 \x01(\x0b\x32\x1e.porfirium.runtime.v1.RunInput\"{\n\x08RunInput\x12\x14\n\x0ctrigger_type\x18\x01 \x01(\t\x12\x12\n\ntrigger_id\x18\x02 \x01(\t\x12%\n\x05value\x18\x03 \x01(\x0b\x32\x16.google.protobuf.Value\x12\x1e\n\x16starting_checkpoint_id\x18\x04 \x01(\t\"\x0b\n\tHeartbeat\"F\n\x0f\x41\x63knowledgement\x12\x19\n\x11\x61\x63\x63\x65pted_sequence\x18\x01 \x01(\x04\x12\x18\n\x10\x64urable_event_id\x18\x02 \x01(\t\":\n\x0eMessageStarted\x12\x12\n\nmessage_id\x18\x01 \x01(\t\x12\x14\n\x0c\x63ontent_type\x18\x02 \x01(\t\"P\n\x0cMessageDelta\x12\x12\n\nmessage_id\x18\x01 \x01(\t\x12\x16\n\x0e\x63hunk_sequence\x18\x02 \x01(\x04\x12\x14\n\x0c\x63ontent_utf8\x18\x03 \x01(\x0c\"\xc9\x01\n\x10MessageCompleted\x12\x12\n\nmessage_id\x18\x01 \x01(\t\x12\x1e\n\x16\x63\x61nonical_content_utf8\x18\x02 \x01(\x0c\x12\x13\n\x0b\x63hunk_count\x18\x03 \x01(\x04\x12\x15\n\rcontent_bytes\x18\x04 \x01(\x04\x12\x16\n\x0e\x63ontent_sha256\x18\x05 \x01(\t\x12\x15\n\rfinish_reason\x18\x06 \x01(\t\x12&\n\x05usage\x18\x07 \x01(\x0b\x32\x17.google.protobuf.Struct\"6\n\x12MessageInterrupted\x12\x12\n\nmessage_id\x18\x01 \x01(\t\x12\x0c\n\x04\x63ode\x18\x02 \x01(\t\"\x86\x01\n\x14InputRequestProposed\x12\x15\n\rsuspension_id\x18\x01 \x01(\t\x12\x15\n\rcheckpoint_id\x18\x02 \x01(\t\x12\x0e\n\x06prompt\x18\x03 \x01(\t\x12\x30\n\x0fresponse_schema\x18\x04 \x01(\x0b\x32\x17.google.protobuf.Struct\"]\n\x13SuspensionCommitted\x12\x15\n\rsuspension_id\x18\x01 \x01(\t\x12\x15\n\rcheckpoint_id\x18\x02 \x01(\t\x12\x18\n\x10input_request_id\x18\x03 \x01(\t\"H\n\x0eResultProposed\x12\x19\n\x11\x66inal_message_ids\x18\x01 \x03(\t\x12\x1b\n\x13\x66inal_checkpoint_id\x18\x02 \x01(\t\"Y\n\tModelCall\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12\r\n\x05model\x18\x02 \x01(\t\x12\x0e\n\x06prompt\x18\x03 \x01(\t\x12\x19\n\x11max_output_tokens\x18\x04 \x01(\r\"v\n\x0bModelResult\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12\x14\n\x0c\x63ontent_utf8\x18\x02 \x01(\x0c\x12\x15\n\rfinish_reason\x18\x03 \x01(\t\x12&\n\x05usage\x18\x04 \x01(\x0b\x32\x17.google.protobuf.Struct\"W\n\x0c\x43\x61ncellation\x12\x13\n\x0breason_code\x18\x01 \x01(\t\x12\x32\n\x0egrace_deadline\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"8\n\x08\x44\x65\x61\x64line\x12,\n\x08\x64\x65\x61\x64line\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"a\n\x11\x43\x61pabilityRenewal\x12\x1c\n\x14\x64\x65legated_user_token\x18\x01 \x01(\t\x12.\n\nexpires_at\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"^\n\rProtocolError\x12\x0c\n\x04\x63ode\x18\x01 \x01(\t\x12\x14\n\x0csafe_message\x18\x02 \x01(\t\x12\x11\n\tretryable\x18\x03 \x01(\x08\x12\x16\n\x0e\x63orrelation_id\x18\x04 \x01(\t2d\n\x0c\x41gentRuntime\x12T\n\x07\x43onnect\x12 .porfirium.runtime.v1.AgentFrame\x1a#.porfirium.runtime.v1.PlatformFrame(\x01\x30\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,39 +36,45 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_FRAMEIDENTITY']._serialized_start=124
   _globals['_FRAMEIDENTITY']._serialized_end=286
   _globals['_AGENTFRAME']._serialized_start=289
-  _globals['_AGENTFRAME']._serialized_end=953
-  _globals['_PLATFORMFRAME']._serialized_start=956
-  _globals['_PLATFORMFRAME']._serialized_end=1423
-  _globals['_HELLO']._serialized_start=1425
-  _globals['_HELLO']._serialized_end=1513
-  _globals['_HELLOACCEPTED']._serialized_start=1516
-  _globals['_HELLOACCEPTED']._serialized_end=1663
-  _globals['_HEARTBEAT']._serialized_start=1665
-  _globals['_HEARTBEAT']._serialized_end=1676
-  _globals['_ACKNOWLEDGEMENT']._serialized_start=1678
-  _globals['_ACKNOWLEDGEMENT']._serialized_end=1748
-  _globals['_MESSAGESTARTED']._serialized_start=1750
-  _globals['_MESSAGESTARTED']._serialized_end=1808
-  _globals['_MESSAGEDELTA']._serialized_start=1810
-  _globals['_MESSAGEDELTA']._serialized_end=1890
-  _globals['_MESSAGECOMPLETED']._serialized_start=1893
-  _globals['_MESSAGECOMPLETED']._serialized_end=2094
-  _globals['_MESSAGEINTERRUPTED']._serialized_start=2096
-  _globals['_MESSAGEINTERRUPTED']._serialized_end=2150
-  _globals['_INPUTREQUESTPROPOSED']._serialized_start=2153
-  _globals['_INPUTREQUESTPROPOSED']._serialized_end=2287
-  _globals['_SUSPENSIONCOMMITTED']._serialized_start=2289
-  _globals['_SUSPENSIONCOMMITTED']._serialized_end=2382
-  _globals['_RESULTPROPOSED']._serialized_start=2384
-  _globals['_RESULTPROPOSED']._serialized_end=2456
-  _globals['_CANCELLATION']._serialized_start=2458
-  _globals['_CANCELLATION']._serialized_end=2545
-  _globals['_DEADLINE']._serialized_start=2547
-  _globals['_DEADLINE']._serialized_end=2603
-  _globals['_CAPABILITYRENEWAL']._serialized_start=2605
-  _globals['_CAPABILITYRENEWAL']._serialized_end=2702
-  _globals['_PROTOCOLERROR']._serialized_start=2704
-  _globals['_PROTOCOLERROR']._serialized_end=2798
-  _globals['_AGENTRUNTIME']._serialized_start=2800
-  _globals['_AGENTRUNTIME']._serialized_end=2900
+  _globals['_AGENTFRAME']._serialized_end=1008
+  _globals['_PLATFORMFRAME']._serialized_start=1011
+  _globals['_PLATFORMFRAME']._serialized_end=1537
+  _globals['_HELLO']._serialized_start=1539
+  _globals['_HELLO']._serialized_end=1627
+  _globals['_HELLOACCEPTED']._serialized_start=1630
+  _globals['_HELLOACCEPTED']._serialized_end=1828
+  _globals['_RUNINPUT']._serialized_start=1830
+  _globals['_RUNINPUT']._serialized_end=1953
+  _globals['_HEARTBEAT']._serialized_start=1955
+  _globals['_HEARTBEAT']._serialized_end=1966
+  _globals['_ACKNOWLEDGEMENT']._serialized_start=1968
+  _globals['_ACKNOWLEDGEMENT']._serialized_end=2038
+  _globals['_MESSAGESTARTED']._serialized_start=2040
+  _globals['_MESSAGESTARTED']._serialized_end=2098
+  _globals['_MESSAGEDELTA']._serialized_start=2100
+  _globals['_MESSAGEDELTA']._serialized_end=2180
+  _globals['_MESSAGECOMPLETED']._serialized_start=2183
+  _globals['_MESSAGECOMPLETED']._serialized_end=2384
+  _globals['_MESSAGEINTERRUPTED']._serialized_start=2386
+  _globals['_MESSAGEINTERRUPTED']._serialized_end=2440
+  _globals['_INPUTREQUESTPROPOSED']._serialized_start=2443
+  _globals['_INPUTREQUESTPROPOSED']._serialized_end=2577
+  _globals['_SUSPENSIONCOMMITTED']._serialized_start=2579
+  _globals['_SUSPENSIONCOMMITTED']._serialized_end=2672
+  _globals['_RESULTPROPOSED']._serialized_start=2674
+  _globals['_RESULTPROPOSED']._serialized_end=2746
+  _globals['_MODELCALL']._serialized_start=2748
+  _globals['_MODELCALL']._serialized_end=2837
+  _globals['_MODELRESULT']._serialized_start=2839
+  _globals['_MODELRESULT']._serialized_end=2957
+  _globals['_CANCELLATION']._serialized_start=2959
+  _globals['_CANCELLATION']._serialized_end=3046
+  _globals['_DEADLINE']._serialized_start=3048
+  _globals['_DEADLINE']._serialized_end=3104
+  _globals['_CAPABILITYRENEWAL']._serialized_start=3106
+  _globals['_CAPABILITYRENEWAL']._serialized_end=3203
+  _globals['_PROTOCOLERROR']._serialized_start=3205
+  _globals['_PROTOCOLERROR']._serialized_end=3299
+  _globals['_AGENTRUNTIME']._serialized_start=3301
+  _globals['_AGENTRUNTIME']._serialized_end=3401
 # @@protoc_insertion_point(module_scope)

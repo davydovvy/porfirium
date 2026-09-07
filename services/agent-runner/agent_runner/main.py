@@ -17,7 +17,11 @@ from agent_runner.container import PodmanBackend
 from agent_runner.messaging import consume_admissions, consume_completion_events, publish_loop
 from agent_runner.models import RunAdmission, RunResponse
 from agent_runner.readiness import check_dependencies
-from agent_runner.registry import RegistryClient, RegistryResolutionError
+from agent_runner.registry import (
+    ClientCredentialsTokenProvider,
+    RegistryClient,
+    RegistryResolutionError,
+)
 from agent_runner.service import RunnerError, RunnerService
 from agent_runner.specification import load_public_keys, verify_specification
 
@@ -29,10 +33,6 @@ class HealthResponse(TypedDict):
     status: Literal["ok"]
     service: str
     version: str
-
-
-async def _registry_token(_: RunAdmission) -> str:
-    return os.environ["REGISTRY_RESOLVER_TOKEN"]
 
 
 async def _scheduler(app: FastAPI) -> None:
@@ -57,12 +57,22 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         raise RuntimeError("database pool creation failed")
     client = httpx.AsyncClient(timeout=httpx.Timeout(5, connect=2))
     app.state.pool = pool
-    app.state.registry = RegistryClient(client, os.environ["AGENT_REGISTRY_URL"], _registry_token)
+    registry_token = ClientCredentialsTokenProvider(
+        client,
+        os.environ.get("RUNNER_OIDC_TOKEN_URL", os.environ["OIDC_TOKEN_URL"]),
+        os.environ["OIDC_CLIENT_ID"],
+        os.environ["OIDC_CLIENT_SECRET"],
+    )
+    app.state.registry = RegistryClient(
+        client, os.environ["AGENT_REGISTRY_URL"], registry_token
+    )
     app.state.registry_public_keys = load_public_keys(os.environ["REGISTRY_RUN_PUBLIC_KEYS"])
     app.state.runner = RunnerService(
-        pool, PodmanBackend(), capability_secret=os.environ["RUN_CAPABILITY_SECRET"],
+        pool, PodmanBackend(os.environ.get("RUNTIME_CONTAINER", "porfirium-agent-runtime-api")),
+        capability_secret=os.environ["RUN_CAPABILITY_SECRET"],
         runtime_url=os.environ["AGENT_RUNTIME_URL"],
         attempt_timeout_seconds=int(os.environ.get("RUNNER_ATTEMPT_TIMEOUT_SECONDS", "300")),
+        max_attempts=int(os.environ.get("RUNNER_MAX_ATTEMPTS", "3")),
     )
     app.state.verify_specification = lambda specification: verify_specification(
         specification, app.state.registry_public_keys

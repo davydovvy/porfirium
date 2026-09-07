@@ -211,6 +211,11 @@ class MemoryStore:
                 "release_id": str(item.release_id),
                 "run_id": str(payload["run_id"]),
                 "message_id": str(message_id),
+                "run_input": {
+                    "trigger_type": "user_message",
+                    "trigger_id": str(message_id),
+                    "value": payload["content"],
+                },
                 "delegation_grant_id": str(payload["delegation_grant_id"]),
             }
         )
@@ -375,6 +380,11 @@ class MemoryStore:
                 ),
                 "starting_checkpoint_id": str(request.checkpoint_id),
                 "trigger": {"type": "user_response", "id": str(request_id)},
+                "run_input": {
+                    "trigger_type": "user_response",
+                    "trigger_id": str(request_id),
+                    "value": response,
+                },
             }
         )
         result = (request_id, sequence)

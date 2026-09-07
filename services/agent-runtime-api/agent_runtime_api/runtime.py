@@ -8,10 +8,12 @@ from uuid import UUID, uuid4
 
 import asyncpg
 import grpc
-from google.protobuf.json_format import MessageToDict
+from google.protobuf.json_format import MessageToDict, ParseDict
+from google.protobuf.struct_pb2 import Struct
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from agent_runtime_api.auth import CapabilityError, RunCapability, decode_capability
+from agent_runtime_api.model_gateway import ModelGateway, ModelGatewayError
 from agent_runtime_api.proto import runtime_pb2 as pb
 
 MAX_FRAME_BYTES = 16 * 1024
@@ -109,8 +111,9 @@ def _event(capability: RunCapability, frame: pb.AgentFrame, event_id: UUID) -> t
 
 
 class RuntimeService:
-    def __init__(self, pool: asyncpg.Pool) -> None:
+    def __init__(self, pool: asyncpg.Pool, model_gateway: ModelGateway | None = None) -> None:
         self.pool = pool
+        self.model_gateway = model_gateway
 
     async def connect(self, request_iterator, context):
         capability: RunCapability | None = None
@@ -134,6 +137,15 @@ class RuntimeService:
                     yield _error(identity, "capability_invalid", "Run capability is invalid")
                     return
                 deadline = Timestamp(seconds=capability.deadline)
+                run_input = pb.RunInput()
+                if capability.run_input:
+                    run_input.trigger_type = str(capability.run_input["trigger_type"])
+                    run_input.trigger_id = str(capability.run_input["trigger_id"])
+                    ParseDict(capability.run_input.get("value"), run_input.value)
+                    if capability.starting_checkpoint_id:
+                        run_input.starting_checkpoint_id = str(
+                            capability.starting_checkpoint_id
+                        )
                 yield pb.PlatformFrame(
                     run_id=identity.run_id,
                     attempt_id=identity.attempt_id,
@@ -144,6 +156,7 @@ class RuntimeService:
                         deadline=deadline,
                         max_frame_bytes=MAX_FRAME_BYTES,
                         max_in_flight_frames=MAX_IN_FLIGHT_FRAMES,
+                        run_input=run_input,
                     ),
                 )
                 continue
@@ -151,13 +164,31 @@ class RuntimeService:
                 _validate_identity(identity, capability)
                 if identity.sequence < 1:
                     raise ValueError("sequence_out_of_order")
+                model_result = None
+                if kind == "model_call":
+                    model_result = await self._call_model(capability, frame.model_call)
                 event_id = await self._accept(capability, frame)
-            except ValueError as exc:
+            except (ModelGatewayError, ValueError) as exc:
                 code = str(exc)
                 yield _error(identity, code, code.replace("_", " ").capitalize())
                 if code in {"stale_epoch", "identity_mismatch"}:
                     return
                 continue
+            if model_result is not None:
+                usage = Struct()
+                usage.update(model_result.usage)
+                yield pb.PlatformFrame(
+                    run_id=identity.run_id,
+                    attempt_id=identity.attempt_id,
+                    lease_epoch=identity.lease_epoch,
+                    sequence=identity.sequence,
+                    model_result=pb.ModelResult(
+                        request_id=frame.model_call.request_id,
+                        content_utf8=model_result.content.encode(),
+                        finish_reason=model_result.finish_reason,
+                        usage=usage,
+                    ),
+                )
             yield pb.PlatformFrame(
                 run_id=identity.run_id,
                 attempt_id=identity.attempt_id,
@@ -168,6 +199,26 @@ class RuntimeService:
                     durable_event_id=str(event_id) if event_id else "",
                 ),
             )
+
+    async def _call_model(self, cap: RunCapability, call: pb.ModelCall):
+        if self.model_gateway is None:
+            raise ValueError("model_gateway_unavailable")
+        if call.model not in cap.models:
+            raise ValueError("model_forbidden")
+        if (
+            not call.request_id
+            or len(call.request_id) > 128
+            or not call.prompt
+            or len(call.prompt.encode()) > 12 * 1024
+            or not 1 <= call.max_output_tokens <= 4096
+        ):
+            raise ValueError("model_request_invalid")
+        return await self.model_gateway.respond(
+            model=call.model,
+            prompt=call.prompt,
+            max_output_tokens=call.max_output_tokens,
+            metadata={"run_id": str(cap.run_id), "user_id": str(cap.user_id)},
+        )
 
     async def _activate(self, cap: RunCapability) -> int:
         async with self.pool.acquire() as connection, connection.transaction():

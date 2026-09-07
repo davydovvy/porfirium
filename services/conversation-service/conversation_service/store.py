@@ -206,6 +206,11 @@ class PostgresStore:
                 "release_id": str(conversation["release_id"]),
                 "run_id": str(payload["run_id"]),
                 "message_id": str(payload["message_id"]),
+                "run_input": {
+                    "trigger_type": "user_message",
+                    "trigger_id": str(payload["message_id"]),
+                    "value": payload["content"],
+                },
                 "delegation_grant_id": str(payload["delegation_grant_id"]),
                 "configuration_revision_id": (
                     str(conversation["configuration_revision_id"])
@@ -539,6 +544,11 @@ class PostgresStore:
                 "thread_id": str(row["thread_id"]),
                 "release_id": str(row["release_id"]),
                 "run_id": str(run_id),
+                "run_input": {
+                    "trigger_type": "user_response",
+                    "trigger_id": str(request_id),
+                    "value": response,
+                },
                 "delegation_grant_id": str(row["delegation_grant_id"]),
                 "configuration_revision_id": (
                     str(row["configuration_revision_id"])

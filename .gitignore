@@ -1,4 +1,6 @@
 .env
+.env.*
+.secrets/
 .phase0/
 .phase1/
 __pycache__/

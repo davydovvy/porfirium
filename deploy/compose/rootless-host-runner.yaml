@@ -1,0 +1,40 @@
+# Target override for the supported rootless Podman topology. Start the Compose stack with
+# agent-runner scaled to zero, then run scripts/target-runner/start-host.sh as the same user.
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:${TARGET_POSTGRES_PORT:-15432}:5432"
+
+  nats:
+    ports:
+      - "127.0.0.1:${TARGET_NATS_PORT:-14222}:4222"
+
+  agent-registry:
+    # Root in a rootless Podman user namespace maps to the unprivileged Podman owner. This permits
+    # reading the owner's mode-0600 signing key without making it readable to other host users.
+    user: "0:0"
+    ports:
+      - "127.0.0.1:${TARGET_REGISTRY_PORT:-18102}:8102"
+    volumes:
+      - ../../.secrets/target-run-signing.key:/run/secrets/target-run-signing.key:ro
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+
+  registry:
+    ports:
+      - "127.0.0.1:${TARGET_OCI_REGISTRY_PORT:-15000}:5000"
+
+  agent-runtime-api:
+    container_name: porfirium-agent-runtime-api
+    environment:
+      MODEL_GATEWAY_URL: http://${TARGET_HOST_BRIDGE:-10.255.0.1}:8089
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+
+  portal-bff:
+    ports:
+      - "127.0.0.1:${TARGET_BFF_PORT:-18100}:8100"
+    environment:
+      AGENT_RUNNER_URL: http://${TARGET_RUNNER_HOST:-host.containers.internal}:${TARGET_RUNNER_PORT:-18103}
+    extra_hosts:
+      - "host.containers.internal:host-gateway"

@@ -199,7 +199,7 @@ services:
     volumes:
       - ./deploy/agentgateway/config.yaml:/config/config.yaml:ro
     ports:
-      - "127.0.0.1:8089:8090"
+      - "${AGENTGATEWAY_BIND_HOST:-127.0.0.1}:8089:8090"
       - "127.0.0.1:15001:15000"
       - "127.0.0.1:15021:15021"
     depends_on:

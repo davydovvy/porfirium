@@ -1,10 +1,17 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from checkpoint_api.main import SERVICE_NAME, SERVICE_VERSION, app
 from checkpoint_api.readiness import check_dependencies
 
 client = TestClient(app)
-app.dependency_overrides[check_dependencies] = lambda: None
+
+
+@pytest.fixture(autouse=True)
+def override_readiness_dependencies() -> None:
+    app.dependency_overrides[check_dependencies] = lambda: None
+    yield
+    app.dependency_overrides.pop(check_dependencies, None)
 
 
 def test_liveness_contract() -> None:

@@ -5,6 +5,10 @@ errors, a bounded Checkpoint API client, an async LangGraph checkpointer, and re
 message streaming. It requires only a short-lived run capability and never accepts database or
 NATS credentials.
 
+After `RuntimeClient.connect()`, `run_input` contains the immutable trigger snapshot authorized for
+the attempt. User messages and human-input responses arrive through this field; agents do not read
+Conversation Service or receive its credentials.
+
 `request_input` uses one stable suspension ID to write a deterministic checkpoint, propose the
 input request, commit both identities through Runtime API, and raise `InputSuspended`. Agent code
 must let that exception end the activation; it must not wait in the container for a response.
@@ -26,6 +30,13 @@ checkpointer = LangGraphCheckpointer(client)
 Use `CheckpointClient` as an async context manager or close it with `await client.aclose()`.
 Platform failures raise `PlatformError` with a stable code, safe message, retryability flag,
 correlation ID, and bounded details.
+
+Model calls use the same attempt-authenticated Runtime channel. The requested alias must be pinned
+in the signed release; provider credentials and gateway topology never enter the agent:
+
+```python
+response = await runtime.model(str(runtime.run_input.value), model="default")
+```
 
 Stream an assistant message through Runtime with ordered, acknowledged deltas:
 

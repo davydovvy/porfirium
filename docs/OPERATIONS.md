@@ -114,6 +114,7 @@ Target-platform verification is independent of the deployed legacy runtime:
 ./scripts/target-phase8/verify.sh
 ./scripts/target-phase9/verify.sh
 ./scripts/target-phase10/verify.sh
+./scripts/target-phase11/verify.sh
 ```
 
 These gates require Docker with Compose and remove their isolated containers and volumes on exit.
@@ -155,6 +156,77 @@ The Runner must execute as an unprivileged host service with access to its own r
 runtime. Do not expose that runtime socket, host mounts, infrastructure credentials, or caller-
 controlled Podman flags to agent containers. Registry run-signing public keys and the Runtime API
 capability secret must be supplied through the deployment secret mechanism, never committed.
+
+For the target rootless topology, use `deploy/compose/rootless-host-runner.yaml` as an override and
+scale the Compose `agent-runner` service to zero. The override publishes PostgreSQL, NATS, and Agent
+Registry only on loopback, pins Runtime to `porfirium-agent-runtime-api`, and directs Portal BFF to
+the host Runner through `host.containers.internal`. Start Runner as the same unprivileged user that
+owns the rootless Podman control plane:
+
+```bash
+podman compose --profile target \
+  -f deploy/compose/target.yaml \
+  -f deploy/compose/rootless-host-runner.yaml \
+  up -d --scale agent-runner=0
+
+export DATABASE_URL='postgresql://agent_runner:...@127.0.0.1:15432/runner'
+export NATS_URL='nats://127.0.0.1:14222'
+export AGENT_REGISTRY_URL='http://127.0.0.1:18102'
+export TARGET_RUNNER_BIND_HOST='<dedicated host interface reachable only from the Podman network>'
+export TARGET_RUNNER_HOST="$TARGET_RUNNER_BIND_HOST"
+# Also export the Runner NATS identity and deployment-managed signing values.
+./scripts/target-runner/start-host.sh
+```
+
+The launcher refuses a non-rootless engine, a missing Runtime container, or incomplete Runner
+configuration. It also rejects wildcard bind addresses: Runner must listen on a dedicated host
+interface reachable from the rootless Podman network without exposing it to the LAN. It passes
+`runtime:50051` to attempts and never mounts a Podman or Docker socket into an agent container.
+Set `RUNNER_MAX_ATTEMPTS` to tune retries for attempts that exit before visible output; the default
+is three. Retries also stop at the signed run deadline. Exhaustion records
+`attempt_retry_exhausted`, removes the exact attempt container and network, and does not leave the
+run scheduled indefinitely.
+
+Publish the platform-owned model-only release from a trusted release host. Provide a Registry token
+with the publisher role, a registered Ed25519 publication key, and the target OCI host. The script
+builds and pushes the image, resolves the registry digest, renders the manifest into a temporary
+directory, signs canonical provenance, and publishes the digest-pinned release. It never modifies
+the immutable version directory.
+
+```bash
+export OCI_REGISTRY_HOST='registry.example'
+export AGENT_REGISTRY_URL='https://registry-api.example'
+export REGISTRY_PUBLISH_TOKEN='...'
+export REGISTRY_PUBLICATION_KEY_ID='release-2026'
+export REGISTRY_PUBLICATION_PRIVATE_KEY_FILE='/secure/release-2026.key'
+export MODEL_ONLY_SET_DEFAULT=true
+./scripts/target-model-only/publish.sh
+```
+
+Default selection additionally requires the Registry administrator role on the supplied token.
+For the local development client, set `REGISTRY_PUBLISH_TOKEN=client_credentials`; the command then
+obtains a short-lived token from `RUNNER_OIDC_TOKEN_URL` and does not persist it.
+
+The checked-in local Keycloak configurator is for the disposable development realm only. It uses
+the public demo administrator credentials already declared by the standalone Keycloak project,
+creates or updates `porfirium-target-dev`, assigns the target service roles, adds the Registry
+audience, and verifies a client-credentials token without printing it:
+
+```bash
+python3 scripts/target-keycloak/configure.py
+```
+
+Never point this helper at another Keycloak instance or copy its development secret into a shared
+environment.
+
+Before running the provider-backed smoke test, verify that the Agentgateway container can resolve
+and connect to the configured provider over HTTPS. A sequence of Agentgateway `503` responses with
+`Connect: deadline has elapsed` indicates host/container DNS or egress failure, not an admission,
+OCI, isolation, or Runtime routing failure. Restore DNS/egress, then run:
+
+```bash
+python3 scripts/target-phase11/live_smoke.py
+```
 
 Runner consumes `porfirium.run.command.requested` and the completion handshake on durable
 JetStream consumers. A container exit is diagnostic only and must never mark a run completed.
