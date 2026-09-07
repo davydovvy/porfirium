@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import time
 from dataclasses import dataclass
 from uuid import UUID
@@ -21,6 +22,9 @@ class RunCapability:
     attempt_id: UUID
     lease_epoch: int
     operations: frozenset[str]
+    user_id: UUID | None = None
+    conversation_id: UUID | None = None
+    trace_id: str = ""
 
 
 def _decode(value: str) -> bytes:
@@ -46,12 +50,18 @@ def decode_capability(token: str, secret: str) -> RunCapability:
         claims = json.loads(_decode(payload))
         if int(claims["exp"]) <= int(time.time()):
             raise ValueError
+        trace_id = claims["trace_id"]
+        if re.fullmatch(r"(?!0{32}$)[0-9a-f]{32}", trace_id) is None:
+            raise ValueError
         return RunCapability(
             UUID(claims["thread_id"]),
             UUID(claims["run_id"]),
             UUID(claims["attempt_id"]),
             int(claims["lease_epoch"]),
             frozenset(claims["operations"]),
+            UUID(claims["user_id"]),
+            UUID(claims["conversation_id"]),
+            trace_id,
         )
     except (ValueError, KeyError, TypeError, json.JSONDecodeError):
         raise CheckpointProblem(401, "capability_invalid", "Run capability is invalid") from None

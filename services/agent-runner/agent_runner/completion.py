@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
 import asyncpg
 
+from agent_runner.event_validation import validate_envelope, validate_run_binding
 from agent_runner.outbox import enqueue
 
 TERMINAL_STATES = {"completed", "failed", "cancelled"}
@@ -17,6 +19,7 @@ class CompletionError(ValueError):
 
 async def consume_run_event(pool: asyncpg.Pool, envelope: dict[str, Any]) -> bool:
     """Apply a completion event once and converge the run without changing terminal outcomes."""
+    validate_envelope(envelope)
     try:
         event_id = UUID(str(envelope["id"]))
         event_type = str(envelope["type"])
@@ -37,6 +40,7 @@ async def consume_run_event(pool: asyncpg.Pool, envelope: dict[str, Any]) -> boo
         run = await connection.fetchrow("SELECT * FROM runs WHERE run_id=$1 FOR UPDATE", run_id)
         if run is None:
             raise CompletionError("run_not_found")
+        validate_run_binding(envelope, run)
         if event_type == "porfirium.run.result_proposed.v1":
             await _proposal(connection, run, event_id, data)
         elif event_type == "porfirium.run.messages_committed.v1":
@@ -151,7 +155,8 @@ async def _converge(connection: Any, run_id: UUID) -> None:
                     "UPDATE run_completion SET checkpoint_confirmed=true WHERE run_id=$1", run_id
                 )
     row = await connection.fetchrow(
-        "SELECT r.state,r.active_attempt_id,c.* FROM runs r JOIN run_completion c USING(run_id) "
+        "SELECT r.state,r.active_attempt_id,r.user_id,r.conversation_id,r.thread_id,r.trace_id,"
+        "c.* FROM runs r JOIN run_completion c USING(run_id) "
         "WHERE r.run_id=$1",
         run_id,
     )
@@ -178,13 +183,23 @@ async def _converge(connection: Any, run_id: UUID) -> None:
             "UPDATE run_completion SET reconciled_at=now() WHERE run_id=$1", run_id
         )
         event_id = uuid4()
+        trace_id = str(row["trace_id"])
         await enqueue(
             connection,
             event_id=event_id,
             subject="porfirium.run.event.completed",
             payload={
                 "specversion": "1.0", "type": "porfirium.run.completed.v1",
-                "id": str(event_id), "source": "agent-runner", "run_id": str(run_id),
+                "id": str(event_id), "source": "agent-runner",
+                "subject": f"run/{run_id}",
+                "time": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                "user_id": str(row["user_id"]),
+                "conversation_id": str(row["conversation_id"]),
+                "thread_id": str(row["thread_id"]),
+                "run_id": str(run_id),
+                "correlation_id": str(UUID(hex=trace_id)),
+                "causation_id": str(row["proposal_event_id"]),
+                "traceparent": f"00-{trace_id}-{event_id.hex[:16]}-01",
                 "data": {
                     "run_id": str(run_id), "state": "completed",
                     "attempt_id": str(row["attempt_id"]),

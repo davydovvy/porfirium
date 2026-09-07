@@ -14,6 +14,7 @@ from uuid import UUID, uuid4
 
 import grpc
 from google.protobuf.json_format import MessageToDict
+from google.protobuf.struct_pb2 import Struct
 
 from porfirium_agent_sdk.errors import PlatformError
 from porfirium_agent_sdk.proto import runtime_pb2 as pb
@@ -32,6 +33,12 @@ class ModelResponse:
     content: str
     finish_reason: str
     usage: dict[str, object]
+
+
+@dataclass(frozen=True, slots=True)
+class ToolResponse:
+    result: object
+    is_error: bool
 
 
 def decode_run_input(value: pb.RunInput) -> RunInput | None:
@@ -73,12 +80,14 @@ class RuntimeClient:
         run_capability: str,
         sdk_version: str = "0.2.0",
         buffer_frames: int = 32,
+        trace_id: str | None = None,
     ) -> None:
         self.endpoint = endpoint
         self.run_id = run_id
         self.attempt_id = attempt_id
         self.lease_epoch = lease_epoch
         self.run_capability = run_capability
+        self.trace_id = trace_id or run_id.hex
         self.sdk_version = sdk_version
         self._last_ack = 0
         self._pending: dict[int, pb.AgentFrame] = {}
@@ -111,6 +120,9 @@ class RuntimeClient:
             lease_epoch = int(payload["lease_epoch"])
             if lease_epoch < 1:
                 raise ValueError
+            trace_id = str(payload["trace_id"])
+            if len(trace_id) != 32 or any(value not in "0123456789abcdef" for value in trace_id):
+                raise ValueError
         except (KeyError, TypeError, ValueError, json.JSONDecodeError, binascii.Error) as error:
             raise PlatformError(
                 "bootstrap_invalid", "Runtime bootstrap capability is invalid"
@@ -121,9 +133,11 @@ class RuntimeClient:
             attempt_id=attempt_id,
             lease_epoch=lease_epoch,
             run_capability=capability,
+            trace_id=trace_id,
         )
 
     def _identity(self, sequence: int, idempotency_key: str | None = None) -> pb.FrameIdentity:
+        span_id = uuid4().hex[:16]
         return pb.FrameIdentity(
             protocol_version="1.0",
             run_id=str(self.run_id),
@@ -131,6 +145,7 @@ class RuntimeClient:
             lease_epoch=self.lease_epoch,
             sequence=sequence,
             idempotency_key=idempotency_key or str(uuid4()),
+            traceparent=f"00-{self.trace_id}-{span_id}-01",
         )
 
     async def connect(self) -> None:
@@ -302,6 +317,69 @@ class RuntimeClient:
         self, message_id: UUID | None = None, content_type: str = "text/plain"
     ) -> MessageStream:
         return MessageStream(self, message_id or uuid4(), content_type)
+
+    async def tool(
+        self,
+        tool: str,
+        arguments: Mapping[str, object],
+        *,
+        invocation_id: UUID | None = None,
+    ) -> ToolResponse:
+        if not tool or len(tool) > 128:
+            raise ValueError("tool name exceeds SDK bounds")
+        encoded_arguments = json.dumps(arguments, ensure_ascii=False, separators=(",", ":"))
+        if len(encoded_arguments.encode()) > 8 * 1024:
+            raise ValueError("tool arguments exceed SDK bounds")
+        protobuf_arguments = Struct()
+        try:
+            protobuf_arguments.update(dict(arguments))
+        except (TypeError, ValueError) as error:
+            raise ValueError("tool arguments are not JSON-compatible") from error
+        stable_invocation_id = invocation_id or uuid4()
+        async with self._slots, self._lock:
+            if self._call is None:
+                await self.connect()
+            sequence = max([self._last_ack, *self._pending], default=0) + 1
+            frame = pb.AgentFrame(
+                identity=self._identity(sequence, str(stable_invocation_id)),
+                tool_call=pb.ToolCall(
+                    invocation_id=str(stable_invocation_id),
+                    tool=tool,
+                    arguments=protobuf_arguments,
+                ),
+            )
+            self._pending[sequence] = frame
+            await self._call.write(frame)
+            result: ToolResponse | None = None
+            while True:
+                response = await self._call.read()
+                kind = response.WhichOneof("payload") if response else None
+                if kind == "cancellation":
+                    self.cancelled.set()
+                    continue
+                if kind == "error":
+                    await self._raise_response(response)
+                if kind == "tool_result":
+                    received = response.tool_result
+                    if received.invocation_id != str(stable_invocation_id):
+                        raise PlatformError("tool_response_mismatch", "Tool response mismatched")
+                    value = MessageToDict(received.result)
+                    if len(json.dumps(value, ensure_ascii=False).encode()) > 12 * 1024:
+                        raise PlatformError(
+                            "tool_response_invalid", "Tool response exceeded bounds"
+                        )
+                    result = ToolResponse(value, received.is_error)
+                    continue
+                if kind == "acknowledgement":
+                    accepted = response.acknowledgement.accepted_sequence
+                    self._last_ack = max(self._last_ack, accepted)
+                    for sent in [value for value in self._pending if value <= accepted]:
+                        self._pending.pop(sent)
+                    if result is None:
+                        raise PlatformError(
+                            "tool_response_missing", "Tool gateway returned no response"
+                        )
+                    return result
 
 
 @dataclass(slots=True)

@@ -36,10 +36,27 @@ def test_podman_profile_is_fixed_and_fail_closed(monkeypatch) -> None:
     assert ("--network", NETWORK) == create[create.index("--network"):create.index("--network") + 2]
     assert ("--user", "65532:65532") == create[create.index("--user"):create.index("--user") + 2]
     assert "--read-only" in create
+    assert "--read-only-tmpfs=false" in create
+    assert ("--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=16777216") == create[
+        create.index("--tmpfs") : create.index("--tmpfs") + 2
+    ]
     assert "--cap-drop=all" in create
     assert "--security-opt=no-new-privileges" in create
+    assert ("--pids-limit", "32") == create[
+        create.index("--pids-limit") : create.index("--pids-limit") + 2
+    ]
+    assert ("--memory", str(64 * 1024 * 1024)) == create[
+        create.index("--memory") : create.index("--memory") + 2
+    ]
+    assert ("--cpus", "0.5") == create[create.index("--cpus") : create.index("--cpus") + 2]
     assert f"ai.porfirium.attempt-network={NETWORK}" in create
-    assert not any("docker.sock" in item or item == "--privileged" for item in create)
+    assert [item for item in create if item == "--env"] == ["--env", "--env"]
+    assert not any(
+        "docker.sock" in item
+        or "podman.sock" in item
+        or item in {"--privileged", "--device", "--volume", "--mount"}
+        for item in create
+    )
 
 
 def test_remove_addresses_only_recorded_container(monkeypatch) -> None:

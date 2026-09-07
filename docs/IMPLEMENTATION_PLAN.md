@@ -294,8 +294,72 @@ operator-authenticated, idempotent replay path with durable audit. Scheduling en
 per-user active-run ceilings. Reconciliation removes both missing recorded attempts and unknown
 Porfirium-labeled containers/networks. Runtime accepts only the explicit current/adjacent-minor
 protocol window, and Registry can require signed provenance from a deployment allowlist of builder
-identities. `./scripts/target-phase12/verify-hardening.sh` is the focused gate for this first
-hardening slice; it is not the final Phase 12 acceptance gate.
+identities. Owner-local retention now removes only expired transport residue while preserving
+canonical conversations, messages, checkpoints, runs, releases, idempotency state, and audit
+facts. The backup workflow captures all seven service-owned databases, coherent JetStream and OCI
+storage, and protected signing/encryption keys; a disposable restore exercise verifies database
+and immutable-volume integrity across all seven service-owned databases, JetStream, OCI storage,
+and protected keys, including checksum-based tamper detection. The signed run trace now propagates
+through SDK frames, Runtime
+events, checkpoint/message confirmations, and Runner terminal events. Runtime, Runner, and
+Conversation reject oversized, structurally malformed, cross-run, or trace-mismatched events
+before state changes. `./scripts/target-phase12/verify-hardening.sh` is the focused gate for the
+completed hardening slices; it is not the final Phase 12 acceptance gate.
+
+The independently packaged `planning-assistant` now has two immutable releases. Version 1.0.0
+exercises two independently mediated model calls. Version 1.1.0 declares the read-only
+`time_get_current_time` grant, invokes it through the delegated Runtime path, and grounds its model
+response with the bounded result. Both have behavior tests, OCI builds, manifest validation, and a
+digest-pinned signed publication command. Run
+`./scripts/target-phase12/verify-agents.sh` to verify both independently packaged agents. This
+closes the two-package build requirement, but not the final exit gate: the full two-agent live
+acceptance matrix still needs to run against published releases.
+
+The tool-invocation path is additive to Runtime protocol v1: the Python SDK sends bounded typed
+arguments under a stable invocation ID, Runtime validates the tool against the signed run grant,
+and typed results remain bounded. Runtime exchanges the opaque delegation grant for the exact
+attempt and requested tool scope on every invocation, retains the resulting short-lived MCP token
+only in memory for that call, and forwards both user and run authorization to Agentgateway.
+Identity Delegation independently binds grant, release, run, attempt, lease epoch, and requested
+scope. Portal BFF resolves the selected user-visible release and derives delegation scopes only
+from its immutable manifest. Runtime durably reserves each `(run_id, invocation_id)` before the
+external call, replays a completed bounded result, rejects request reuse with different arguments,
+and reports `tool_outcome_ambiguous` without re-executing a call left in progress. Revoked grants
+and cross-run capabilities are covered by fail-closed tests. An opt-in live gate now drives the
+tool-enabled release through authenticated Portal BFF conversation APIs and verifies the durable
+Runtime invocation record. It requires a deployed target topology and test credentials, so it is
+kept separate from the hermetic hardening suite. It now exercises the complete two-agent matrix:
+the model-only release must complete with no tool records, while the planning release must complete
+with exactly one successful delegated time-tool record. The lifecycle gate separately proves
+idempotent cancellation with exact attempt cleanup and one terminal event, plus both mid-stream and
+reconnect fencing after a replacement lease activates. Running the credentialed matrix against
+published releases remains an environment acceptance activity. The matrix also uses a distinct
+second user to prove foreign conversation reads and cancellation are hidden, and submits malformed
+portal input to confirm browser-boundary validation. Package verification executes every agent
+image under the Runner-equivalent non-root, read-only, no-exec tmpfs, capability-dropped,
+no-new-privileges resource profile and probes common container escape surfaces. The rootless
+deployment-network gate attaches only Runtime to a fresh internal attempt network and verifies the
+agent cannot reach public, metadata, host, foreign-attempt, platform-service, or runtime-socket
+targets.
+
+`./scripts/target-phase12/verify-acceptance.sh` is the consolidated exit gate. It always runs
+hardening, immutable-package, lifecycle, and rootless-network verification. It refuses to declare
+final acceptance unless the operator explicitly enables both destructive recovery verification and
+the credentialed two-user live matrix. Runtime lifecycle acceptance deliberately replays an
+identical accepted frame before restart and requires the same durable event identity, then restarts
+Runtime and resumes from the durable sequence.
+
+The credentialed matrix has a non-mutating preflight mode that verifies both distinct user
+identities, Keycloak token exchange, Registry and Portal dependency readiness, Runtime database
+connectivity, and the tool-invocation migration before publication, access grants, conversations,
+or provider-backed calls begin.
+
+Portal component acceptance covers selecting either visible default release when creating a
+conversation and recovering immediately after cancellation. A successful Stop response now aborts
+the stale event stream, clears local running state, and reloads the authoritative conversation and
+list projections instead of waiting indefinitely for a later SSE event. Runner cancellation emits
+one message interruption for visible partial output before its single terminal run event, and BFF
+projections never expose a terminal Runner state as active while that event converges.
 
 Exit gate: the acceptance baseline in `SPECIFICATION.md` passes with two independently packaged
 agents, including restart, duplicate delivery, cancellation, authorization, malformed input, and

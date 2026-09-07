@@ -79,14 +79,22 @@ def test_conversation_identity_and_thread_are_server_owned(monkeypatch) -> None:
 
 def test_message_composes_owned_conversation_and_delegation(monkeypatch) -> None:
     async def handler(request: httpx.Request) -> httpx.Response:
-        if request.method == "GET":
+        if request.url.host == "conversation" and request.method == "GET":
             return httpx.Response(200, json={"release_id": RELEASE_ID, "messages": []})
+        if request.url.host == "keycloak":
+            return httpx.Response(200, json={"access_token": "registry-token"})
+        if request.url.host == "registry":
+            assert request.headers["authorization"] == "Bearer registry-token"
+            return httpx.Response(
+                200,
+                json={"manifest": {"spec": {"tools": ["time_get_current_time"]}}},
+            )
         if request.url.host == "delegation":
             payload = json.loads(request.content)
             assert payload == {
                 "conversation_id": CONVERSATION_ID,
                 "release_id": RELEASE_ID,
-                "maximum_scopes": [],
+                "maximum_scopes": ["tool:time_get_current_time"],
             }
             return httpx.Response(201, json={"grant_id": "50000000-0000-0000-0000-000000000005"})
         payload = json.loads(request.content)
@@ -107,7 +115,7 @@ def test_message_composes_owned_conversation_and_delegation(monkeypatch) -> None
 
     assert response.status_code == 202
     assert [request.url.host for request in requests] == [
-        "conversation", "delegation", "conversation"
+        "conversation", "keycloak", "registry", "delegation", "conversation"
     ]
 
 
@@ -144,6 +152,26 @@ def test_projection_recovers_an_active_run_for_sse_reconnect(monkeypatch) -> Non
     assert response.status_code == 200
     assert response.json()["active_run"] == {"run_id": RUN_ID, "state": "running"}
     assert [request.url.host for request in requests] == ["conversation", "runner"]
+
+
+def test_projection_does_not_present_cancelled_runner_state_as_active(monkeypatch) -> None:
+    async def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "conversation":
+            return httpx.Response(
+                200,
+                json={
+                    "conversation_id": CONVERSATION_ID,
+                    "messages": [{"run_id": RUN_ID, "role": "user", "status": "completed"}],
+                    "last_sequence": 7,
+                },
+            )
+        return httpx.Response(200, json={"run_id": RUN_ID, "state": "cancelled"})
+
+    configure(monkeypatch, handler)
+    response = TestClient(app).get(f"/api/v1/conversations/{CONVERSATION_ID}")
+
+    assert response.status_code == 200
+    assert "active_run" not in response.json()
 
 
 def test_sse_forwards_authoritative_replay_cursor(monkeypatch) -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from datetime import UTC, datetime
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import pytest
@@ -43,17 +44,58 @@ def create_conversation(client: TestClient) -> dict:
 
 
 def envelope(conversation: dict, event_type: str, data: dict, **overrides: object) -> dict:
+    event_id = uuid4()
+    trace_id = "1" * 32
     value = {
-        "id": str(uuid4()),
+        "specversion": "1.0",
+        "id": str(event_id),
         "type": event_type,
+        "source": "agent-runtime-api",
+        "subject": f"conversation/{conversation['conversation_id']}",
+        "time": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "user_id": str(OWNER),
         "conversation_id": conversation["conversation_id"],
+        "thread_id": conversation["thread_id"],
         "run_id": str(overrides.pop("run_id", uuid4())),
+        "correlation_id": str(UUID(hex=trace_id)),
+        "causation_id": str(uuid4()),
+        "traceparent": f"00-{trace_id}-{'2' * 16}-01",
         "schema_version": 1,
         "data": data,
     }
     value.update(overrides)
     return value
+
+
+@pytest.mark.anyio
+async def test_projection_rejects_missing_mismatched_and_oversized_trace_context() -> None:
+    store = MemoryStore()
+    conversation = await store.create_conversation(
+        OWNER,
+        "trace-conversation",
+        {"title": "Trace", "release_id": uuid4(), "thread_id": uuid4(),
+         "configuration_revision_id": None},
+    )
+    base = envelope(
+        {"conversation_id": str(conversation.conversation_id),
+         "thread_id": str(conversation.thread_id)},
+        "porfirium.message.started.v1",
+        {"message_id": str(uuid4())},
+    )
+    missing = dict(base)
+    missing.pop("traceparent")
+    with pytest.raises(ConversationProblem, match="event_invalid"):
+        await store.project(missing)
+
+    mismatch = dict(base)
+    mismatch["correlation_id"] = str(uuid4())
+    with pytest.raises(ConversationProblem, match="event_invalid"):
+        await store.project(mismatch)
+
+    oversized = dict(base)
+    oversized["data"] = {"message_id": str(uuid4()), "content": "x" * (1024 * 1024)}
+    with pytest.raises(ConversationProblem, match="event_invalid"):
+        await store.project(oversized)
 
 
 def test_create_and_message_are_idempotent_and_atomic(client: TestClient) -> None:
@@ -138,7 +180,10 @@ async def test_runtime_projection_deduplicates_and_keeps_canonical_completion() 
             "configuration_revision_id": None,
         },
     )
-    conversation_json = {"conversation_id": str(conversation.conversation_id)}
+    conversation_json = {
+        "conversation_id": str(conversation.conversation_id),
+        "thread_id": str(conversation.thread_id),
+    }
     run_id, message_id = uuid4(), uuid4()
     started = envelope(
         conversation_json,
@@ -200,7 +245,10 @@ async def test_invalid_completion_does_not_become_terminal() -> None:
             "configuration_revision_id": None,
         },
     )
-    view = {"conversation_id": str(conversation.conversation_id)}
+    view = {
+        "conversation_id": str(conversation.conversation_id),
+        "thread_id": str(conversation.thread_id),
+    }
     run_id, message_id = uuid4(), uuid4()
     await store.project(
         envelope(
@@ -281,7 +329,10 @@ async def test_input_saga_is_hidden_until_commit_and_order_independent(
          "delegation_grant_id": grant_id},
     )
     request_id = uuid5(NAMESPACE_URL, f"porfirium:suspension:{suspension_id}")
-    view = {"conversation_id": str(conversation.conversation_id)}
+    view = {
+        "conversation_id": str(conversation.conversation_id),
+        "thread_id": str(conversation.thread_id),
+    }
     proposed = envelope(
         view, "porfirium.input.request_proposed.v1",
         {"suspension_id": str(suspension_id), "checkpoint_id": str(checkpoint_id),

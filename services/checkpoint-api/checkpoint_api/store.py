@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
-from uuid import UUID, uuid4
+from datetime import UTC, datetime
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import asyncpg
 
@@ -117,9 +117,21 @@ async def put_checkpoint(
             checkpoint_id,
         )
         event_id = uuid4()
+        trace_id = capability.trace_id or capability.run_id.hex
         envelope = {
             "specversion": "1.0", "type": "porfirium.run.checkpoint_committed.v1",
-            "id": str(event_id), "source": "checkpoint-api", "run_id": str(capability.run_id),
+            "id": str(event_id), "source": "checkpoint-api",
+            "subject": f"run/{capability.run_id}",
+            "time": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            "user_id": str(capability.user_id or capability.run_id),
+            "conversation_id": str(capability.conversation_id or capability.thread_id),
+            "thread_id": str(capability.thread_id),
+            "run_id": str(capability.run_id),
+            "attempt_id": str(capability.attempt_id),
+            "lease_epoch": capability.lease_epoch,
+            "correlation_id": str(UUID(hex=trace_id)),
+            "causation_id": str(uuid5(NAMESPACE_URL, f"porfirium:cause:{idempotency_key}")),
+            "traceparent": f"00-{trace_id}-{event_id.hex[:16]}-01",
             "schema_version": 1,
             "data": {"run_id": str(capability.run_id), "checkpoint_id": str(checkpoint_id),
                      "checkpoint_version": current + 1, "payload_sha256": payload_sha256},

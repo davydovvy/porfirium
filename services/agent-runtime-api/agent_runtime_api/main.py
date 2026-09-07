@@ -15,6 +15,7 @@ from agent_runtime_api.model_gateway import ModelGateway
 from agent_runtime_api.outbox import publish_pending
 from agent_runtime_api.readiness import check_dependencies
 from agent_runtime_api.runtime import RuntimeService, add_runtime_service
+from agent_runtime_api.tool_gateway import McpToolGateway
 
 SERVICE_NAME = "agent-runtime-api"
 SERVICE_VERSION = "0.1.0"
@@ -48,7 +49,12 @@ async def lifespan(app: FastAPI):
         timeout=httpx.Timeout(float(os.environ.get("MODEL_TIMEOUT_SECONDS", "120")), connect=5)
     )
     model_gateway = ModelGateway(model_client, os.environ["MODEL_GATEWAY_URL"])
-    add_runtime_service(server, RuntimeService(pool, model_gateway))
+    tool_gateway = McpToolGateway(
+        model_client,
+        os.environ["MCP_GATEWAY_URL"],
+        os.environ["IDENTITY_DELEGATION_URL"],
+    )
+    add_runtime_service(server, RuntimeService(pool, model_gateway, tool_gateway))
     server.add_insecure_port(f"0.0.0.0:{os.environ.get('RUNTIME_GRPC_PORT', '50051')}")
     await server.start()
     publisher = asyncio.create_task(_publish_loop(pool, nats_client.jetstream()))

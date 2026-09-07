@@ -33,6 +33,7 @@ message AgentFrame {
     SuspensionCommitted suspension_committed = 17;
     ResultProposed result_proposed = 18;
     ModelCall model_call = 19;
+    ToolCall tool_call = 20;
   }
 }
 
@@ -49,6 +50,7 @@ message PlatformFrame {
     CapabilityRenewal capability_renewal = 14;
     ProtocolError error = 15;
     ModelResult model_result = 16;
+    ToolResult tool_result = 17;
   }
 }
 
@@ -137,6 +139,19 @@ message ModelResult {
   bytes content_utf8 = 2;
   string finish_reason = 3;
   google.protobuf.Struct usage = 4;
+}
+
+// Tool calls are authorized against both the signed run grant and delegated user token.
+message ToolCall {
+  string invocation_id = 1;
+  string tool = 2;
+  google.protobuf.Struct arguments = 3;
+}
+
+message ToolResult {
+  string invocation_id = 1;
+  google.protobuf.Value result = 2;
+  bool is_error = 3;
 }
 
 message Cancellation {

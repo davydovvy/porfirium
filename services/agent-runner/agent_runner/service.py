@@ -6,7 +6,7 @@ import json
 import re
 from datetime import UTC, datetime, timedelta
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import asyncpg
 
@@ -148,8 +148,12 @@ class RunnerService:
             {"user_id": str(row["user_id"]), "conversation_id": str(row["conversation_id"]),
              "thread_id": str(row["thread_id"]), "run_id": str(run_id),
              "attempt_id": str(attempt_id), "lease_epoch": row["lease_epoch"],
+             "trace_id": row["trace_id"],
+             "release_id": str(row["release_id"]),
+             "delegation_grant_id": str(row["delegation_grant_id"]),
              "run_input": _object(row["run_input"]) if row["run_input"] else None,
              "models": payload.get("requested_models", []),
+             "tools": payload.get("requested_tools", []),
              "starting_checkpoint_id": (
                  str(row["starting_checkpoint_id"]) if row["starting_checkpoint_id"] else None
              )},
@@ -230,12 +234,35 @@ class RunnerService:
                 "active_attempt_id=NULL,"
                 "updated_at=now() WHERE run_id=$1 AND state='cancelling'", run_id
             )
+            if attempt and attempt["active_message_id"]:
+                interrupted_id = uuid4()
+                interruption_metadata = _event_metadata(row, interrupted_id, idempotency_key)
+                await enqueue(
+                    connection,
+                    event_id=interrupted_id,
+                    subject="porfirium.conversation.event.message_interrupted",
+                    payload={
+                        "specversion": "1.0",
+                        "type": "porfirium.message.interrupted.v1",
+                        "id": str(interrupted_id),
+                        "source": "agent-runner",
+                        **interruption_metadata,
+                        "attempt_id": str(attempt["attempt_id"]),
+                        "lease_epoch": row["lease_epoch"],
+                        "schema_version": 1,
+                        "data": {
+                            "message_id": str(attempt["active_message_id"]),
+                            "code": "cancelled",
+                        },
+                    },
+                )
             event_id = uuid4()
+            metadata = _event_metadata(row, event_id, idempotency_key)
             await enqueue(
                 connection, event_id=event_id, subject="porfirium.run.event.cancelled",
                 payload={
                     "specversion": "1.0", "type": "porfirium.run.cancelled.v1",
-                    "id": str(event_id), "source": "agent-runner", "run_id": str(run_id),
+                    "id": str(event_id), "source": "agent-runner", **metadata,
                     "schema_version": 1,
                     "data": {"run_id": str(run_id), "state": "cancelled",
                              "attempt_id": str(attempt["attempt_id"]) if attempt else None,
@@ -298,7 +325,7 @@ class RunnerService:
     async def reconcile(self) -> int:
         rows = await self.pool.fetch(
             "SELECT r.run_id,r.user_id,r.conversation_id,r.thread_id,r.lease_epoch,"
-            "r.deadline_at,a.attempt_id,a.attempt_number,a.container_id,a.network_name,"
+            "r.deadline_at,r.trace_id,a.attempt_id,a.attempt_number,a.container_id,a.network_name,"
             "a.visible_output,a.active_message_id "
             "FROM runs r JOIN attempts a "
             "ON a.attempt_id=r.active_attempt_id "
@@ -354,16 +381,13 @@ class RunnerService:
             )
             if attempt["active_message_id"]:
                 event_id = uuid4()
+                metadata = _event_metadata(attempt, event_id, str(attempt["attempt_id"]))
                 await enqueue(
                     connection, event_id=event_id,
                     subject="porfirium.conversation.event.message_interrupted",
                     payload={
                         "specversion": "1.0", "type": "porfirium.message.interrupted.v1",
-                        "id": str(event_id), "source": "agent-runner",
-                        "user_id": str(attempt["user_id"]),
-                        "conversation_id": str(attempt["conversation_id"]),
-                        "thread_id": str(attempt["thread_id"]),
-                        "run_id": str(attempt["run_id"]),
+                        "id": str(event_id), "source": "agent-runner", **metadata,
                         "attempt_id": str(attempt["attempt_id"]),
                         "lease_epoch": attempt["lease_epoch"],
                         "data": {"message_id": str(attempt["active_message_id"]),
@@ -419,3 +443,22 @@ def _memory_bytes(value: object) -> int:
         raise RunnerError("specification_invalid")
     multiplier = 1024**2 if match.group(2) == "Mi" else 1024**3
     return int(match.group(1)) * multiplier
+
+
+def _event_metadata(row: Any, event_id: UUID, cause: str) -> dict[str, Any]:
+    try:
+        causation_id = UUID(cause)
+    except ValueError:
+        causation_id = uuid5(NAMESPACE_URL, f"porfirium:cause:{cause}")
+    trace_id = str(row["trace_id"])
+    return {
+        "subject": f"run/{row['run_id']}",
+        "time": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "user_id": str(row["user_id"]),
+        "conversation_id": str(row["conversation_id"]),
+        "thread_id": str(row["thread_id"]),
+        "run_id": str(row["run_id"]),
+        "correlation_id": str(UUID(hex=trace_id)),
+        "causation_id": str(causation_id),
+        "traceparent": f"00-{trace_id}-{event_id.hex[:16]}-01",
+    }

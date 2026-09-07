@@ -151,7 +151,14 @@ def bearer(value: str | None) -> str:
 
 
 def run_grant(authorization: str | None) -> RunGrant:
-    claims = verify_token(bearer(authorization), signing_secret(), "porfirium-gateway-policy")
+    token = bearer(authorization)
+    try:
+        claims = verify_token(token, signing_secret(), "porfirium-gateway-policy")
+    except DelegationProblem:
+        capability_secret = os.environ.get("RUN_CAPABILITY_SECRET")
+        if not capability_secret:
+            raise
+        claims = verify_token(token, capability_secret, "agent-runtime-api")
     try:
         return RunGrant(
             str(UUID(claims["run_id"])),
@@ -184,17 +191,32 @@ async def grant_create(
 
 
 async def exchange_token(
-    grant_id: UUID, body: ExchangeGrant, run_authorization: str | None
+    grant_id: UUID,
+    body: ExchangeGrant,
+    run_authorization: str | None,
+    run_capability: str | None = None,
 ) -> DelegatedToken:
-    claims = verify_token(bearer(run_authorization), signing_secret(), "identity-delegation")
+    capability_exchange = run_capability is not None
+    if capability_exchange:
+        capability_secret = os.environ.get("RUN_CAPABILITY_SECRET")
+        if not capability_secret:
+            raise DelegationProblem(
+                503, "token_issuer_unavailable", "Token issuer is unavailable"
+            )
+        claims = verify_token(
+            bearer(run_capability), capability_secret, "agent-runtime-api"
+        )
+    else:
+        claims = verify_token(bearer(run_authorization), signing_secret(), "identity-delegation")
     expected = (str(grant_id), str(body.run_id), str(body.attempt_id), body.lease_epoch)
     actual = (
-        claims.get("grant_id"),
+        claims.get("delegation_grant_id") if capability_exchange else claims.get("grant_id"),
         claims.get("run_id"),
         claims.get("attempt_id"),
         claims.get("lease_epoch"),
     )
-    if actual != expected or claims.get("active") is not True or claims.get("cancelled") is True:
+    active = claims.get("active") is True or capability_exchange
+    if actual != expected or not active or claims.get("cancelled") is True:
         raise DelegationProblem(403, "run_binding_invalid", "Active run binding is invalid")
     item = await get_grant(app.state.pool, grant_id)
     now = datetime.now(UTC)
@@ -202,6 +224,10 @@ async def exchange_token(
         raise DelegationProblem(403, "grant_inactive", "Delegation grant is inactive")
     if str(item.release_id) != claims.get("release_id"):
         raise DelegationProblem(403, "release_binding_invalid", "Release binding is invalid")
+    if capability_exchange:
+        granted_scopes = {f"tool:{tool}" for tool in claims.get("tools", [])}
+        if not set(body.scopes) <= granted_scopes:
+            raise DelegationProblem(403, "scope_not_granted", "Tool is not granted to this run")
     effective = sorted(set(body.scopes) & set(item.maximum_scopes))
     if set(effective) != set(body.scopes):
         raise DelegationProblem(403, "scope_not_delegated", "Requested scope was not delegated")
@@ -233,8 +259,9 @@ async def grant_exchange(
         str, Header(alias="Idempotency-Key", min_length=8, max_length=128)
     ],
     authorization: Annotated[str | None, Header()] = None,
+    run_capability: Annotated[str | None, Header(alias="X-Run-Capability")] = None,
 ) -> DelegatedToken:
-    return await exchange_token(grant_id, body, authorization)
+    return await exchange_token(grant_id, body, authorization, run_capability)
 
 
 @app.post("/v1/delegation-grants/{grant_id}:revoke", status_code=204)

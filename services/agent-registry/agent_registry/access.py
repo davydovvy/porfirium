@@ -107,6 +107,34 @@ async def get_visible_release(
     return _from_row(row)
 
 
+async def get_visible_release_by_id(
+    pool: Pool, identity: ServiceIdentity, release_id: UUID
+) -> PublishedRelease:
+    user_id, groups, roles = _subjects(identity)
+    row = await pool.fetchrow(
+        """
+        SELECT r.release_id, r.agent_id, r.version, r.image, r.manifest, r.status
+        FROM releases AS r
+        WHERE r.release_id = $1
+          AND EXISTS (
+            SELECT 1 FROM access_grants AS g
+            WHERE g.agent_id = r.agent_id AND g.revoked_at IS NULL
+              AND g.permission IN ('discover', 'run', 'admin')
+              AND ((g.subject_type = 'user' AND g.subject_id = $2)
+                OR (g.subject_type = 'group' AND g.subject_id = ANY($3::text[]))
+                OR (g.subject_type = 'role' AND g.subject_id = ANY($4::text[])))
+          )
+        """,
+        release_id,
+        user_id,
+        groups,
+        roles,
+    )
+    if row is None:
+        raise AccessError("release_not_found")
+    return _from_row(row)
+
+
 async def grant_access(
     pool: Pool,
     *,

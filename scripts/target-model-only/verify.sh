@@ -53,5 +53,6 @@ PY
 docker build --tag "$image" --file "$agent_dir/Dockerfile" "$repo_dir"
 docker image inspect "$image" --format '{{json .Config.Entrypoint}}' | \
   grep -qx '\["python","-m","model_only_agent"\]'
+"$repo_dir/scripts/target-phase12/probe-agent-image.sh" "$image"
 
 echo "PASS: model-only release bootstrap, behavior, manifest, and OCI image"

@@ -156,6 +156,11 @@ export function App({ authenticated }: { authenticated: boolean }) {
     if (!activeRunId) return
     if (!active) return
     await json(`/api/v1/conversations/${active.conversation_id}/runs/${activeRunId}:cancel`, command())
+    streamAbort.current?.abort()
+    setActiveRunId(null)
+    setStreamText('')
+    await openConversation(active.conversation_id)
+    await loadConversations()
   }
 
   async function answerInput(input: InputRequest) {

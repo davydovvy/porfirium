@@ -8,6 +8,7 @@ from typing import Any
 
 from agent_runner.completion import consume_run_event
 from agent_runner.deadletter import dead_letter, delivery_attempt
+from agent_runner.event_validation import MAX_EVENT_BYTES, validate_envelope
 from agent_runner.models import RunAdmission
 from agent_runner.outbox import publish_pending
 
@@ -21,6 +22,7 @@ async def consume_completion_events(
         envelope = None
         try:
             envelope = json.loads(message.data)
+            validate_envelope(envelope)
             supported = {
                 "porfirium.run.result_proposed.v1",
                 "porfirium.run.messages_committed.v1",
@@ -53,6 +55,8 @@ async def consume_admissions(
     async for message in subscription.messages:
         envelope = None
         try:
+            if len(message.data) > MAX_EVENT_BYTES:
+                raise ValueError("run admission exceeds maximum size")
             envelope = json.loads(message.data)
             if not isinstance(envelope, dict):
                 raise ValueError("JSON root is not an object")

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -11,6 +12,49 @@ from conversation_service.problems import ConversationProblem
 
 MAX_MESSAGE_BYTES = 256 * 1024
 MAX_CHUNKS = 65_536
+MAX_EVENT_BYTES = 1024 * 1024
+TRACEPARENT = re.compile(
+    r"^00-((?!0{32}-)[0-9a-f]{32})-((?!0{16}-)[0-9a-f]{16})-[0-9a-f]{2}$"
+)
+
+
+def validate_event_envelope(envelope: object) -> dict[str, Any]:
+    if not isinstance(envelope, dict):
+        raise ConversationProblem(422, "event_invalid", "Runtime event envelope is invalid")
+    try:
+        encoded = canonical_json(envelope)
+    except (TypeError, ValueError, RecursionError) as exc:
+        raise ConversationProblem(
+            422, "event_invalid", "Runtime event envelope is invalid"
+        ) from exc
+    if len(encoded) > MAX_EVENT_BYTES:
+        raise ConversationProblem(422, "event_invalid", "Runtime event envelope is invalid")
+    required = {
+        "specversion", "type", "id", "source", "subject", "time", "user_id",
+        "conversation_id", "thread_id", "run_id", "correlation_id", "causation_id",
+        "traceparent", "schema_version", "data",
+    }
+    try:
+        match = TRACEPARENT.fullmatch(envelope["traceparent"])
+        correlation_id = UUID(str(envelope["correlation_id"]))
+        UUID(str(envelope["causation_id"]))
+        UUID(str(envelope["thread_id"]))
+        timestamp = datetime.fromisoformat(str(envelope["time"]).replace("Z", "+00:00"))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ConversationProblem(
+            422, "event_invalid", "Runtime event envelope is invalid"
+        ) from exc
+    if (
+        not required <= envelope.keys()
+        or envelope.get("specversion") != "1.0"
+        or envelope.get("schema_version") != 1
+        or not isinstance(envelope.get("data"), dict)
+        or match is None
+        or correlation_id.hex != match.group(1)
+        or timestamp.tzinfo is None
+    ):
+        raise ConversationProblem(422, "event_invalid", "Runtime event envelope is invalid")
+    return envelope
 
 
 def now_utc() -> datetime:
@@ -237,6 +281,7 @@ class MemoryStore:
         return message
 
     async def project(self, envelope: dict[str, Any]) -> int | None:
+        validate_event_envelope(envelope)
         try:
             event_id = UUID(str(envelope["id"]))
             conversation_id = UUID(str(envelope["conversation_id"]))
@@ -252,6 +297,8 @@ class MemoryStore:
         if envelope.get("schema_version") != 1:
             raise ConversationProblem(422, "event_invalid", "Runtime event envelope is invalid")
         item = self._owned(owner_id, conversation_id)
+        if UUID(str(envelope["thread_id"])) != item.thread_id:
+            raise ConversationProblem(422, "event_invalid", "Runtime event envelope is invalid")
         event_type = str(envelope.get("type"))
         message_id = UUID(str(data["message_id"])) if data.get("message_id") else None
         if event_type == "porfirium.message.started.v1":

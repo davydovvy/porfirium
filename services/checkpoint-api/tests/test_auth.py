@@ -15,6 +15,9 @@ def claims() -> dict[str, object]:
         "run_id": str(uuid4()),
         "attempt_id": str(uuid4()),
         "lease_epoch": 2,
+        "user_id": str(uuid4()),
+        "conversation_id": str(uuid4()),
+        "trace_id": "1" * 32,
         "operations": ["checkpoint:read", "checkpoint:write"],
         "exp": int(time.time()) + 60,
     }

@@ -306,11 +306,19 @@ async def conversation(
             run = await _request(
                 request, "GET", "AGENT_RUNNER_URL", f"/v1/runs/{latest_run_id}"
             )
-            projection["active_run"] = (
-                run.json()
-                if run.status_code == 200
-                else {"run_id": latest_run_id, "state": "requested"}
-            )
+            if run.status_code != 200:
+                projection["active_run"] = {"run_id": latest_run_id, "state": "requested"}
+            elif run.json().get("state") in {
+                "accepted",
+                "scheduled",
+                "starting",
+                "running",
+                "suspending",
+                "waiting_for_input",
+                "completion_reconciling",
+                "cancelling",
+            }:
+                projection["active_run"] = run.json()
     return JSONResponse(projection)
 
 
@@ -331,6 +339,22 @@ async def create_message(
     if owned.status_code != 200:
         return _forward(owned)
     release_id = owned.json()["release_id"]
+    release = await _request(
+        request,
+        "GET",
+        "AGENT_REGISTRY_URL",
+        f"/v1/releases/{release_id}",
+        headers={"Authorization": await _registry_authorization(request, identity)},
+    )
+    if release.status_code != 200:
+        return _forward(release)
+    tools = release.json().get("manifest", {}).get("spec", {}).get("tools", [])
+    if (
+        not isinstance(tools, list)
+        or len(tools) > 64
+        or any(not isinstance(tool, str) or not tool or len(tool) > 128 for tool in tools)
+    ):
+        raise HTTPException(status_code=502, detail="Registry release tools are invalid")
     grant = await _request(
         request,
         "POST",
@@ -340,8 +364,11 @@ async def create_message(
             identity,
             str(uuid5(NAMESPACE_URL, f"porfirium:{conversation_id}:grant:{idempotency_key}")),
         ),
-        body={"conversation_id": str(conversation_id), "release_id": release_id,
-              "maximum_scopes": []},
+        body={
+            "conversation_id": str(conversation_id),
+            "release_id": release_id,
+            "maximum_scopes": [f"tool:{tool}" for tool in tools],
+        },
     )
     if grant.status_code != 201:
         return _forward(grant)

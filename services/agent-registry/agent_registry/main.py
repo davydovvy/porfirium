@@ -17,6 +17,7 @@ from agent_registry.access import (
     AccessError,
     AccessGrant,
     get_visible_release,
+    get_visible_release_by_id,
     grant_access,
     list_visible_agents,
     revoke_access,
@@ -239,6 +240,19 @@ async def get_release_endpoint(
 ) -> dict[str, object]:
     try:
         release = await get_visible_release(request.app.state.pool, identity, agent_id, version)
+    except AccessError as error:
+        raise _access_problem(error) from error
+    return release.contract_response()
+
+
+@app.get("/v1/releases/{release_id}", response_model=ReleaseResponse)
+async def get_release_by_id_endpoint(
+    release_id: UUID,
+    request: Request,
+    identity: Annotated[ServiceIdentity, Depends(authenticated_identity)],
+) -> dict[str, object]:
+    try:
+        release = await get_visible_release_by_id(request.app.state.pool, identity, release_id)
     except AccessError as error:
         raise _access_problem(error) from error
     return release.contract_response()

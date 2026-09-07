@@ -253,6 +253,8 @@ services:
       NATS_PASSWORD: ${NATS_RUNTIME_PASSWORD:?set NATS_RUNTIME_PASSWORD}
       RUN_CAPABILITY_SECRET: ${RUN_CAPABILITY_SECRET:?set RUN_CAPABILITY_SECRET}
       MODEL_GATEWAY_URL: http://agentgateway:8090
+      MCP_GATEWAY_URL: http://agentgateway:8090
+      IDENTITY_DELEGATION_URL: http://identity-delegation:8105
       MODEL_TIMEOUT_SECONDS: "120"
     healthcheck:
       <<: *service_healthcheck
@@ -288,6 +290,7 @@ services:
       NATS_USER: identity_delegation
       NATS_PASSWORD: ${NATS_DELEGATION_PASSWORD:?set NATS_DELEGATION_PASSWORD}
       DELEGATION_SIGNING_SECRET: ${DELEGATION_SIGNING_SECRET:?set DELEGATION_SIGNING_SECRET}
+      RUN_CAPABILITY_SECRET: ${RUN_CAPABILITY_SECRET:?set RUN_CAPABILITY_SECRET}
     healthcheck:
       <<: *service_healthcheck
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8105/health/ready', timeout=2)"]

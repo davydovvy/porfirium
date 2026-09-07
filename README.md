@@ -44,8 +44,14 @@ API and SDK, Runtime API and message SDK, isolated Runner, configuration and del
 conversations, end-to-end run completion, container-free human-input suspension, and the Portal
 BFF/web migration. Phase 12 hardening is in progress: its first slice adds bounded consumer
 failure handling, dead-letter inspection and replay, capacity enforcement, orphan cleanup, an
-adjacent-minor Runtime compatibility window, and trusted-builder provenance policy. The legacy
-runtime remains available until target acceptance and the planned production cutover.
+adjacent-minor Runtime compatibility window, trusted-builder provenance policy, bounded retention,
+backup/restore tooling, signed end-to-end trace propagation, and malformed-event containment. A
+second immutable target package now provides a two-stage planning assistant with its own signed
+publication workflow. The additive Runtime protocol and Python SDK now define bounded typed tool
+calls and propagate signed per-run tool grants. Runtime exchanges the opaque delegation grant on
+each call, retains the short-lived user token only in memory, and forwards both authorization
+dimensions to the MCP boundary. The legacy runtime remains available until target acceptance and
+the planned production cutover.
 
 The authoritative documents are:
 
@@ -83,6 +89,15 @@ Focused commands:
 ./scripts/target-phase10/verify.sh
 ./scripts/target-phase11/verify.sh
 ./scripts/target-phase12/verify-hardening.sh
+./scripts/target-phase12/verify-agents.sh
+./scripts/target-phase12/verify-lifecycle.sh
+# Requires the supported rootless Podman host.
+./scripts/target-phase12/verify-network-isolation.sh
+# Requires a running target topology and test credentials.
+./scripts/target-phase12/acceptance.sh
+# Final gate; requires explicit recovery and live opt-ins.
+PHASE12_INCLUDE_RECOVERY=true PHASE12_INCLUDE_LIVE=true \
+  ./scripts/target-phase12/verify-acceptance.sh
 ./scripts/target-runner/verify.sh
 ./scripts/target-model-only/verify.sh
 python3 scripts/target-keycloak/configure.py

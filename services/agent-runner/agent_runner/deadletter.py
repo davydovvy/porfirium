@@ -9,6 +9,8 @@ from uuid import UUID, uuid4, uuid5
 
 from cryptography.fernet import Fernet, InvalidToken
 
+from agent_runner.event_validation import EventValidationError, validate_envelope
+
 DLQ_NAMESPACE = UUID("ca17d0ab-542e-4da9-99a8-75cb0351338f")
 
 
@@ -89,6 +91,15 @@ async def dead_letter(
         now,
     )
     event_id = uuid4()
+    try:
+        traced = validate_envelope(envelope)
+    except EventValidationError:
+        traced = None
+    correlation_id = str(traced["correlation_id"]) if traced else str(event_id)
+    traceparent = (
+        str(traced["traceparent"])
+        if traced else f"00-{event_id.hex}-{event_id.hex[:16]}-00"
+    )
     diagnostic = {
         "specversion": "1.0",
         "type": "porfirium.dlq.message.v1",
@@ -96,10 +107,12 @@ async def dead_letter(
         "source": "agent-runner",
         "subject": f"dead-letter/{dead_letter_id}",
         "time": now.isoformat().replace("+00:00", "Z"),
-        "user_id": "00000000-0000-0000-0000-000000000000",
-        "correlation_id": str(event_id),
+        "user_id": (
+            str(traced["user_id"]) if traced else "00000000-0000-0000-0000-000000000000"
+        ),
+        "correlation_id": correlation_id,
         "causation_id": str(original_id),
-        "traceparent": f"00-{event_id.hex}-{event_id.hex[:16]}-00",
+        "traceparent": traceparent,
         "schema_version": 1,
         "data": {
             "original_event_id": str(original_id),

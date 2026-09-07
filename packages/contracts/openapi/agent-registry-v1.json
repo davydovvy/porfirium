@@ -81,6 +81,18 @@
         }
       }
     },
+    "/releases/{release_id}": {
+      "get": {
+        "operationId": "getVisibleReleaseById",
+        "parameters": [
+          {"name": "release_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {"description": "Visible immutable release", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Release"}}}},
+          "default": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    },
     "/releases/{release_id}:deprecate": {
       "post": {
         "operationId": "deprecateRelease",

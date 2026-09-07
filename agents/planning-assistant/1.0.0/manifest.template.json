@@ -1,0 +1,27 @@
+{
+  "apiVersion": "porfirium.ai/v1",
+  "kind": "Agent",
+  "metadata": {
+    "name": "planning-assistant",
+    "version": "1.0.0",
+    "displayName": "Planning Assistant",
+    "description": "Two-stage assistant that plans before composing its final response"
+  },
+  "spec": {
+    "image": "${IMAGE}",
+    "entrypoint": "planning_assistant:main",
+    "sdk": ">=1.0.0,<2.0.0",
+    "models": ["default"],
+    "tools": [],
+    "configSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "resources": {
+      "cpu": "500m",
+      "memory": "128Mi",
+      "timeoutSeconds": 240
+    }
+  }
+}

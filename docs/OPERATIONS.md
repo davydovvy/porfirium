@@ -133,12 +133,112 @@ Phase 10 verifies stable suspension identity, hidden partial saga state, commitm
 order, one effective owner-authorized response, exact attempt teardown, and checkpoint-bound resume.
 The Phase 12 hardening gate verifies bounded delivery failure and dead-letter behavior, capacity
 policy, orphan reconciliation, Runtime protocol compatibility, trusted builder policy, and the
-additive Runner operator contract. It is a focused incremental gate, not the final Phase 12
+additive Runner operator contract. It also covers owner-local retention boundaries and backup
+script validation, signed run-trace propagation, cross-run identity rejection, and bounded
+malformed-event handling. Run `./scripts/target-phase12/verify-recovery.sh` separately for the
+disposable seven-database, JetStream, OCI, protected-key, and checksum restore exercise. This is
+not the final Phase 12
 two-agent acceptance gate.
 
+Run the destructive, isolated lifecycle acceptance separately. It creates disposable Compose
+resources, restarts Runtime during an active stream, proves a superseded open stream and reconnect
+are fenced, and verifies idempotent cancellation performs one exact cleanup and emits one terminal
+event:
+
+```bash
+./scripts/target-phase12/verify-lifecycle.sh
+```
+
+## Phase 12 live two-agent acceptance
+
+Run the credentialed live gate only against an isolated target environment. Version 1.0.0 of
+`model-only` and version 1.1.0 of `planning-assistant` must already be published and selected as
+their default releases unless the optional publication flag is used.
+
+```bash
+export KEYCLOAK_TOKEN_URL=https://identity.example/realms/porfirium/protocol/openid-connect/token
+export AGENT_REGISTRY_URL=https://registry.internal
+export PORTAL_BFF_URL=https://portal.example
+export RUNTIME_DATABASE_URL=postgresql://runtime_user:password@runtime-db/runtime
+export OIDC_CLIENT_ID=portal-bff
+export OIDC_CLIENT_SECRET=...
+export TEST_USER_CLIENT_ID=porfirium-cli
+export TEST_USERNAME=phase12-user
+export TEST_PASSWORD=...
+export TEST_OTHER_USERNAME=phase12-other-user
+export TEST_OTHER_PASSWORD=...
+./scripts/target-phase12/acceptance.sh
+```
+
+Before publication or any acceptance mutations, run the same command with
+`PHASE12_PREFLIGHT_ONLY=true`. Preflight obtains both user tokens, requires distinct subjects,
+performs the user-to-Registry token exchange, checks Registry and the complete Portal BFF dependency
+graph for readiness, and verifies the Runtime database contains the Phase 12 tool-invocation table.
+It does not publish images, change defaults, grant access, create conversations, or invoke a model:
+
+```bash
+PHASE12_PREFLIGHT_ONLY=true ./scripts/target-phase12/acceptance.sh
+```
+
+The gate grants that test user run access to both agents and completes one portal conversation with
+each. It confirms that model-only has no Runtime tool records and planning-assistant has exactly one
+successful result from `demo-time-mcp`. Set `AGENT_REGISTRY_AUDIENCE` when the deployment does not
+use `agent-registry`. The second user must have a distinct subject; the gate proves that user's
+conversation read and cancellation attempts return the same not-found boundary, and that malformed
+portal input is rejected before reaching a service. Set `PHASE12_PUBLISH_AGENTS=true` only on a
+trusted publication host with the
+OCI and signing variables required by both publication scripts; publication pushes both images and
+changes both default releases. `PHASE12_PUBLISH_AGENT` remains a deprecated alias for compatibility.
+The normal gate does not publish or mutate release selection, though it does create access grants,
+conversations, runs, messages, and audit records.
+
+## Target retention
+
+Run retention after a successful backup:
+
+```bash
+./scripts/target-phase12/run-retention.sh
+```
+
+The operation removes completed message chunks after 30 minutes, acknowledged transport outbox
+rows only after the corresponding stream replay window, expired Runtime attempt buffers one day
+after their deadline, old inbox deduplication records after their source stream expires, and
+already-replayed encrypted dead letters after 31 days. It never deletes canonical messages,
+presentation history, conversations, checkpoints, releases, run/attempt history, request
+idempotency records, pending dead letters, or operator/security audit facts. In the rootless host
+topology, run `python -m agent_runner.retention` from the stopped or quiescent host Runner
+environment when prompted by the wrapper.
+
+## Target backup and restore
+
+Create a new protected backup directory only after freezing authoring and new conversations. In the
+rootless topology, stop the host Runner and explicitly confirm that state:
+
+```bash
+export PORFIRIUM_BACKUP_KEYS_DIR=/secure/porfirium-recovery-keys
+export PORFIRIUM_HOST_RUNNER_STOPPED=true
+./scripts/target-phase12/backup.sh /secure/backups/porfirium-YYYYMMDDTHHMMSSZ
+```
+
+The command stops and later restarts running target writers, dumps every owning database, snapshots
+JetStream and OCI registry volumes, archives the protected key bundle with mode `077`, and writes
+SHA-256 checksums. The key bundle must include Registry publication/run-signing material and the
+Runner capability and dead-letter encryption keys. Database, NATS, OIDC, gateway, and operator
+credentials remain deployment-managed and must be recoverable separately.
+
+Restore only into empty databases and empty JetStream/registry volumes. Verify `SHA256SUMS`, restore
+the protected keys first, load each custom-format dump into its matching service-owned database,
+unpack the two volume archives while their services are stopped, apply migrations, and start the
+target stack. Before traffic is enabled, require readiness, Registry digest reconciliation, a
+dead-letter inventory, Runner reconciliation, and the full target acceptance gate. Never restore
+over a live or partially populated target deployment.
+
 Target Phase 7 requires `DELEGATION_SIGNING_SECRET` in addition to the target database and NATS
-secrets. Supply it through deployment secret management. Never place that secret or an issued
-delegated token in Compose files, logs, events, checkpoints, traces, or error responses.
+secrets. Identity Delegation also receives `RUN_CAPABILITY_SECRET` so it can validate the exact
+attempt-bound capability when Runtime exchanges a grant for an MCP token. Supply both through
+deployment secret management. Runtime exchanges on every tool call and does not persist the token.
+Never place either secret or an issued delegated token in Compose files, logs, events, checkpoints,
+traces, or error responses.
 
 The Conversation Service owns the `conversation` database and starts only after
 `conversation-migrate` applies its ordered SQL migrations. It consumes Runtime message events with
@@ -196,7 +296,8 @@ Publish the platform-owned model-only release from a trusted release host. Provi
 with the publisher role, a registered Ed25519 publication key, and the target OCI host. The script
 builds and pushes the image, resolves the registry digest, renders the manifest into a temporary
 directory, signs canonical provenance, and publishes the digest-pinned release. It never modifies
-the immutable version directory.
+the immutable version directory. The same controls apply to the independently packaged planning
+assistant.
 
 ```bash
 export OCI_REGISTRY_HOST='registry.example'
@@ -207,6 +308,66 @@ export REGISTRY_PUBLICATION_PRIVATE_KEY_FILE='/secure/release-2026.key'
 export MODEL_ONLY_SET_DEFAULT=true
 ./scripts/target-model-only/publish.sh
 ```
+
+Publish the two-stage planning assistant with the same release identity and trust policy:
+
+```bash
+export PLANNING_ASSISTANT_SET_DEFAULT=true
+./scripts/target-planning-assistant/publish.sh
+```
+
+This publishes version 1.1.0 by default. To republish the immutable model-only planning release
+from its existing source package, explicitly set `PLANNING_ASSISTANT_VERSION=1.0.0`. Version 1.1.0
+requires the `time_get_current_time` scope; Portal BFF derives that scope from the visible signed
+release rather than accepting it from the browser.
+
+Tool invocation IDs are durable Runtime records. If Runtime reports `tool_outcome_ambiguous`, do
+not replay the call under a new ID: determine the downstream outcome and reconcile it according to
+the tool's contract. Read-only calls may be intentionally retried only through an operator-reviewed
+workflow; side-effecting calls require downstream idempotency evidence.
+
+Setting a default is optional. Grant users access through the Registry before expecting the new
+agent to appear in the portal selector. Verify both immutable package builds before publication:
+
+```bash
+./scripts/target-phase12/verify-agents.sh
+```
+
+Package verification also runs each built image with the Runner-equivalent security constraints
+and checks numeric non-root identity, zero effective capabilities, no-new-privileges, seccomp,
+read-only root storage, non-executable bounded temporary storage, and absence of Docker or Podman
+sockets. This complements the Runner launch-policy tests; it does not replace the rootless-host
+feasibility gate or deployment-specific network-policy validation.
+
+On the supported rootless Podman host, run the Phase 12 network gate separately:
+
+```bash
+./scripts/target-phase12/verify-network-isolation.sh
+```
+
+It creates two disposable internal networks, attaches only a controlled Runtime endpoint to the
+attempt network, and verifies denial of public internet, cloud metadata, the host, another attempt,
+platform database and messaging endpoints, Registry and service endpoints, and runtime sockets.
+
+Run the consolidated final gate only when the environment is prepared for both the destructive
+restore exercise and credentialed provider-backed conversations:
+
+```bash
+PHASE12_INCLUDE_RECOVERY=true PHASE12_INCLUDE_LIVE=true \
+  ./scripts/target-phase12/verify-acceptance.sh
+```
+
+Without both opt-ins, the command still runs the local hardening, package, lifecycle, and network
+gates, but exits with status 2 and reports final acceptance as incomplete. The lifecycle portion
+proves duplicate Runtime delivery returns the original durable event identity, persists no second
+event, survives Runtime restart, resumes at the accepted sequence, and fences superseded leases.
+
+In the portal, selecting an agent affects only the next conversation; existing conversations stay
+pinned to their release. Stop waits for Runner acceptance, aborts the current SSE request, and then
+reloads authoritative projections. If that refresh fails, the run is still no longer presented as
+active and the portal displays the refresh error. Cancellation of visible partial output produces
+an interrupted assistant message; a terminal Runner state is never rendered as an active run while
+the interruption event is still converging.
 
 Default selection additionally requires the Registry administrator role on the supplied token.
 For the local development client, set `REGISTRY_PUBLISH_TOKEN=client_credentials`; the command then

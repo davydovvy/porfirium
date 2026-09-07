@@ -106,6 +106,16 @@ is requested through Runtime API and atomically replaces the in-memory credentia
 Tool calls require stable invocation IDs. SDK retries only when the tool contract declares the
 operation idempotent and no ambiguous result was observed.
 
+The current additive protocol exposes `RuntimeClient.tool(...)` with JSON-compatible arguments and
+a typed bounded result. Runtime enforces the signed per-run tool grant, exchanges the attempt-bound
+opaque delegation grant on each invocation, and holds the short-lived delegated token only while
+calling the MCP gateway. Missing grant identity, scope expansion, expired/revoked grants, and
+gateway failures all fail closed.
+
+Runtime reserves a stable tool invocation durably before contacting MCP. Completed results are
+replayed for the same request. A reservation without a recorded result is treated as an ambiguous
+outcome and is never automatically executed again; agent code receives `tool_outcome_ambiguous`.
+
 ## Checkpoints
 
 SDK exposes a LangGraph checkpointer backed by State API. It supplies thread/run namespaces,

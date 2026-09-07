@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class Trigger(BaseModel):
@@ -33,6 +33,13 @@ class RunAdmission(BaseModel):
     trigger: Trigger
     run_input: RunInput | None = None
     trace_id: str = Field(pattern=r"^[0-9a-f]{32}$")
+
+    @field_validator("trace_id")
+    @classmethod
+    def trace_id_is_nonzero(cls, value: str) -> str:
+        if value == "0" * 32:
+            raise ValueError("trace ID cannot be zero")
+        return value
 
     def resolution_payload(self) -> dict[str, Any]:
         payload = self.model_dump(mode="json")

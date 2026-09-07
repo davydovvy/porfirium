@@ -3,7 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
+from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any, Protocol
 from uuid import UUID, uuid4
 
 import asyncpg
@@ -48,6 +51,25 @@ EVENTS = {
 }
 
 
+@dataclass(frozen=True, slots=True)
+class ToolExecution:
+    result: object
+    is_error: bool = False
+
+
+class DelegatedToolGateway(Protocol):
+    """Gateway boundary that must enforce the delegated user token for this attempt."""
+
+    async def invoke(
+        self,
+        *,
+        tool: str,
+        arguments: dict[str, Any],
+        invocation_id: UUID,
+        capability: RunCapability,
+    ) -> ToolExecution: ...
+
+
 def _error(
     identity: pb.FrameIdentity, code: str, message: str, retryable: bool = False
 ) -> pb.PlatformFrame:
@@ -69,6 +91,10 @@ def _validate_identity(identity: pb.FrameIdentity, capability: RunCapability) ->
         raise ValueError("unsupported_protocol") from None
     if major != SUPPORTED_PROTOCOL_MAJOR or minor not in SUPPORTED_PROTOCOL_MINORS:
         raise ValueError("unsupported_protocol")
+    trace_match = re.fullmatch(
+        r"00-((?!0{32})[0-9a-f]{32})-((?!0{16})[0-9a-f]{16})-[0-9a-f]{2}",
+        identity.traceparent,
+    )
     if (
         UUID(identity.run_id) != capability.run_id
         or UUID(identity.attempt_id) != capability.attempt_id
@@ -76,6 +102,8 @@ def _validate_identity(identity: pb.FrameIdentity, capability: RunCapability) ->
         or identity.sequence < 0
         or not identity.idempotency_key
         or len(identity.idempotency_key) > 128
+        or trace_match is None
+        or trace_match.group(1) != capability.trace_id
     ):
         raise ValueError("identity_mismatch")
 
@@ -107,8 +135,9 @@ def _event(capability: RunCapability, frame: pb.AgentFrame, event_id: UUID) -> t
         "run_id": str(capability.run_id),
         "attempt_id": str(capability.attempt_id),
         "lease_epoch": capability.lease_epoch,
-        "correlation_id": str(event_id),
-        "causation_id": frame.identity.idempotency_key,
+        "correlation_id": str(UUID(hex=capability.trace_id)),
+        "causation_id": _causation_id(frame.identity.idempotency_key),
+        "traceparent": frame.identity.traceparent,
         "schema_version": 1,
         "aggregate_sequence": frame.identity.sequence,
         "data": data,
@@ -116,10 +145,23 @@ def _event(capability: RunCapability, frame: pb.AgentFrame, event_id: UUID) -> t
     return subject, envelope
 
 
+def _causation_id(idempotency_key: str) -> str:
+    try:
+        return str(UUID(idempotency_key))
+    except ValueError:
+        return str(UUID(bytes=hashlib.sha256(idempotency_key.encode()).digest()[:16]))
+
+
 class RuntimeService:
-    def __init__(self, pool: asyncpg.Pool, model_gateway: ModelGateway | None = None) -> None:
+    def __init__(
+        self,
+        pool: asyncpg.Pool,
+        model_gateway: ModelGateway | None = None,
+        tool_gateway: DelegatedToolGateway | None = None,
+    ) -> None:
         self.pool = pool
         self.model_gateway = model_gateway
+        self.tool_gateway = tool_gateway
 
     async def connect(self, request_iterator, context):
         capability: RunCapability | None = None
@@ -171,8 +213,11 @@ class RuntimeService:
                 if identity.sequence < 1:
                     raise ValueError("sequence_out_of_order")
                 model_result = None
+                tool_result = None
                 if kind == "model_call":
                     model_result = await self._call_model(capability, frame.model_call)
+                if kind == "tool_call":
+                    tool_result = await self._call_tool(capability, frame.tool_call)
                 event_id = await self._accept(capability, frame)
             except (ModelGatewayError, ValueError) as exc:
                 code = str(exc)
@@ -194,6 +239,23 @@ class RuntimeService:
                         finish_reason=model_result.finish_reason,
                         usage=usage,
                     ),
+                )
+            if tool_result is not None:
+                result_frame = pb.ToolResult(
+                    invocation_id=frame.tool_call.invocation_id,
+                    is_error=tool_result.is_error,
+                )
+                try:
+                    ParseDict(tool_result.result, result_frame.result)
+                except (TypeError, ValueError):
+                    yield _error(identity, "tool_response_invalid", "Tool response is invalid")
+                    continue
+                yield pb.PlatformFrame(
+                    run_id=identity.run_id,
+                    attempt_id=identity.attempt_id,
+                    lease_epoch=identity.lease_epoch,
+                    sequence=identity.sequence,
+                    tool_result=result_frame,
                 )
             yield pb.PlatformFrame(
                 run_id=identity.run_id,
@@ -225,6 +287,83 @@ class RuntimeService:
             max_output_tokens=call.max_output_tokens,
             metadata={"run_id": str(cap.run_id), "user_id": str(cap.user_id)},
         )
+
+    async def _call_tool(self, cap: RunCapability, call: pb.ToolCall) -> ToolExecution:
+        if call.tool not in cap.tools:
+            raise ValueError("tool_forbidden")
+        try:
+            invocation_id = UUID(call.invocation_id)
+        except ValueError as error:
+            raise ValueError("tool_request_invalid") from error
+        arguments = MessageToDict(call.arguments, preserving_proto_field_name=True)
+        if (
+            not call.tool
+            or len(call.tool) > 128
+            or not isinstance(arguments, dict)
+            or len(json.dumps(arguments, ensure_ascii=False).encode()) > 8 * 1024
+        ):
+            raise ValueError("tool_request_invalid")
+        if self.tool_gateway is None:
+            raise ValueError("tool_delegation_unavailable")
+        request_digest = hashlib.sha256(
+            json.dumps(
+                {"tool": call.tool, "arguments": arguments},
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode()
+        ).hexdigest()
+        async with self.pool.acquire() as connection, connection.transaction():
+            await connection.execute(
+                "SELECT pg_advisory_xact_lock(hashtextextended($1,0))",
+                f"tool:{cap.run_id}:{invocation_id}",
+            )
+            existing = await connection.fetchrow(
+                "SELECT request_sha256,state,result,is_error FROM tool_invocations "
+                "WHERE run_id=$1 AND invocation_id=$2 FOR UPDATE",
+                cap.run_id,
+                invocation_id,
+            )
+            if existing:
+                if existing["request_sha256"] != request_digest:
+                    raise ValueError("tool_idempotency_conflict")
+                if existing["state"] != "completed":
+                    raise ValueError("tool_outcome_ambiguous")
+                stored = existing["result"]
+                return ToolExecution(
+                    json.loads(stored) if isinstance(stored, str) else stored,
+                    bool(existing["is_error"]),
+                )
+            await connection.execute(
+                "INSERT INTO tool_invocations(run_id,invocation_id,attempt_id,lease_epoch,"
+                "request_sha256,state) VALUES($1,$2,$3,$4,$5,'executing')",
+                cap.run_id,
+                invocation_id,
+                cap.attempt_id,
+                cap.lease_epoch,
+                request_digest,
+            )
+        result = await self.tool_gateway.invoke(
+            tool=call.tool,
+            arguments=arguments,
+            invocation_id=invocation_id,
+            capability=cap,
+        )
+        if len(json.dumps(result.result, ensure_ascii=False).encode()) > 12 * 1024:
+            raise ValueError("tool_response_invalid")
+        async with self.pool.acquire() as connection, connection.transaction():
+            updated = await connection.execute(
+                "UPDATE tool_invocations SET state='completed',result=$3::jsonb,is_error=$4,"
+                "completed_at=now() WHERE run_id=$1 AND invocation_id=$2 "
+                "AND state='executing'",
+                cap.run_id,
+                invocation_id,
+                json.dumps(result.result, separators=(",", ":"), ensure_ascii=False),
+                result.is_error,
+            )
+            if updated != "UPDATE 1":
+                raise ValueError("tool_outcome_ambiguous")
+        return result
 
     async def _activate(self, cap: RunCapability) -> int:
         async with self.pool.acquire() as connection, connection.transaction():

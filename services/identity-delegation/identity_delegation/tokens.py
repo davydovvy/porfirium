@@ -31,7 +31,9 @@ def verify_token(token: str, secret: str, audience: str) -> dict[str, Any]:
         if not hmac.compare_digest(_decode(signature), expected):
             raise ValueError
         claims = json.loads(_decode(payload))
-        if claims["aud"] != audience or int(claims["exp"]) <= int(time.time()):
+        if claims.get("aud", claims.get("audience")) != audience or int(
+            claims["exp"]
+        ) <= int(time.time()):
             raise ValueError
         return claims
     except (ValueError, KeyError, TypeError, json.JSONDecodeError):

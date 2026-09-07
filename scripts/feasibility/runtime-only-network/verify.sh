@@ -40,6 +40,13 @@ podman run --name "$probe" --network "$network" \
     ! nc -z -w 1 169.254.169.254 80
     ! nc -z -w 1 host.containers.internal 80
     ! nc -z -w 1 foreign 1 2>/dev/null
+    for endpoint in postgres:5432 nats:4222 agent-registry:8102 registry:5000 \
+      identity-delegation:8106 checkpoint-api:8107 conversation-service:8108 \
+      portal-bff:8100; do
+      host=${endpoint%:*}
+      port=${endpoint#*:}
+      ! nc -z -w 1 "$host" "$port" 2>/dev/null
+    done
     test ! -e /run/podman/podman.sock
     test ! -e /var/run/docker.sock
   ' >/dev/null
@@ -49,5 +56,5 @@ attached_networks=$(podman inspect --format '{{json .NetworkSettings.Networks}}'
 [[ "$attached_networks" == *"\"$network\""* ]]
 
 echo "PASS: attempt reached only its platform Runtime endpoint"
-echo "PASS: public, metadata, host, foreign-attempt, and runtime-socket access was denied"
+echo "PASS: public, metadata, host, service, foreign-attempt, and runtime-socket access was denied"
 echo "PASS: per-attempt network is internal and platform-selected"

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+from datetime import UTC, datetime
 from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
@@ -17,6 +18,7 @@ from conversation_service.domain import (
     canonical_json,
     message_json,
     validate_completion,
+    validate_event_envelope,
 )
 from conversation_service.problems import ConversationProblem
 
@@ -250,6 +252,7 @@ class PostgresStore:
         return [PresentationEvent(**dict(row)) for row in rows]
 
     async def project(self, envelope: dict[str, Any]) -> int | None:
+        validate_event_envelope(envelope)
         try:
             event_id = UUID(str(envelope["id"]))
             conversation_id = UUID(str(envelope["conversation_id"]))
@@ -265,7 +268,11 @@ class PostgresStore:
         async with self.pool.acquire() as connection, connection.transaction():
             if await connection.fetchval("SELECT 1 FROM inbox_events WHERE event_id=$1", event_id):
                 return None
-            await self._owned(connection, owner_id, conversation_id, lock=True)
+            conversation = await self._owned(connection, owner_id, conversation_id, lock=True)
+            if UUID(str(envelope["thread_id"])) != conversation["thread_id"]:
+                raise ConversationProblem(
+                    422, "event_invalid", "Runtime event envelope is invalid"
+                )
             kind = str(envelope.get("type"))
             mid = UUID(str(data["message_id"])) if data.get("message_id") else None
             if kind == "porfirium.run.result_proposed.v1":
@@ -281,9 +288,11 @@ class PostgresStore:
                     conversation_id, run_id, message_ids,
                 )
                 await connection.execute(
-                    "INSERT INTO result_proposals(run_id,event_id,conversation_id,final_message_ids) "
-                    "VALUES($1,$2,$3,$4) ON CONFLICT(run_id) DO NOTHING",
-                    run_id, event_id, conversation_id, message_ids,
+                    "INSERT INTO result_proposals(run_id,event_id,conversation_id,final_message_ids,"
+                    "traceparent,correlation_id,causation_id) "
+                    "VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(run_id) DO NOTHING",
+                    run_id, event_id, conversation_id, message_ids, envelope["traceparent"],
+                    UUID(str(envelope["correlation_id"])), UUID(str(envelope["causation_id"])),
                 )
                 if count == len(message_ids):
                     await self._confirm_messages(connection, run_id, message_ids)
@@ -449,10 +458,11 @@ class PostgresStore:
     async def _confirm_messages(
         self, connection: asyncpg.Connection, run_id: UUID, message_ids: list[UUID]
     ) -> None:
-        existing = await connection.fetchval(
-            "SELECT confirmation_event_id FROM result_proposals WHERE run_id=$1", run_id
+        proposal = await connection.fetchrow(
+            "SELECT r.*,c.owner_id,c.thread_id FROM result_proposals r "
+            "JOIN conversations c USING(conversation_id) WHERE r.run_id=$1", run_id
         )
-        if existing:
+        if proposal["confirmation_event_id"]:
             return
         event_id = uuid4()
         sequence = await connection.fetchval(
@@ -461,7 +471,18 @@ class PostgresStore:
         )
         payload = {
             "specversion": "1.0", "type": "porfirium.run.messages_committed.v1",
-            "id": str(event_id), "source": "conversation-service", "run_id": str(run_id),
+            "id": str(event_id), "source": "conversation-service",
+            "subject": f"run/{run_id}",
+            "time": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            "user_id": str(proposal["owner_id"]),
+            "conversation_id": str(proposal["conversation_id"]),
+            "thread_id": str(proposal["thread_id"]),
+            "run_id": str(run_id),
+            "correlation_id": str(proposal["correlation_id"]),
+            "causation_id": str(proposal["event_id"]),
+            "traceparent": (
+                f"00-{proposal['correlation_id'].hex}-{event_id.hex[:16]}-01"
+            ),
             "schema_version": 1,
             "data": {"run_id": str(run_id), "message_ids": [str(value) for value in message_ids],
                      "conversation_sequence": max(1, int(sequence or 1))},

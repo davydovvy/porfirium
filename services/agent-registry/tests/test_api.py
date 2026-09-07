@@ -109,6 +109,24 @@ def test_publishes_contract_response_with_verified_identity(monkeypatch: object)
     app.dependency_overrides.pop(require_publisher, None)
 
 
+def test_gets_visible_release_by_opaque_release_id(monkeypatch: object) -> None:
+    identity = ServiceIdentity("user", "portal-bff", frozenset())
+    app.dependency_overrides[registry_main.authenticated_identity] = lambda: identity
+    app.state.pool = object()
+    release_id = uuid4()
+
+    async def get_release(*args: object) -> PublishedRelease:
+        assert args == (app.state.pool, identity, release_id)
+        return PublishedRelease(release_id, "example-agent", "1.0.0", IMAGE, BODY["manifest"])
+
+    monkeypatch.setattr(registry_main, "get_visible_release_by_id", get_release)
+    response = TestClient(app).get(f"/v1/releases/{release_id}")
+
+    assert response.status_code == 200
+    assert response.json()["release_id"] == str(release_id)
+    app.dependency_overrides.pop(registry_main.authenticated_identity, None)
+
+
 def test_validation_errors_are_bounded_problems() -> None:
     identity = ServiceIdentity("publisher", "portal-bff", frozenset({"genai-agent-publisher"}))
     app.dependency_overrides[require_publisher] = lambda: identity
