@@ -28,6 +28,15 @@ internal service boundary and an `Idempotency-Key` for state-changing requests. 
 not call this service directly; the Portal BFF will authenticate browser sessions and supply the
 trusted internal identity when Phase 11 connects the user-facing path.
 
+Runner hardening defaults bound a consumer to five deliveries, active execution to 32 runs
+globally, and active execution to four runs per user. Override
+`RUNNER_CONSUMER_MAX_DELIVERIES`, `RUNNER_MAX_CONCURRENT_RUNS`, and
+`RUNNER_MAX_CONCURRENT_RUNS_PER_USER` through deployment configuration. Set a secret
+`RUNNER_OPERATOR_TOKEN` and a Fernet `RUNNER_DLQ_ENCRYPTION_KEY` to enable encrypted dead-letter
+storage, inspection, and replay. Registry accepts provenance
+only from `REGISTRY_ALLOWED_BUILDERS`; the local default matches the trusted publication helper,
+while production must supply its own builder identity allowlist.
+
 Run `./scripts/target-phase2/verify.sh` for offline structural validation. Run
 `./scripts/target-phase2/verify-nats.sh` to create an isolated, temporary Compose project and prove
 authenticated stream bootstrap plus an allowed and denied service publish. The verifier removes

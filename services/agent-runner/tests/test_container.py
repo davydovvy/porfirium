@@ -104,3 +104,24 @@ def test_running_state_requires_an_actively_running_container(monkeypatch) -> No
     monkeypatch.setattr(PodmanBackend, "_run", fake_run)
 
     assert asyncio.run(PodmanBackend().is_running("container-id")) is False
+
+
+def test_managed_lists_only_valid_labeled_attempt_containers(monkeypatch) -> None:
+    network = NETWORK
+
+    async def fake_run(self, *arguments: str, check: bool = True) -> str:
+        assert arguments[:3] == ("ps", "--all", "--filter")
+        return f"container-id {network}\ninvalid-line"
+
+    monkeypatch.setattr(PodmanBackend, "_run", fake_run)
+
+    assert asyncio.run(PodmanBackend().managed()) == [("container-id", network)]
+
+
+def test_managed_fails_closed_for_spoofed_network_label(monkeypatch) -> None:
+    async def fake_run(self, *arguments: str, check: bool = True) -> str:
+        return "container-id ai.porfirium.attempt-network=foreign"
+
+    monkeypatch.setattr(PodmanBackend, "_run", fake_run)
+    with pytest.raises(ContainerError, match="invalid attempt network identity"):
+        asyncio.run(PodmanBackend().managed())

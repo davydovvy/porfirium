@@ -19,6 +19,8 @@ from agent_runtime_api.proto import runtime_pb2 as pb
 MAX_FRAME_BYTES = 16 * 1024
 MAX_IN_FLIGHT_FRAMES = 32
 MAX_MESSAGE_BYTES = 256 * 1024
+SUPPORTED_PROTOCOL_MAJOR = 1
+SUPPORTED_PROTOCOL_MINORS = frozenset({0, 1})
 
 EVENTS = {
     "message_started": (
@@ -61,7 +63,11 @@ def _error(
 
 
 def _validate_identity(identity: pb.FrameIdentity, capability: RunCapability) -> None:
-    if identity.protocol_version != "1.0":
+    try:
+        major, minor = (int(value) for value in identity.protocol_version.split(".", 1))
+    except (TypeError, ValueError):
+        raise ValueError("unsupported_protocol") from None
+    if major != SUPPORTED_PROTOCOL_MAJOR or minor not in SUPPORTED_PROTOCOL_MINORS:
         raise ValueError("unsupported_protocol")
     if (
         UUID(identity.run_id) != capability.run_id

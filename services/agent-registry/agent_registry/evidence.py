@@ -26,13 +26,19 @@ class EvidenceVerifier:
         registry_url: str,
         registry_host: str,
         publication_keys: dict[str, Ed25519PublicKey],
+        allowed_builders: frozenset[str] = frozenset(),
     ) -> None:
         self.client = client
         self.registry_url = registry_url.rstrip("/")
         self.registry_host = registry_host
         self.publication_keys = publication_keys
+        self.allowed_builders = allowed_builders
 
     async def verify(self, release: ValidatedRelease) -> None:
+        if self.allowed_builders and release.provenance.get("builder") not in self.allowed_builders:
+            raise RegistryProblem(
+                422, "builder_untrusted", "Publication builder identity is not trusted"
+            )
         repository = _repository(release.image, expected_host=self.registry_host)
         await self._verify_oci_digest(repository, release.image_digest)
         self._verify_signature(release)

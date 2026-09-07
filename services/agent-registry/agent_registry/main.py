@@ -159,6 +159,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             registry_url=os.environ["OCI_REGISTRY_URL"],
             registry_host=os.environ.get("OCI_REGISTRY_HOST", "registry:5000"),
             publication_keys=load_publication_keys(publication_keys),
+            allowed_builders=frozenset(
+                value.strip()
+                for value in os.environ.get("REGISTRY_ALLOWED_BUILDERS", "").split(",")
+                if value.strip()
+            ),
         )
     app.state.run_signer = None
     signing_key_file = os.environ.get("REGISTRY_RUN_SIGNING_KEY_FILE")

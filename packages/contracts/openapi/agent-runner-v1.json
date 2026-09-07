@@ -35,6 +35,31 @@
         }
       }
     },
+    "/operations/dead-letters": {
+      "get": {
+        "operationId": "listDeadLetters",
+        "summary": "Inspect bounded Runner consumer failures",
+        "responses": {
+          "200": {"description": "Most recent dead letters", "content": {"application/json": {"schema": {"type": "array", "maxItems": 100, "items": {"$ref": "#/components/schemas/DeadLetter"}}}}},
+          "default": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    },
+    "/operations/dead-letters/{dead_letter_id}:replay": {
+      "post": {
+        "operationId": "replayDeadLetter",
+        "summary": "Republish the exact original event once and record an operator audit fact",
+        "parameters": [
+          {"name": "dead_letter_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "X-Operator-ID", "in": "header", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 128}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "responses": {
+          "202": {"description": "Replay accepted"},
+          "default": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    },
     "/health/live": {"get": {"security": [], "operationId": "liveness", "responses": {"200": {"description": "Process is live"}}}},
     "/health/ready": {"get": {"security": [], "operationId": "readiness", "responses": {"200": {"description": "Required dependencies are ready"}, "503": {"description": "A required dependency is unavailable"}}}}
   },
@@ -81,6 +106,24 @@
           "lease_epoch": {"type": "integer", "minimum": 0},
           "terminal_code": {"type": ["string", "null"], "maxLength": 64},
           "created_at": {"type": "string", "format": "date-time"}, "updated_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "DeadLetter": {
+        "type": "object",
+        "required": ["dead_letter_id", "original_event_id", "original_subject", "original_type", "consumer", "attempts", "error_code", "first_failed_at", "last_failed_at"],
+        "additionalProperties": false,
+        "properties": {
+          "dead_letter_id": {"type": "string", "format": "uuid"},
+          "original_event_id": {"type": "string", "format": "uuid"},
+          "original_subject": {"type": "string", "maxLength": 256},
+          "original_type": {"type": "string", "maxLength": 128},
+          "consumer": {"type": "string", "maxLength": 128},
+          "attempts": {"type": "integer", "minimum": 1},
+          "error_code": {"type": "string", "maxLength": 64},
+          "first_failed_at": {"type": "string", "format": "date-time"},
+          "last_failed_at": {"type": "string", "format": "date-time"},
+          "replayed_at": {"type": ["string", "null"], "format": "date-time"},
+          "replayed_by": {"type": ["string", "null"], "maxLength": 128}
         }
       }
     }

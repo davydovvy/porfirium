@@ -115,6 +115,7 @@ Target-platform verification is independent of the deployed legacy runtime:
 ./scripts/target-phase9/verify.sh
 ./scripts/target-phase10/verify.sh
 ./scripts/target-phase11/verify.sh
+./scripts/target-phase12/verify-hardening.sh
 ```
 
 These gates require Docker with Compose and remove their isolated containers and volumes on exit.
@@ -130,6 +131,10 @@ message/checkpoint confirmation publication, order-independent completion conver
 cancellation, interruption after visible output, and safe pre-output recovery.
 Phase 10 verifies stable suspension identity, hidden partial saga state, commitment in either event
 order, one effective owner-authorized response, exact attempt teardown, and checkpoint-bound resume.
+The Phase 12 hardening gate verifies bounded delivery failure and dead-letter behavior, capacity
+policy, orphan reconciliation, Runtime protocol compatibility, trusted builder policy, and the
+additive Runner operator contract. It is a focused incremental gate, not the final Phase 12
+two-agent acceptance gate.
 
 Target Phase 7 requires `DELEGATION_SIGNING_SECRET` in addition to the target database and NATS
 secrets. Supply it through deployment secret management. Never place that secret or an issued
@@ -230,6 +235,20 @@ python3 scripts/target-phase11/live_smoke.py
 
 Runner consumes `porfirium.run.command.requested` and the completion handshake on durable
 JetStream consumers. A container exit is diagnostic only and must never mark a run completed.
+Set `RUNNER_CONSUMER_MAX_DELIVERIES`, `RUNNER_MAX_CONCURRENT_RUNS`, and
+`RUNNER_MAX_CONCURRENT_RUNS_PER_USER` to positive bounded values. Messages that exhaust delivery
+move to `porfirium.dlq.message`; the diagnostic contains identifiers and a stable error code, never
+the exception message or original payload.
+
+Configure deployment-managed `RUNNER_OPERATOR_TOKEN` and `RUNNER_DLQ_ENCRYPTION_KEY` secrets
+before using dead-letter operations. The encryption key must be a URL-safe base64-encoded 32-byte
+Fernet key and must be included in protected backup/restore procedures. List
+failures with `GET /v1/operations/dead-letters`. Replay with
+`POST /v1/operations/dead-letters/{id}:replay`, a bearer operator token, `X-Operator-ID`, and an
+`Idempotency-Key`. Replay republishes the exact stored JSON with its original event identity and
+records an immutable operator audit fact. Malformed non-JSON payloads cannot be replayed. Inspect
+the owning service state and correct the cause before replaying; never edit the stored payload.
+
 During incident recovery, inspect `run_completion`, `run_confirmations`, and `run_event_inbox`
 before replaying an event. Replays are safe with the original event ID. Do not edit a terminal run:
 the first valid terminal transition is authoritative.

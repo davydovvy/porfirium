@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 import asyncpg
 
 from agent_runner.capability import issue_run_capability
+from agent_runner.capacity import CapacityLimits, has_capacity
 from agent_runner.container import AttemptContainer, ContainerBackend
 from agent_runner.models import RunAdmission, RunResponse, SignedSpecification
 from agent_runner.outbox import enqueue
@@ -38,6 +39,7 @@ class RunnerService:
         runtime_url: str,
         attempt_timeout_seconds: int = 300,
         max_attempts: int = 3,
+        capacity: CapacityLimits | None = None,
     ) -> None:
         self.pool = pool
         self.backend = backend
@@ -45,6 +47,7 @@ class RunnerService:
         self.runtime_url = runtime_url
         self.attempt_timeout_seconds = attempt_timeout_seconds
         self.max_attempts = max_attempts
+        self.capacity = capacity or CapacityLimits()
 
     async def admit(
         self, admission: RunAdmission, idempotency_key: str, spec: SignedSpecification
@@ -104,6 +107,8 @@ class RunnerService:
             if row is None:
                 raise RunnerError("run_not_found")
             if row["state"] not in ("accepted", "scheduled") or row["active_attempt_id"]:
+                return None
+            if not await has_capacity(connection, row["user_id"], self.capacity):
                 return None
             epoch = row["lease_epoch"] + 1
             number = await connection.fetchval(
@@ -308,6 +313,18 @@ class RunnerService:
                 await self.backend.remove(row["container_id"], row["network_name"])
                 await self._handle_attempt_loss(row)
                 repaired += 1
+        managed = getattr(self.backend, "managed", None)
+        if managed is not None:
+            recorded = {
+                (str(row["container_id"]), row["network_name"])
+                for row in await self.pool.fetch(
+                    "SELECT container_id,network_name FROM attempts WHERE container_id IS NOT NULL"
+                )
+            }
+            for container_id, network_name in await managed():
+                if (container_id, network_name) not in recorded:
+                    await self.backend.remove(container_id, network_name)
+                    repaired += 1
         return repaired
 
     async def _handle_attempt_loss(self, attempt: Any) -> None:

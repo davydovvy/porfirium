@@ -28,6 +28,7 @@ class ContainerBackend(Protocol):
     async def remove(self, container_id: str | None, network_name: str) -> None: ...
     async def exists(self, container_id: str) -> bool: ...
     async def is_running(self, container_id: str) -> bool: ...
+    async def managed(self) -> list[tuple[str, str]]: ...
 
 
 class PodmanBackend:
@@ -88,6 +89,20 @@ class PodmanBackend:
     async def is_running(self, container_id: str) -> bool:
         value = await self._run("inspect", "--format", "{{.State.Running}}", container_id)
         return value == "true"
+
+    async def managed(self) -> list[tuple[str, str]]:
+        output = await self._run(
+            "ps", "--all", "--filter", "label=ai.porfirium.attempt-network",
+            "--format", '{{.ID}} {{.Label "ai.porfirium.attempt-network"}}',
+        )
+        managed: list[tuple[str, str]] = []
+        for line in output.splitlines():
+            container_id, separator, network = line.partition(" ")
+            if not separator:
+                continue
+            self._validate_network(network)
+            managed.append((container_id, network))
+        return managed
 
     async def _cleanup_network(self, network: str) -> None:
         await self._run(

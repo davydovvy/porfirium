@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hmac
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
@@ -13,7 +14,9 @@ import nats
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 
+from agent_runner.capacity import CapacityLimits
 from agent_runner.container import PodmanBackend
+from agent_runner.deadletter import replay
 from agent_runner.messaging import consume_admissions, consume_completion_events, publish_loop
 from agent_runner.models import RunAdmission, RunResponse
 from agent_runner.readiness import check_dependencies
@@ -73,6 +76,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         runtime_url=os.environ["AGENT_RUNTIME_URL"],
         attempt_timeout_seconds=int(os.environ.get("RUNNER_ATTEMPT_TIMEOUT_SECONDS", "300")),
         max_attempts=int(os.environ.get("RUNNER_MAX_ATTEMPTS", "3")),
+        capacity=CapacityLimits(
+            global_runs=int(os.environ.get("RUNNER_MAX_CONCURRENT_RUNS", "32")),
+            per_user_runs=int(os.environ.get("RUNNER_MAX_CONCURRENT_RUNS_PER_USER", "4")),
+        ),
     )
     app.state.verify_specification = lambda specification: verify_specification(
         specification, app.state.registry_public_keys
@@ -81,6 +88,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         os.environ["NATS_URL"], user=os.environ["NATS_USER"], password=os.environ["NATS_PASSWORD"]
     )
     jetstream = nats_client.jetstream()
+    app.state.jetstream = jetstream
+    max_deliveries = int(os.environ.get("RUNNER_CONSUMER_MAX_DELIVERIES", "5"))
     completion_subscription = await jetstream.subscribe(
         "porfirium.run.event.*", durable="agent-runner-completion-v1", manual_ack=True
     )
@@ -97,9 +106,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     scheduler = asyncio.create_task(_scheduler(app))
     messaging_tasks = [
         asyncio.create_task(publish_loop(pool, jetstream)),
-        asyncio.create_task(consume_completion_events(app.state.runner, completion_subscription)),
-        asyncio.create_task(consume_completion_events(app.state.runner, message_subscription)),
-        asyncio.create_task(consume_admissions(app, admission_subscription)),
+        asyncio.create_task(consume_completion_events(
+            app.state.runner, completion_subscription, jetstream, max_deliveries=max_deliveries
+        )),
+        asyncio.create_task(consume_completion_events(
+            app.state.runner, message_subscription, jetstream, max_deliveries=max_deliveries
+        )),
+        asyncio.create_task(consume_admissions(
+            app, admission_subscription, jetstream, max_deliveries=max_deliveries
+        )),
     ]
     try:
         yield
@@ -127,7 +142,8 @@ def health_response() -> HealthResponse:
 @app.exception_handler(RunnerError)
 async def runner_error_handler(request: Request, error: RunnerError) -> JSONResponse:
     statuses = {"run_not_found": 404, "idempotency_conflict": 409, "run_conflict": 409,
-                "specification_invalid": 422, "specification_expired": 422}
+                "specification_invalid": 422, "specification_expired": 422,
+                "operator_forbidden": 403, "operator_auth_unavailable": 503}
     status = statuses.get(error.code, 500)
     return JSONResponse(
         {"type": f"urn:porfirium:problem:{error.code}", "title": error.code.replace("_", " "),
@@ -177,3 +193,44 @@ async def cancel_run(
     idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=8, max_length=128)],
 ) -> RunResponse:
     return await request.app.state.runner.cancel(run_id, idempotency_key)
+
+
+@app.get("/v1/operations/dead-letters")
+async def list_dead_letters(
+    request: Request,
+    authorization: Annotated[str, Header(alias="Authorization")],
+) -> list[dict[str, object]]:
+    _require_operator(authorization)
+    rows = await request.app.state.pool.fetch(
+        "SELECT dead_letter_id,original_event_id,original_subject,original_type,consumer,"
+        "attempts,error_code,first_failed_at,last_failed_at,replayed_at,replayed_by "
+        "FROM runner_dead_letters ORDER BY last_failed_at DESC LIMIT 100"
+    )
+    return [dict(row) for row in rows]
+
+
+@app.post("/v1/operations/dead-letters/{dead_letter_id}:replay", status_code=202)
+async def replay_dead_letter(
+    dead_letter_id: UUID,
+    request: Request,
+    authorization: Annotated[str, Header(alias="Authorization")],
+    operator_id: Annotated[str, Header(alias="X-Operator-ID", min_length=1, max_length=128)],
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=8, max_length=128)],
+) -> dict[str, object]:
+    _require_operator(authorization)
+    del idempotency_key  # The dead-letter row is the durable idempotency boundary.
+    replayed = await replay(
+        request.app.state.pool, request.app.state.jetstream, dead_letter_id, operator_id
+    )
+    if not replayed:
+        return JSONResponse({"detail": "dead letter not found"}, status_code=404)
+    return {"dead_letter_id": dead_letter_id, "state": "replayed"}
+
+
+def _require_operator(authorization: str) -> None:
+    expected = os.environ.get("RUNNER_OPERATOR_TOKEN")
+    supplied = authorization.removeprefix("Bearer ") if authorization.startswith("Bearer ") else ""
+    if not expected:
+        raise RunnerError("operator_auth_unavailable")
+    if not hmac.compare_digest(supplied, expected):
+        raise RunnerError("operator_forbidden")

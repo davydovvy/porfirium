@@ -23,7 +23,7 @@
     "fixtures/http/problem-v1.json": "b1a1200afa1febd59b79bf93b87b84c7c7aa1ac1f81057ba878f92fad6e811ba",
     "http/problem-v1.schema.json": "5d466caa6fdd9a14d0b5e67d8c2cd9045b07717a91e9149ce8c4a10fd2c4d947",
     "openapi/agent-registry-v1.json": "ea05017fc31b111991e388f2eb4139acd541646af4f82d4c179875ef63b3e2a1",
-    "openapi/agent-runner-v1.json": "91e03969ed3b42494ea541e43b3b1cf7ef6a2e6c311af214aec0f77c9c209a1f",
+    "openapi/agent-runner-v1.json": "87c021babf044e06d94f047ae0120572e1231f3dc828420707df61f8cb18acee",
     "openapi/checkpoint-api-v1.json": "e49aa0e4d5db12265347c09c88b276d91b65b899ec8bc7446bfa30cd10641b6f",
     "openapi/configuration-service-v1.json": "44b5613a3422052f4ad36b7d9177ff14a4896fa5c4722b03c76b3cb29e73388f",
     "openapi/conversation-service-v1.json": "f837748fb8c938c3934c4992d97b2d10c177ca782975353e721d12e1d718c0ed",

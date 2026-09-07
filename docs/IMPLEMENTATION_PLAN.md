@@ -288,6 +288,15 @@ Extend the bounded attempt retry policy with dead-letter operations and safe rep
 controls, Runner reconciliation, retention, malformed-input tests, protocol compatibility,
 supply-chain enforcement, backup/restore exercises, and full trace correlation.
 
+Implementation status: in progress. Runner consumers now stop after a deployment-bounded delivery
+count, persist bounded dead-letter records, publish credential-free diagnostics, and expose an
+operator-authenticated, idempotent replay path with durable audit. Scheduling enforces global and
+per-user active-run ceilings. Reconciliation removes both missing recorded attempts and unknown
+Porfirium-labeled containers/networks. Runtime accepts only the explicit current/adjacent-minor
+protocol window, and Registry can require signed provenance from a deployment allowlist of builder
+identities. `./scripts/target-phase12/verify-hardening.sh` is the focused gate for this first
+hardening slice; it is not the final Phase 12 acceptance gate.
+
 Exit gate: the acceptance baseline in `SPECIFICATION.md` passes with two independently packaged
 agents, including restart, duplicate delivery, cancellation, authorization, malformed input, and
 isolation tests.

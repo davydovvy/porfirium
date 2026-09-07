@@ -42,7 +42,10 @@ The repository still runs the previous Portal API and Temporal worker. The targe
 has completed Phases 0–11: contracts and feasibility, service infrastructure, Registry, Checkpoint
 API and SDK, Runtime API and message SDK, isolated Runner, configuration and delegation, durable
 conversations, end-to-end run completion, container-free human-input suspension, and the Portal
-BFF/web migration. The legacy runtime remains available until the planned production cutover.
+BFF/web migration. Phase 12 hardening is in progress: its first slice adds bounded consumer
+failure handling, dead-letter inspection and replay, capacity enforcement, orphan cleanup, an
+adjacent-minor Runtime compatibility window, and trusted-builder provenance policy. The legacy
+runtime remains available until target acceptance and the planned production cutover.
 
 The authoritative documents are:
 
@@ -79,6 +82,7 @@ Focused commands:
 ./scripts/target-phase9/verify.sh
 ./scripts/target-phase10/verify.sh
 ./scripts/target-phase11/verify.sh
+./scripts/target-phase12/verify-hardening.sh
 ./scripts/target-runner/verify.sh
 ./scripts/target-model-only/verify.sh
 python3 scripts/target-keycloak/configure.py

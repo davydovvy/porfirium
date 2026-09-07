@@ -38,7 +38,8 @@ def signed_release() -> tuple[object, Ed25519PrivateKey]:
 
 
 def verifier_for(
-    private_key: Ed25519PrivateKey, *, observed_digest: str = DIGEST
+    private_key: Ed25519PrivateKey, *, observed_digest: str = DIGEST,
+    allowed_builders: frozenset[str] = frozenset(),
 ) -> EvidenceVerifier:
     def registry(request: httpx.Request) -> httpx.Response:
         assert request.url.path == f"/v2/example-agent/manifests/{DIGEST}"
@@ -49,6 +50,7 @@ def verifier_for(
         registry_url="http://registry:5000",
         registry_host="registry.local",
         publication_keys={"ci-key": private_key.public_key()},
+        allowed_builders=allowed_builders,
     )
 
 
@@ -76,6 +78,19 @@ def test_rejects_signature_from_another_key() -> None:
         asyncio.run(verifier_for(Ed25519PrivateKey.generate()).verify(release))  # type: ignore[arg-type]
 
     assert error.value.code == "signature_invalid"
+
+
+def test_rejects_provenance_from_untrusted_builder() -> None:
+    release, private_key = signed_release()
+
+    with pytest.raises(RegistryProblem) as error:
+        asyncio.run(
+            verifier_for(private_key, allowed_builders=frozenset({"trusted.example"})).verify(
+                release  # type: ignore[arg-type]
+            )
+        )
+
+    assert error.value.code == "builder_untrusted"
 
 
 def test_loads_base64_encoded_public_keys() -> None:
