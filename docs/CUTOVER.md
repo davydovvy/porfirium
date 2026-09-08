@@ -11,7 +11,7 @@ freeze, traffic switch, or retirement has been performed.
 | --- | --- | --- |
 | Agent selection | Legacy agent ID, target release ID/digest, owner, grants, models/tools | Pending owner selection; model-only 1.0.1 and planning-assistant 1.1.1 are acceptance packages |
 | Identity mapping | Keycloak realm, stable subject IDs, roles and target access grants | Two distinct test users verified; full user/role inventory pending |
-| Traffic switch | Public endpoint, routing component, exact change and reversal | Pending deployment-specific routing inventory |
+| Traffic switch | Public endpoint, routing component, exact change and reversal | Legacy local endpoint is `https://portal.local:8444`; target BFF is exposed on `127.0.0.1:18100`, but the target portal deployment and final routing change are pending |
 | Maintenance window | Operator, approver, freeze time and drain deadline | Pending scheduling |
 | Rollback window | Duration, rollback owner, health criteria and retention deadline | Pending agreement |
 | Backup location | Protected storage, encryption/key custody and restore evidence | Pending actual legacy backup; disposable target restore gate is separate evidence |
@@ -19,11 +19,34 @@ freeze, traffic switch, or retirement has been performed.
 Keep credentials, provider payloads and production data out of this document and Git. Record only
 identifiers and protected evidence locations.
 
+## Local rehearsal inventory on 2026-09-08
+
+This workstation is a target acceptance environment, not a source for the actual legacy cutover.
+The `genai-platform` Docker project currently runs Agentgateway, the three MCP servers, and the
+Langfuse services. Its legacy `portal`, `portal-api`, `agent-worker`, `temporal`, `temporal-ui`, and
+`application-postgres` containers are absent. The expected
+`genai-platform_application_postgres_data` volume is also absent, so there is no local legacy
+application or Temporal database to back up or drain.
+
+The legacy Compose definition would publish the Caddy portal at `127.0.0.1:8444`, Temporal at
+`127.0.0.1:7233`, and Temporal UI at `127.0.0.1:8080`. The portal Caddy configuration currently
+proxies `/api/*` and `/health/*` to the legacy `portal-api:8000` service. The React application uses
+the target `/api/v1` routes, but the target Compose topology currently exposes only Portal BFF at
+`127.0.0.1:18100`; it does not define a portal frontend. Phase 13 must add and verify the target
+portal deployment or identify an external proxy that serves the built frontend and routes those
+paths to Portal BFF.
+
+The rootless target control plane is healthy and has passed Phase 12 acceptance. Shared
+Agentgateway, MCP, Keycloak, and observability services must remain outside the legacy retirement
+set unless the deployment owner explicitly assigns replacements. Inventory must be repeated on the
+host that actually contains legacy application and Temporal state before any freeze begins.
+
 ## Preparation sequence
 
 1. Inventory the active legacy Compose deployment, Portal API, worker, Temporal namespace,
    databases, artifact storage and Keycloak dependencies. Identify the actual traffic-routing
    configuration and capture a reversible configuration change before scheduling maintenance.
+   The local inventory above is insufficient for this gate because its legacy state is absent.
 2. Select agents with their owners. Map each to a signed target release and digest, configuration,
    model aliases, tool grants, and eligible users. The two acceptance packages do not by themselves
    establish that every legacy agent has a replacement.
