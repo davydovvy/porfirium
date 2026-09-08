@@ -92,6 +92,46 @@ async def test_gateway_rejects_oversized_output() -> None:
 
 
 @pytest.mark.asyncio
+async def test_gateway_retries_transient_and_empty_responses() -> None:
+    calls = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return httpx.Response(503)
+        if calls == 2:
+            return httpx.Response(200, json={"status": "incomplete", "output_text": ""})
+        return httpx.Response(200, json={"status": "completed", "output_text": "hello"})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        result = await ModelGateway(client, "http://gateway").respond(
+            model="default", prompt="hi", max_output_tokens=32, metadata={}
+        )
+
+    assert calls == 3
+    assert result.content == "hello"
+
+
+@pytest.mark.asyncio
+async def test_gateway_does_not_retry_non_transient_client_error() -> None:
+    calls = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(400)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(ModelGatewayError):
+            await ModelGateway(client, "http://gateway").respond(
+                model="default", prompt="hi", max_output_tokens=32, metadata={}
+            )
+
+    assert calls == 1
+
+
+@pytest.mark.asyncio
 async def test_runtime_denies_tool_outside_signed_grant() -> None:
     service = RuntimeService(SimpleNamespace(), tool_gateway=SimpleNamespace())
     capability = SimpleNamespace(tools=("time.current",))

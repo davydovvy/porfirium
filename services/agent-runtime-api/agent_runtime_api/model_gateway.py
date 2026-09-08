@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any
 
 import httpx
+
+logger = logging.getLogger("uvicorn.error")
 
 
 class ModelGatewayError(RuntimeError):
@@ -18,6 +21,8 @@ class ModelResponse:
 
 
 class ModelGateway:
+    _MAX_ATTEMPTS = 3
+
     def __init__(self, client: httpx.AsyncClient, base_url: str) -> None:
         self.client = client
         self.base_url = base_url.rstrip("/")
@@ -30,35 +35,62 @@ class ModelGateway:
         max_output_tokens: int,
         metadata: dict[str, str],
     ) -> ModelResponse:
-        try:
-            response = await self.client.post(
-                f"{self.base_url}/v1/responses",
-                json={
-                    "model": model,
-                    "input": prompt,
-                    "max_output_tokens": max_output_tokens,
-                    "metadata": metadata,
-                },
-            )
-            response.raise_for_status()
-            payload = response.json()
-            content = _output_text(payload)
-            details = payload.get("response", payload)
-            usage = details.get("usage", {}) if isinstance(details, dict) else {}
-            finish_reason = (
-                str(details.get("status", "completed"))
-                if isinstance(details, dict) else "completed"
-            )
-        except (httpx.HTTPError, TypeError, ValueError) as error:
-            raise ModelGatewayError("model gateway request failed") from error
-        if (
-            not content
-            or len(content.encode()) > 12 * 1024
-            or not isinstance(usage, dict)
-            or len(str(usage).encode()) > 2048
-        ):
-            raise ModelGatewayError("model gateway response is invalid")
-        return ModelResponse(content, finish_reason, usage)
+        request = {
+            "model": model,
+            "input": prompt,
+            "max_output_tokens": max_output_tokens,
+            "metadata": metadata,
+        }
+        last_error: Exception | None = None
+        for attempt in range(self._MAX_ATTEMPTS):
+            try:
+                response = await self.client.post(
+                    f"{self.base_url}/v1/responses", json=request
+                )
+                response.raise_for_status()
+                payload = response.json()
+                content = _output_text(payload)
+                if not content:
+                    raise ValueError("response contains empty output text")
+                details = payload.get("response", payload)
+                usage = details.get("usage", {}) if isinstance(details, dict) else {}
+                finish_reason = (
+                    str(details.get("status", "completed"))
+                    if isinstance(details, dict)
+                    else "completed"
+                )
+            except httpx.HTTPStatusError as error:
+                status_code = error.response.status_code
+                logger.warning(
+                    "model gateway attempt failed: attempt=%d error_type=%s status_code=%d",
+                    attempt + 1,
+                    type(error).__name__,
+                    status_code,
+                )
+                if status_code not in {408, 429} and status_code < 500:
+                    raise ModelGatewayError("model gateway request failed") from error
+                last_error = error
+            except (httpx.RequestError, TypeError, ValueError) as error:
+                logger.warning(
+                    "model gateway attempt failed: attempt=%d error_type=%s",
+                    attempt + 1,
+                    type(error).__name__,
+                )
+                last_error = error
+            else:
+                if (
+                    len(content.encode()) > 12 * 1024
+                    or not isinstance(usage, dict)
+                    or len(str(usage).encode()) > 2048
+                ):
+                    logger.warning("model gateway response exceeded bounds")
+                    raise ModelGatewayError("model gateway response is invalid")
+                return ModelResponse(content, finish_reason, usage)
+
+            if attempt == self._MAX_ATTEMPTS - 1:
+                break
+
+        raise ModelGatewayError("model gateway request failed") from last_error
 
 
 def _output_text(payload: Any) -> str:

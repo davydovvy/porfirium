@@ -28,6 +28,7 @@ services:
     container_name: porfirium-agent-runtime-api
     environment:
       MODEL_GATEWAY_URL: http://${TARGET_HOST_BRIDGE:-10.255.0.1}:8089
+      MCP_GATEWAY_URL: http://${TARGET_HOST_BRIDGE:-10.255.0.1}:8089
     extra_hosts:
       - "host.containers.internal:host-gateway"
 

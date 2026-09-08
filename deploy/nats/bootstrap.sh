@@ -11,7 +11,7 @@ ensure_stream() {
     stream info "$name" >/dev/null 2>&1; then
     nats --server "$NATS_URL" --user "$NATS_USER" --password "$NATS_PASSWORD" \
       stream edit "$name" --subjects "$subjects" \
-      --retention "$retention" --max-age "$max_age" --defaults --force >/dev/null
+      --max-age "$max_age" --force >/dev/null
   else
     nats --server "$NATS_URL" --user "$NATS_USER" --password "$NATS_PASSWORD" \
       stream add "$name" --subjects "$subjects" \

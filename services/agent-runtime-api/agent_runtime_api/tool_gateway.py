@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 from uuid import UUID
 
@@ -10,6 +11,7 @@ from agent_runtime_api.auth import RunCapability
 from agent_runtime_api.runtime import ToolExecution
 
 MAX_GATEWAY_RESPONSE_BYTES = 16 * 1024
+logger = logging.getLogger("uvicorn.error")
 
 
 class ToolGatewayError(ValueError):
@@ -37,6 +39,7 @@ class McpToolGateway:
     ) -> ToolExecution:
         if capability.delegation_grant_id is None or capability.release_id is None:
             raise ToolGatewayError("tool_delegation_unavailable")
+        stage = "delegation_exchange"
         try:
             token_response = await self.client.post(
                 f"{self.delegation_url}/v1/delegation-grants/"
@@ -58,6 +61,7 @@ class McpToolGateway:
             access_token = token_payload["access_token"]
             if not isinstance(access_token, str) or not access_token:
                 raise ValueError
+            stage = "mcp_call"
             response = await self.client.post(
                 f"{self.mcp_url}/mcp",
                 headers={
@@ -78,7 +82,16 @@ class McpToolGateway:
             payload = _mcp_payload(response)
         except ToolGatewayError:
             raise
-        except (httpx.HTTPError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        except (httpx.HTTPError, KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+            status_code = (
+                error.response.status_code if isinstance(error, httpx.HTTPStatusError) else None
+            )
+            logger.warning(
+                "tool gateway request failed: stage=%s error_type=%s status_code=%s",
+                stage,
+                type(error).__name__,
+                status_code,
+            )
             raise ToolGatewayError("tool_gateway_failed") from None
         if payload.get("error") is not None:
             return ToolExecution(payload["error"], is_error=True)

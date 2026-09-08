@@ -170,6 +170,10 @@ export TEST_OTHER_PASSWORD=...
 ./scripts/target-phase12/acceptance.sh
 ```
 
+For a local workstation, keep these values in a mode-0600 `.env.phase12.local` file and load it
+with `set -a; source .env.phase12.local; set +a`. The file is ignored by Git. Keep provider keys in
+the ignored root `.env`; never copy either file into documentation, commits, or diagnostic output.
+
 Before publication or any acceptance mutations, run the same command with
 `PHASE12_PREFLIGHT_ONLY=true`. Preflight obtains both user tokens, requires distinct subjects,
 performs the user-to-Registry token exchange, checks Registry and the complete Portal BFF dependency
@@ -264,9 +268,11 @@ capability secret must be supplied through the deployment secret mechanism, neve
 
 For the target rootless topology, use `deploy/compose/rootless-host-runner.yaml` as an override and
 scale the Compose `agent-runner` service to zero. The override publishes PostgreSQL, NATS, and Agent
-Registry only on loopback, pins Runtime to `porfirium-agent-runtime-api`, and directs Portal BFF to
-the host Runner through `host.containers.internal`. Start Runner as the same unprivileged user that
-owns the rootless Podman control plane:
+Registry only on loopback, pins Runtime to `porfirium-agent-runtime-api`, directs Portal BFF to the
+host Runner, and routes both model and MCP traffic from Runtime through Agentgateway on the
+rootless host bridge. Set `TARGET_HOST_BRIDGE` and `TARGET_RUNNER_HOST` when the bridge is not
+`10.255.0.1`. Agentgateway must bind that same bridge address rather than loopback alone. Start
+Runner as the same unprivileged user that owns the rootless Podman control plane:
 
 ```bash
 podman compose --profile target \
@@ -393,6 +399,13 @@ OCI, isolation, or Runtime routing failure. Restore DNS/egress, then run:
 ```bash
 python3 scripts/target-phase11/live_smoke.py
 ```
+
+Runtime retries a model request at most three times for transport failures, HTTP 408/429/5xx, and
+responses without output text. Other 4xx responses and responses exceeding Runtime bounds fail
+closed without retry. Runtime logs only the failure stage, exception class, and HTTP status; it
+does not log prompts, model output, delegated tokens, or provider response bodies. If Phase 12
+reports `attempt_retry_exhausted`, correlate the run identifier with these sanitized Runtime logs
+and Agentgateway request status before retrying the live gate.
 
 Runner consumes `porfirium.run.command.requested` and the completion handshake on durable
 JetStream consumers. A container exit is diagnostic only and must never mark a run completed.

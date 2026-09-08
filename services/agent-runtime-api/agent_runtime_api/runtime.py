@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 from dataclasses import dataclass
@@ -18,6 +19,8 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from agent_runtime_api.auth import CapabilityError, RunCapability, decode_capability
 from agent_runtime_api.model_gateway import ModelGateway, ModelGatewayError
 from agent_runtime_api.proto import runtime_pb2 as pb
+
+logger = logging.getLogger("uvicorn.error")
 
 MAX_FRAME_BYTES = 16 * 1024
 MAX_IN_FLIGHT_FRAMES = 32
@@ -221,10 +224,23 @@ class RuntimeService:
                 event_id = await self._accept(capability, frame)
             except (ModelGatewayError, ValueError) as exc:
                 code = str(exc)
+                logger.warning(
+                    "runtime rejected agent frame: kind=%s code=%s error_type=%s",
+                    kind,
+                    code,
+                    type(exc).__name__,
+                )
                 yield _error(identity, code, code.replace("_", " ").capitalize())
                 if code in {"stale_epoch", "identity_mismatch"}:
                     return
                 continue
+            except Exception as exc:
+                logger.exception(
+                    "runtime frame processing failed: kind=%s error_type=%s",
+                    kind,
+                    type(exc).__name__,
+                )
+                raise
             if model_result is not None:
                 usage = Struct()
                 usage.update(model_result.usage)

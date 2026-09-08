@@ -92,6 +92,18 @@ test "$ack_permission_count" = 4 || {
   exit 1
 }
 
+runner_config=$(sed -n '/user: agent_runner/,/^    }/p' "$nats_config")
+grep -q '"porfirium.conversation.event.message_interrupted"' <<<"$runner_config" || {
+  echo "Runner cannot publish its message interruption lifecycle event" >&2
+  exit 1
+}
+
+if sed -n '/stream edit/,/force/p' "$repo_dir/deploy/nats/bootstrap.sh" | \
+  grep -Eq -- '--retention|--defaults'; then
+  echo "NATS stream edit uses unsupported non-interactive flag" >&2
+  exit 1
+fi
+
 for stream in RUN_COMMANDS RUN_EVENTS CONVERSATION_EVENTS MESSAGE_DELTAS USER_INPUT AUDIT_EVENTS DEAD_LETTERS; do
   grep -q "ensure_stream $stream " "$repo_dir/deploy/nats/bootstrap.sh" || {
     echo "missing JetStream declaration: $stream" >&2

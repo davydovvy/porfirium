@@ -114,13 +114,32 @@ def test_rejects_untrusted_network_identity_before_running_podman(monkeypatch) -
 
 
 def test_running_state_requires_an_actively_running_container(monkeypatch) -> None:
+    async def fake_exists(self, container_id: str) -> bool:
+        assert container_id == "container-id"
+        return True
+
     async def fake_run(self, *arguments: str, check: bool = True) -> str:
         assert arguments == ("inspect", "--format", "{{.State.Running}}", "container-id")
         return "false"
 
+    monkeypatch.setattr(PodmanBackend, "exists", fake_exists)
     monkeypatch.setattr(PodmanBackend, "_run", fake_run)
 
     assert asyncio.run(PodmanBackend().is_running("container-id")) is False
+
+
+def test_missing_container_is_not_running(monkeypatch) -> None:
+    async def fake_exists(self, container_id: str) -> bool:
+        assert container_id == "missing-container-id"
+        return False
+
+    async def unexpected_run(self, *arguments: str, check: bool = True) -> str:
+        pytest.fail("missing containers must not be inspected")
+
+    monkeypatch.setattr(PodmanBackend, "exists", fake_exists)
+    monkeypatch.setattr(PodmanBackend, "_run", unexpected_run)
+
+    assert asyncio.run(PodmanBackend().is_running("missing-container-id")) is False
 
 
 def test_managed_lists_only_valid_labeled_attempt_containers(monkeypatch) -> None:

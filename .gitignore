@@ -1,5 +1,7 @@
 .env
 .env.*
+# Local credentials for the Phase 12 live-acceptance environment.
+/.env.phase12.local
 .secrets/
 .phase0/
 .phase1/

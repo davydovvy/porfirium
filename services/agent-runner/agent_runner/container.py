@@ -87,6 +87,8 @@ class PodmanBackend:
         return await process.wait() == 0
 
     async def is_running(self, container_id: str) -> bool:
+        if not await self.exists(container_id):
+            return False
         value = await self._run("inspect", "--format", "{{.State.Running}}", container_id)
         return value == "true"
 
