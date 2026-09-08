@@ -305,23 +305,20 @@ PHASE12_INCLUDE_RECOVERY=true PHASE12_INCLUDE_LIVE=true PHASE12_PUBLISH_AGENTS=f
 
 Actual result: exit 0, `PASS: complete Phase 12 acceptance baseline`. The NATS permission
 regression also passed with `./scripts/target-phase2/verify-nats.sh`. These results validate the
-local acceptance deployment; actual legacy backup, traffic switching, and retirement belong to
-Phase 13. Operator procedures, rollout and rollback remain in `OPERATIONS.md`.
+local acceptance deployment; portal switching and legacy retirement belong to Phase 13. Operator
+procedures, rollout and rollback remain in `OPERATIONS.md`.
 
-## Phase 13 — Offline migration and cutover
+## Phase 13 — Portal cutover and legacy retirement
 
-Implementation status: preparation started. [Cutover preparation](CUTOVER.md) records execution
-gates and the remaining deployment-specific decisions. No legacy freeze or traffic switch has
-been performed.
+Implementation status: plan accepted; implementation pending. [Portal cutover plan](CUTOVER.md)
+defines the work and exit gate.
 
-Freeze legacy authoring and new conversations, drain active Temporal workflows, and back up all
-legacy state. Rebuild the agents selected for continued use as new signed OCI releases and publish
-them through the target Registry. Preserve Keycloak identities, but do not import legacy
-conversations, messages, runs, checkpoints, or Temporal history. After cutover, every conversation
-starts fresh against a target release.
+Reuse the existing React portal with Portal BFF while preserving the current Keycloak login. Do
+not migrate or back up legacy agents, conversations, messages, runs, checkpoints, application data,
+or Temporal history. New conversations start in the target platform with its signed releases.
 
-Switch the BFF after identity, release, ownership, and digest reconciliation. Keep the frozen legacy
-stack and Temporal state read-only during the rollback window only for operational rollback; it is
-not exposed as history by the target portal. Rollback switches traffic to that frozen stack; it
-does not reverse-sync target writes. Retire Temporal only after target acceptance and
-backup/restore tests pass.
+First make the portal backend upstream configurable and deploy it with the target Compose topology
+on a rehearsal port. Verify the browser flows and complete Phase 12 gate, then move the target
+portal to `https://portal.local:8444`. The legacy Portal API, worker, Temporal services, and
+application database remain stopped and can be removed after public-origin acceptance. Rollback
+uses the previous accepted target portal image and configuration; it does not restore legacy data.

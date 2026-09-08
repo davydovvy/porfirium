@@ -1,83 +1,67 @@
-# Offline cutover preparation
+# Portal cutover plan
 
-Phase 13 moves new conversations to the target platform. Preserve Keycloak identities and publish
-selected agents as signed, digest-pinned target releases. Do not import legacy conversations,
-messages, runs, checkpoints, or Temporal history. This document prepares the operation; no legacy
-freeze, traffic switch, or retirement has been performed.
+Phase 13 reuses the existing React portal with the target platform. Legacy agents, conversations,
+messages, runs, checkpoints, application data, and Temporal history will not be migrated or backed
+up. Users start with an empty target conversation list and only the releases already published in
+the target Registry. Keycloak remains the identity provider.
 
-## Decisions to record before execution
+The public portal remains `https://portal.local:8444`. The cutover replaces its backend route from
+legacy `portal-api:8000` to target `portal-bff:8100`. Shared Keycloak, Agentgateway, MCP, and
+observability services remain in service.
 
-| Decision | Required record | Current state |
-| --- | --- | --- |
-| Agent selection | Legacy agent ID, target release ID/digest, owner, grants, models/tools | Pending owner selection; model-only 1.0.1 and planning-assistant 1.1.1 are acceptance packages |
-| Identity mapping | Keycloak realm, stable subject IDs, roles and target access grants | Two distinct test users verified; full user/role inventory pending |
-| Traffic switch | Public endpoint, routing component, exact change and reversal | Legacy local endpoint is `https://portal.local:8444`; target BFF is exposed on `127.0.0.1:18100`, but the target portal deployment and final routing change are pending |
-| Maintenance window | Operator, approver, freeze time and drain deadline | Pending scheduling |
-| Rollback window | Duration, rollback owner, health criteria and retention deadline | Pending agreement |
-| Backup location | Protected storage, encryption/key custody and restore evidence | Pending actual legacy backup; disposable target restore gate is separate evidence |
+## Current state
 
-Keep credentials, provider payloads and production data out of this document and Git. Record only
-identifiers and protected evidence locations.
+- The React application already uses the target `/api/v1` endpoints and passed Phase 12 component
+  and live acceptance.
+- Its Caddy image still hard-codes `portal-api:8000` for `/api/*` and `/health/*`.
+- The target Compose topology exposes Portal BFF on `127.0.0.1:18100` for testing, but does not run
+  the portal frontend.
+- The legacy Portal, Portal API, worker, Temporal, and application PostgreSQL services and the
+  legacy application volume are absent from this workstation. Nothing from them is required for
+  this cutover.
+- Signed `model-only` 1.0.1 and `planning-assistant` 1.1.1 releases are published and passed the
+  complete Phase 12 live matrix.
 
-## Local rehearsal inventory on 2026-09-08
+## Implementation sequence
 
-This workstation is a target acceptance environment, not a source for the actual legacy cutover.
-The `genai-platform` Docker project currently runs Agentgateway, the three MCP servers, and the
-Langfuse services. Its legacy `portal`, `portal-api`, `agent-worker`, `temporal`, `temporal-ui`, and
-`application-postgres` containers are absent. The expected
-`genai-platform_application_postgres_data` volume is also absent, so there is no local legacy
-application or Temporal database to back up or drain.
+1. Make the portal image's API upstream configurable at deployment time. Keep the legacy Compose
+   default as `portal-api:8000`, and configure the target deployment as `portal-bff:8100`. Keep API
+   requests same-origin so browser tokens remain at the Portal BFF boundary.
+2. Add the existing portal image to the target Compose topology on a rehearsal port such as
+   `18444`. Give it only the target network connection needed to reach Portal BFF. Preserve the
+   existing TLS, security headers, SPA fallback, and Keycloak browser client settings.
+3. Add a target portal verification script. It must validate the rendered Compose configuration,
+   Caddy routing, frontend lint/tests/build, Portal BFF readiness through the portal origin, and the
+   absence of any dependency on Portal API, Temporal, or the legacy application database.
+4. Run browser-level acceptance through the rehearsal portal origin. Verify login/logout, identity,
+   empty conversation state for a fresh user, agent selection, message streaming, cancellation,
+   delegated time-tool output, authorization boundaries, and agent publication controls.
+5. Run the complete Phase 12 gate again against the same target services used by the portal. The
+   two agents must still reach durable Runner completion with the expected tool records.
+6. Switch the public portal by stopping the old portal container and starting the verified target
+   portal on `127.0.0.1:8444`. Do not start Portal API, agent-worker, Temporal, Temporal UI, or the
+   legacy application database.
+7. Repeat portal health, authentication, fresh conversation, streaming, cancellation, and both
+   agent checks through `https://portal.local:8444`.
+8. Remove legacy service definitions and code only after the public portal checks pass. This
+   cleanup may delete legacy application and Temporal storage because the user has explicitly
+   waived migration, backup, and history retention.
 
-The legacy Compose definition would publish the Caddy portal at `127.0.0.1:8444`, Temporal at
-`127.0.0.1:7233`, and Temporal UI at `127.0.0.1:8080`. The portal Caddy configuration currently
-proxies `/api/*` and `/health/*` to the legacy `portal-api:8000` service. The React application uses
-the target `/api/v1` routes, but the target Compose topology currently exposes only Portal BFF at
-`127.0.0.1:18100`; it does not define a portal frontend. Phase 13 must add and verify the target
-portal deployment or identify an external proxy that serves the built frontend and routes those
-paths to Portal BFF.
+## Rollback
 
-The rootless target control plane is healthy and has passed Phase 12 acceptance. Shared
-Agentgateway, MCP, Keycloak, and observability services must remain outside the legacy retirement
-set unless the deployment owner explicitly assigns replacements. Inventory must be repeated on the
-host that actually contains legacy application and Temporal state before any freeze begins.
+Rollback restores the last accepted target portal image and target Caddy configuration. It does
+not restore the legacy platform or its data. Keep the previous accepted target portal image digest
+and Compose configuration until the new portal has passed the public-origin checks. Target service
+data remains authoritative throughout rollback.
 
-## Preparation sequence
+## Exit gate
 
-1. Inventory the active legacy Compose deployment, Portal API, worker, Temporal namespace,
-   databases, artifact storage and Keycloak dependencies. Identify the actual traffic-routing
-   configuration and capture a reversible configuration change before scheduling maintenance.
-   The local inventory above is insufficient for this gate because its legacy state is absent.
-2. Select agents with their owners. Map each to a signed target release and digest, configuration,
-   model aliases, tool grants, and eligible users. The two acceptance packages do not by themselves
-   establish that every legacy agent has a replacement.
-3. Reconcile identity and ownership using stable Keycloak subjects. Verify target release visibility
-   and run access for allowed users, and hidden resources for unauthorized users.
-4. Rehearse backups and restores in an isolated environment. The target backup procedure is in
-   [Operations](OPERATIONS.md#target-backup-and-restore). Capture actual legacy database, artifact,
-   Temporal and protected-key backups as well; the disposable Phase 12 restore is not a legacy
-   backup. Confirm the retained legacy stack can be recovered independently of target writes.
-5. Prepare exact freeze, drain, switch and rollback commands for the inventoried deployment.
-   Review them before execution. Confirm stopping new admissions does not prevent active workflows
-   from draining, and define handling for runs that exceed the drain deadline.
+Phase 13 is complete when `https://portal.local:8444` serves the existing React portal through
+Portal BFF, all portal and Phase 12 checks pass, no portal route or dependency refers to Portal API
+or Temporal, and the legacy runtime can remain stopped or be removed without affecting the target
+platform.
 
-## Execution gates
-
-- Before freezing: selected replacements, ownership mapping, routing reversal and maintenance
-  responsibilities are recorded; baseline tests pass against the intended deployment.
-- Before switching: legacy authoring and new conversations are frozen, active Temporal workflows
-  are drained, actual backups are verified, and target signed releases and grants are reconciled.
-- After switching: start fresh target conversations and run the full acceptance gate with both
-  live and recovery checks enabled. Verify durable Runner completion, message/checkpoint
-  confirmations, delegated tool execution, isolation and authorization. Target UI must not expose
-  legacy history.
-- During the rollback window: retain legacy databases and Temporal history read-only. A rollback
-  routes traffic to the retained legacy stack under the agreed admission policy; target writes
-  remain separate and are not reverse-synchronized. Preserve target state for investigation.
-- Before retirement: the rollback window has ended, target acceptance and backup/restore evidence
-  remain valid, and the owner authorizes retirement. Only then remove Temporal and legacy runtime
-  infrastructure.
-
-## Remaining follow-up
+## Separate follow-up
 
 Preserve sanitized attempt exit status before container cleanup to improve future diagnostics.
-This is distinct from the verified completion handshake and does not replace cutover rehearsal.
+This does not block the portal cutover.
