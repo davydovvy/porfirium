@@ -39,3 +39,7 @@ services:
       AGENT_RUNNER_URL: http://${TARGET_RUNNER_HOST:-host.containers.internal}:${TARGET_RUNNER_PORT:-18103}
     extra_hosts:
       - "host.containers.internal:host-gateway"
+
+  portal:
+    ports:
+      - "127.0.0.1:${TARGET_PORTAL_PORT:-18444}:8444"

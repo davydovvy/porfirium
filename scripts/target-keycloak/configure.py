@@ -174,6 +174,23 @@ def main() -> None:
         ),
         "genai-demo-web",
     )
+    required_redirects = {
+        "https://portal.local:8444/*",
+        "https://portal.local:18444/*",
+    }
+    required_origins = {
+        "https://portal.local:8444",
+        "https://portal.local:18444",
+    }
+    current_redirects = set(web.get("redirectUris", []))
+    current_origins = set(web.get("webOrigins", []))
+    if not required_redirects.issubset(current_redirects) or not required_origins.issubset(
+        current_origins
+    ):
+        web["redirectUris"] = sorted(current_redirects | required_redirects)
+        web["webOrigins"] = sorted(current_origins | required_origins)
+        request(f"{admin}/clients/{web['id']}", token=admin_token, method="PUT", body=web)
+
     mapper_path = f"{admin}/clients/{web['id']}/protocol-mappers/models"
     mappers = request(mapper_path, token=admin_token)
     if not any(item["name"] == "porfirium-target-audience" for item in mappers):

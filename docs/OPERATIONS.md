@@ -290,6 +290,24 @@ export TARGET_RUNNER_HOST="$TARGET_RUNNER_BIND_HOST"
 ./scripts/target-runner/start-host.sh
 ```
 
+The same target topology serves the existing portal on the rehearsal origin
+`https://portal.local:18444`. Its Caddy proxy sends same-origin `/api/*` and `/health/*` requests
+to Portal BFF. After the target services and host Runner are ready, build the portal and run its
+focused gate:
+
+```bash
+podman compose --profile target \
+  -f deploy/compose/target.yaml \
+  -f deploy/compose/rootless-host-runner.yaml \
+  up -d --build portal
+./scripts/target-phase13/verify.sh
+```
+
+The gate resolves `portal.local` to loopback itself, so it does not require a workstation hosts-file
+entry. Set `TARGET_PORTAL_PORT`, `TARGET_PORTAL_URL`, and `TARGET_PORTAL_RESOLVE` together when using
+a different port or hostname. Run `python3 scripts/target-keycloak/configure.py` once to register
+both the public and rehearsal portal origins with the local `genai-demo-web` client.
+
 The launcher refuses a non-rootless engine, a missing Runtime container, or incomplete Runner
 configuration. It also rejects wildcard bind addresses: Runner must listen on a dedicated host
 interface reachable from the rootless Podman network without exposing it to the LAN. It passes

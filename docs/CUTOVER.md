@@ -13,9 +13,11 @@ observability services remain in service.
 
 - The React application already uses the target `/api/v1` endpoints and passed Phase 12 component
   and live acceptance.
-- Its Caddy image still hard-codes `portal-api:8000` for `/api/*` and `/health/*`.
-- The target Compose topology exposes Portal BFF on `127.0.0.1:18100` for testing, but does not run
-  the portal frontend.
+- Its Caddy image accepts a deployment-time API upstream and retains `portal-api:8000` as the
+  legacy Compose default.
+- The target Compose topology runs the portal against Portal BFF and publishes its rehearsal origin
+  on `127.0.0.1:18444`.
+- The local Keycloak web client accepts both the rehearsal and public portal origins.
 - The legacy Portal, Portal API, worker, Temporal, and application PostgreSQL services and the
   legacy application volume are absent from this workstation. Nothing from them is required for
   this cutover.

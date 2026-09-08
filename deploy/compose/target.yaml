@@ -122,6 +122,34 @@ services:
       timeout: 3s
       retries: 12
 
+  portal:
+    profiles: [target]
+    build:
+      context: ../../apps/web
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      PORTAL_API_UPSTREAM: portal-bff:8100
+    extra_hosts:
+      - "portal.local:127.0.0.1"
+    depends_on:
+      portal-bff:
+        condition: service_healthy
+    volumes:
+      - target_portal_caddy_data:/data
+      - target_portal_caddy_config:/config
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "--spider", "https://portal.local:8444/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
   conversation-service:
     <<: *target_service
     build:
@@ -379,3 +407,5 @@ volumes:
   target_postgres_data:
   target_jetstream_data:
   target_registry_data:
+  target_portal_caddy_data:
+  target_portal_caddy_config:
