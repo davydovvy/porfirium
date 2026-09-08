@@ -78,7 +78,9 @@ def token(url: str, form: dict[str, str]) -> str:
 
 def subject(access_token: str) -> str:
     encoded = access_token.split(".")[1]
-    return json.loads(base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)))["sub"]
+    return json.loads(base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)))[
+        "sub"
+    ]
 
 
 async def verify_tool_records(
@@ -107,7 +109,9 @@ async def verify_tool_records(
                     else json.dumps(row["result"])
                 )
                 if "demo-time-mcp" not in rendered:
-                    raise RuntimeError("Runtime tool result did not originate from demo-time-mcp")
+                    raise RuntimeError(
+                        "Runtime tool result did not originate from demo-time-mcp"
+                    )
     finally:
         await connection.close()
 
@@ -125,7 +129,11 @@ async def verify_runtime_schema(database_url: str) -> None:
 
 
 def run_conversation(
-    bff_url: str, user_token: str, release_id: str, scenario: Scenario
+    bff_url: str,
+    user_token: str,
+    release_id: str,
+    scenario: Scenario,
+    runner_database_url: str,
 ) -> tuple[UUID, str]:
     operation = uuid4().hex
     conversation = request(
@@ -133,7 +141,10 @@ def run_conversation(
         method="POST",
         token=user_token,
         idempotency_key=f"phase12-conversation-{operation}",
-        body={"title": f"Phase 12 {scenario.agent_id} acceptance", "release_id": release_id},
+        body={
+            "title": f"Phase 12 {scenario.agent_id} acceptance",
+            "release_id": release_id,
+        },
     )
     conversation_id = conversation["conversation_id"]
     created = request(
@@ -144,19 +155,86 @@ def run_conversation(
         body={"content": scenario.prompt},
     )
     run_id = UUID(created["run_id"])
-    deadline = time.monotonic() + 300
-    while time.monotonic() < deadline:
-        projection = request(f"{bff_url}/api/v1/conversations/{conversation_id}", token=user_token)
-        messages = [item for item in projection["messages"] if item["role"] == "assistant"]
-        if messages and messages[-1]["status"] in {"completed", "failed", "interrupted"}:
-            break
-        time.sleep(1)
-    else:
-        raise RuntimeError(f"{scenario.agent_id} conversation did not complete")
-    if messages[-1]["status"] != "completed" or not messages[-1]["content"].strip():
-        raise RuntimeError(f"{scenario.agent_id} assistant ended as {messages[-1]['status']}")
-    print(f"PASS: {scenario.agent_id} portal conversation completed for run {run_id}")
+    asyncio.run(
+        wait_for_completion(
+            runner_database_url, bff_url, user_token, run_id, conversation_id, scenario
+        )
+    )
+    print(
+        f"PASS: {scenario.agent_id} portal conversation and Runner completed for run {run_id}"
+    )
     return run_id, conversation_id
+
+
+async def wait_for_completion(
+    database_url: str,
+    bff_url: str,
+    user_token: str,
+    run_id: UUID,
+    conversation_id: str,
+    scenario: Scenario,
+) -> None:
+    connection = await asyncpg.connect(database_url, timeout=5)
+    deadline = time.monotonic() + 300
+    try:
+        while time.monotonic() < deadline:
+            row = await connection.fetchrow(
+                "SELECT r.state,r.terminal_code,c.messages_confirmed,c.reconciled_at,"
+                "(SELECT count(*) FROM outbox_events o WHERE o.payload->>'run_id'=r.run_id::text "
+                "AND o.payload->>'type'='porfirium.run.completed.v1') AS completed_events "
+                "FROM runs r LEFT JOIN run_completion c USING(run_id) WHERE r.run_id=$1",
+                run_id,
+            )
+            if row and row["state"] in {"failed", "cancelled"}:
+                raise RuntimeError(
+                    f"{scenario.agent_id} run {run_id} ended as {row['state']}: "
+                    f"{row['terminal_code']}"
+                )
+            projection = request(
+                f"{bff_url}/api/v1/conversations/{conversation_id}", token=user_token
+            )
+            messages = [
+                item
+                for item in projection["messages"]
+                if item["role"] == "assistant" and item["run_id"] == str(run_id)
+            ]
+            if messages and messages[-1]["status"] in {"failed", "interrupted"}:
+                raise RuntimeError(
+                    f"{scenario.agent_id} run {run_id} assistant ended as {messages[-1]['status']}"
+                )
+            if row and row["state"] == "completed":
+                if (
+                    row["messages_confirmed"] is not True
+                    or row["reconciled_at"] is None
+                    or row["completed_events"] != 1
+                ):
+                    raise RuntimeError(
+                        f"{scenario.agent_id} run {run_id} has invalid completion evidence"
+                    )
+                if messages and messages[-1]["status"] == "completed":
+                    if not messages[-1]["content"].strip():
+                        raise RuntimeError(
+                            f"{scenario.agent_id} run {run_id} returned empty output"
+                        )
+                    return
+            await asyncio.sleep(1)
+        raise RuntimeError(
+            f"{scenario.agent_id} run {run_id} did not complete within 300 seconds"
+        )
+    finally:
+        await connection.close()
+
+
+async def verify_runner_schema(database_url: str) -> None:
+    connection = await asyncpg.connect(database_url, timeout=5)
+    try:
+        await connection.fetchrow(
+            "SELECT r.state,r.terminal_code,c.messages_confirmed,c.reconciled_at "
+            "FROM runs r LEFT JOIN run_completion c USING(run_id) LIMIT 0"
+        )
+        await connection.fetchrow("SELECT payload FROM outbox_events LIMIT 0")
+    finally:
+        await connection.close()
 
 
 def main() -> None:
@@ -165,6 +243,7 @@ def main() -> None:
     parser.add_argument("--registry-url", required=True)
     parser.add_argument("--bff-url", required=True)
     parser.add_argument("--runtime-database-url", required=True)
+    parser.add_argument("--runner-database-url", required=True)
     parser.add_argument("--service-client-id", required=True)
     parser.add_argument("--service-client-secret", required=True)
     parser.add_argument("--registry-audience", default="agent-registry")
@@ -221,17 +300,21 @@ def main() -> None:
     if registry_health.get("status") != "ok" or bff_health.get("status") != "ok":
         raise RuntimeError("target Registry or Portal BFF did not report ready")
     asyncio.run(verify_runtime_schema(args.runtime_database_url))
+    asyncio.run(verify_runner_schema(args.runner_database_url))
     if args.preflight_only:
         print("PASS: target Registry and Portal BFF dependency graph is ready")
-        print("PASS: primary and secondary user credentials resolve to distinct subjects")
+        print(
+            "PASS: primary and secondary user credentials resolve to distinct subjects"
+        )
         print("PASS: user-to-Registry token exchange is available")
         print("PASS: Runtime database is reachable with the Phase 12 tool migration")
+        print("PASS: Runner completion evidence is readable")
         return
     scenarios = (
-        Scenario("model-only", "1.0.0", "Reply with a brief greeting.", ()),
+        Scenario("model-only", "1.0.1", "Reply with a brief greeting.", ()),
         Scenario(
             "planning-assistant",
-            "1.1.0",
+            "1.1.1",
             "What is the current time in UTC?",
             ("time_get_current_time",),
         ),
@@ -249,20 +332,26 @@ def main() -> None:
     expectations: list[tuple[UUID, Scenario]] = []
     owned_runs: list[tuple[UUID, str]] = []
     for scenario in scenarios:
-        agent = next((item for item in agents if item["agent_id"] == scenario.agent_id), None)
+        agent = next(
+            (item for item in agents if item["agent_id"] == scenario.agent_id), None
+        )
         if agent is None or not agent.get("default_release_id"):
             raise RuntimeError(f"{scenario.agent_id} has no visible default release")
         release_id = agent["default_release_id"]
-        release = request(f"{args.registry_url}/v1/releases/{release_id}", token=registry_token)
+        release = request(
+            f"{args.registry_url}/v1/releases/{release_id}", token=registry_token
+        )
         manifest = release["manifest"]["spec"]
         if (
             release["version"] != scenario.version
             or manifest["models"] != ["default"]
             or tuple(manifest["tools"]) != scenario.tools
         ):
-            raise RuntimeError(f"{scenario.agent_id} default is not the expected release")
+            raise RuntimeError(
+                f"{scenario.agent_id} default is not the expected release"
+            )
         run_id, conversation_id = run_conversation(
-            args.bff_url, user_token, release_id, scenario
+            args.bff_url, user_token, release_id, scenario, args.runner_database_url
         )
         expectations.append((run_id, scenario))
         owned_runs.append((run_id, conversation_id))

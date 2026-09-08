@@ -151,8 +151,8 @@ event:
 
 ## Phase 12 live two-agent acceptance
 
-Run the credentialed live gate only against an isolated target environment. Version 1.0.0 of
-`model-only` and version 1.1.0 of `planning-assistant` must already be published and selected as
+Run the credentialed live gate only against an isolated target environment. Version 1.0.1 of
+`model-only` and version 1.1.1 of `planning-assistant` must already be published and selected as
 their default releases unless the optional publication flag is used.
 
 ```bash
@@ -160,6 +160,7 @@ export KEYCLOAK_TOKEN_URL=https://identity.example/realms/porfirium/protocol/ope
 export AGENT_REGISTRY_URL=https://registry.internal
 export PORTAL_BFF_URL=https://portal.example
 export RUNTIME_DATABASE_URL=postgresql://runtime_user:password@runtime-db/runtime
+export RUNNER_DATABASE_URL=postgresql://runner_reader:password@runner-db/runner
 export OIDC_CLIENT_ID=portal-bff
 export OIDC_CLIENT_SECRET=...
 export TEST_USER_CLIENT_ID=porfirium-cli
@@ -503,3 +504,34 @@ To stop the runtime without deleting state:
 
 Do not run `docker compose down -v` unless permanent deletion of application, Temporal, and
 observability state is explicitly intended.
+
+## Completion-handshake rollout
+
+For model-only conversations, deploy the Runtime result-proposal event translation and Runner
+confirmation decoding before publishing `model-only` 1.0.1. The new package calls the SDK's explicit
+`propose_result` after completing its message. Existing 1.0.0 packages remain immutable.
+Grant Conversation Service the exact NATS publish subject
+`porfirium.run.event.messages_committed`, reload NATS configuration, and restart Conversation
+Service to resume any publisher stopped by the former permission error. Pending confirmations
+remain in its durable outbox. No database migration is required. With `.env.target.local` loaded,
+publish using
+`MODEL_ONLY_VERSION=1.0.1 MODEL_ONLY_SET_DEFAULT=true ./scripts/target-model-only/publish.sh`.
+Verify both the completed assistant message and Runner's durable completed state.
+
+For rollback, restore the previous service images and select the prior Registry release ID as the
+model-only default. This affects new conversations; existing conversations stay pinned to their
+release. The older package still lacks the completion handshake, so it is not a passing fallback
+for Phase 12 acceptance.
+
+The live matrix requires read access to Runner's `runs`, `run_completion`, and `outbox_events`
+through `RUNNER_DATABASE_URL`. It waits for both a completed assistant message and Runner's durable
+completion, including confirmed messages and exactly one completion event. A failed or cancelled
+run reports its ID and terminal code immediately, even when no assistant message exists.
+For the local stack, load `.env.target.local`, set `RUNNER_DATABASE_URL` from its Runner
+`DATABASE_URL`, then load `.env.phase12.local` before invoking the acceptance script.
+
+Planning-assistant 1.1.1 uses the same explicit completion handshake. After deploying the Runtime,
+Runner, and NATS changes above, publish it with
+`PLANNING_ASSISTANT_VERSION=1.1.1 PLANNING_ASSISTANT_SET_DEFAULT=true ./scripts/target-planning-assistant/publish.sh`.
+The immutable 1.1.0 package is preserved. Rollback uses its prior Registry release ID as the default,
+but restores its missing-handshake limitation. No schema migration is required.

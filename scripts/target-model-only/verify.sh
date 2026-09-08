@@ -3,7 +3,7 @@ set -euo pipefail
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 uv_image="ghcr.io/astral-sh/uv:0.8.13-python3.13-bookworm-slim"
-agent_dir="$repo_dir/agents/model-only/1.0.0"
+agent_dir="$repo_dir/agents/model-only/1.0.1"
 image="porfirium-model-only-verification:$$"
 
 cleanup() {
@@ -18,7 +18,7 @@ docker run --rm \
 
 docker run --rm \
   --mount "type=bind,src=$repo_dir,dst=/repo,readonly" \
-  --workdir /repo/agents/model-only/1.0.0 "$uv_image" \
+  --workdir /repo/agents/model-only/1.0.1 "$uv_image" \
   uv run --isolated --with /repo/packages/agent-sdk-python \
     --with pytest==8.4.2 --with pytest-asyncio==1.1.0 pytest -q
 
@@ -44,8 +44,9 @@ manifest = json.load(open(sys.argv[1], encoding="utf-8"))
 assert manifest["apiVersion"] == "porfirium.ai/v1"
 assert manifest["kind"] == "Agent"
 assert manifest["metadata"]["name"] == "model-only"
-assert manifest["metadata"]["version"] == "1.0.0"
+assert manifest["metadata"]["version"] == "1.0.1"
 assert manifest["spec"]["image"] == "${IMAGE}"
+assert manifest["spec"]["sdk"] == ">=1.0.0,<2.0.0"
 assert manifest["spec"]["models"] == ["default"]
 assert manifest["spec"]["tools"] == []
 PY

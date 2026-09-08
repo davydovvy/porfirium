@@ -57,6 +57,19 @@ docker run --rm --network "${project_name}_default" natsio/nats-box:0.18.0 \
   --user conversation_service --password "$NATS_CONVERSATION_PASSWORD" \
   pub --jetstream porfirium.conversation.event.test '{}'
 
+docker run --rm --network "${project_name}_default" natsio/nats-box:0.18.0 \
+  nats --server nats://nats:4222 \
+  --user conversation_service --password "$NATS_CONVERSATION_PASSWORD" \
+  pub --jetstream porfirium.run.event.messages_committed '{}'
+
+if docker run --rm --network "${project_name}_default" natsio/nats-box:0.18.0 \
+  nats --server nats://nats:4222 \
+  --user conversation_service --password "$NATS_CONVERSATION_PASSWORD" \
+  pub --jetstream porfirium.run.event.completed '{}' >/dev/null 2>&1; then
+  echo "conversation-service must not publish Runner completion events" >&2
+  exit 1
+fi
+
 if docker run --rm --network "${project_name}_default" natsio/nats-box:0.18.0 \
   nats --server nats://nats:4222 \
   --user conversation_service --password "$NATS_CONVERSATION_PASSWORD" \

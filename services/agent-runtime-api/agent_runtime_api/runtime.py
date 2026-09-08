@@ -125,6 +125,27 @@ def _event(capability: RunCapability, frame: pb.AgentFrame, event_id: UUID) -> t
             raise ValueError("message_too_large")
         data["content"] = content
         data.pop("canonical_content_utf8", None)
+    elif kind == "result_proposed":
+        proposal = frame.result_proposed
+        try:
+            message_ids = [str(UUID(value)) for value in proposal.final_message_ids]
+            checkpoint_id = (
+                str(UUID(proposal.final_checkpoint_id)) if proposal.final_checkpoint_id else None
+            )
+        except ValueError as exc:
+            raise ValueError("result_proposal_invalid") from exc
+        if len(message_ids) > 64 or len(set(message_ids)) != len(message_ids):
+            raise ValueError("result_proposal_invalid")
+        data = {
+            "run_id": str(capability.run_id),
+            "attempt_id": str(capability.attempt_id),
+            "lease_epoch": capability.lease_epoch,
+            "final_message_ids": message_ids,
+            "final_checkpoint_id": checkpoint_id,
+            "required_confirmations": (
+                (["messages"] if message_ids else []) + (["checkpoint"] if checkpoint_id else [])
+            ),
+        }
     envelope = {
         "specversion": "1.0",
         "type": event_type,

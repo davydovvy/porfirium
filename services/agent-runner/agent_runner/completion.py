@@ -144,6 +144,8 @@ async def _converge(connection: Any, run_id: UUID) -> None:
         )
         for confirmation in confirmations:
             payload = confirmation["payload"]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
             if confirmation["confirmation"] == "messages":
                 actual = {UUID(str(value)) for value in payload.get("message_ids", [])}
                 if actual == set(proposal["final_message_ids"]):

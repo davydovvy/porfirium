@@ -13,6 +13,12 @@ for project in services/agent-runner services/agent-runtime-api services/agent-r
     'uv run --isolated --frozen ruff check --no-cache . && uv run --isolated --frozen pytest -q'
 done
 
+docker run --rm \
+  --mount "type=bind,src=${repo_dir}/scripts/target-phase12,dst=/app,readonly" \
+  --workdir /app "$uv_image" \
+  uv run --isolated --with asyncpg==0.30.0 --with pytest==8.4.2 \
+    pytest -q -p no:cacheprovider test_live_tool_acceptance.py
+
 "$repo_dir/scripts/contracts/verify.sh"
 
 grep -q 'porfirium.dlq.\*' "$repo_dir/deploy/nats/nats.conf"

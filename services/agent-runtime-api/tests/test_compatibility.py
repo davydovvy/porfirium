@@ -56,3 +56,54 @@ def test_durable_event_preserves_trace_and_has_uuid_causation() -> None:
     assert event["traceparent"] == frame.identity.traceparent
     assert event["correlation_id"] == str(UUID(hex=value.trace_id))
     UUID(event["causation_id"])
+
+
+@pytest.mark.parametrize(
+    "with_messages,with_checkpoint", [(True, False), (True, True), (False, True), (False, False)]
+)
+def test_result_proposal_derives_binding_and_required_confirmations(
+    with_messages: bool,
+    with_checkpoint: bool,
+) -> None:
+    value = capability()
+    messages = [str(uuid4())] if with_messages else []
+    checkpoint = str(uuid4()) if with_checkpoint else ""
+    frame = pb.AgentFrame(
+        identity=identity(value, "1.0"),
+        result_proposed=pb.ResultProposed(
+            final_message_ids=messages,
+            final_checkpoint_id=checkpoint,
+        ),
+    )
+    subject, event = _event(value, frame, uuid4())
+    assert subject == "porfirium.run.event.result_proposed"
+    assert event["data"] == {
+        "run_id": str(value.run_id),
+        "attempt_id": str(value.attempt_id),
+        "lease_epoch": value.lease_epoch,
+        "final_message_ids": messages,
+        "final_checkpoint_id": checkpoint or None,
+        "required_confirmations": (
+            (["messages"] if with_messages else []) + (["checkpoint"] if with_checkpoint else [])
+        ),
+    }
+
+
+@pytest.mark.parametrize(
+    "messages,checkpoint",
+    [
+        (["invalid"], ""),
+        ([str(UUID(int=1))] * 2, ""),
+        ([str(uuid4()) for _ in range(65)], ""),
+        ([], "invalid"),
+    ],
+)
+def test_result_proposal_rejects_invalid_output_references(messages, checkpoint) -> None:
+    frame = pb.AgentFrame(
+        result_proposed=pb.ResultProposed(
+            final_message_ids=messages,
+            final_checkpoint_id=checkpoint,
+        )
+    )
+    with pytest.raises(ValueError, match="result_proposal_invalid"):
+        _event(capability(), frame, uuid4())

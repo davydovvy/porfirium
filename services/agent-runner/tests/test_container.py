@@ -146,7 +146,7 @@ def test_managed_lists_only_valid_labeled_attempt_containers(monkeypatch) -> Non
     network = NETWORK
 
     async def fake_run(self, *arguments: str, check: bool = True) -> str:
-        assert arguments[:3] == ("ps", "--all", "--filter")
+        assert arguments[:4] == ("ps", "--all", "--no-trunc", "--filter")
         return f"container-id {network}\ninvalid-line"
 
     monkeypatch.setattr(PodmanBackend, "_run", fake_run)

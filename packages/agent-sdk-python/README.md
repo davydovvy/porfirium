@@ -53,9 +53,15 @@ runtime = RuntimeClient(
 async with runtime.message() as message:
     await message.delta("Hello")
     await message.delta(" from Porfirium")
+await runtime.propose_result([message.message_id])
 await runtime.close()
 ```
 
 The context manager sends exactly one completion or interruption. Completion includes canonical
 content, byte and chunk counts, and its SHA-256 digest. Unacknowledged frames remain in a bounded
 in-memory buffer and are retransmitted after reconnect; checkpoints provide cross-attempt recovery.
+
+After committing final outputs, explicitly call `propose_result` with their message IDs and any
+`final_checkpoint_id`. Its acknowledgement proves Runtime durably accepted the proposal; Runner
+marks the run completed only after the owning services confirm those outputs. Closing the channel
+or exiting the process does not propose completion.

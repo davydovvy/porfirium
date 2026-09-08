@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-version=${PLANNING_ASSISTANT_VERSION:-1.1.0}
+version=${PLANNING_ASSISTANT_VERSION:-1.1.1}
 [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
   echo "PLANNING_ASSISTANT_VERSION must be a semantic version" >&2
   exit 1

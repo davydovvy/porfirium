@@ -6,7 +6,7 @@ import binascii
 import hashlib
 import json
 import os
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from types import TracebackType
 from typing import Self
@@ -312,6 +312,22 @@ class RuntimeClient:
                             "model_response_missing", "Model gateway returned no response"
                         )
                     return result
+
+    async def propose_result(
+        self,
+        final_message_ids: Sequence[UUID],
+        *,
+        final_checkpoint_id: UUID | None = None,
+    ) -> None:
+        """Durably propose run completion after all final outputs have been committed."""
+        if len(final_message_ids) > 64 or len(set(final_message_ids)) != len(final_message_ids):
+            raise ValueError("invalid final message IDs")
+        await self.send(
+            result_proposed=pb.ResultProposed(
+                final_message_ids=[str(UUID(str(value))) for value in final_message_ids],
+                final_checkpoint_id=str(final_checkpoint_id) if final_checkpoint_id else "",
+            )
+        )
 
     def message(
         self, message_id: UUID | None = None, content_type: str = "text/plain"

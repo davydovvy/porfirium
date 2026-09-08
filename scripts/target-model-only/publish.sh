@@ -2,9 +2,15 @@
 set -euo pipefail
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-agent_dir="$repo_dir/agents/model-only/1.0.0"
+version=${MODEL_ONLY_VERSION:-1.0.1}
+[[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+  echo "MODEL_ONLY_VERSION must be a semantic version" >&2
+  exit 1
+}
+agent_dir="$repo_dir/agents/model-only/$version"
+[[ -d $agent_dir ]] || { echo "model-only package does not exist: $version" >&2; exit 1; }
 repository=${MODEL_ONLY_IMAGE_REPOSITORY:-${OCI_REGISTRY_HOST:-}/porfirium/model-only}
-tagged_image="$repository:1.0.0"
+tagged_image="$repository:$version"
 
 for command_name in curl docker python uv; do
   command -v "$command_name" >/dev/null || {
@@ -68,7 +74,7 @@ uv run --with cryptography==45.0.7 \
   --builder "${MODEL_ONLY_PUBLICATION_BUILDER:-porfirium-release}" \
   --output "$temporary_dir/publication.json"
 
-idempotency_key="model-only-1-0-0-${digest:7:16}"
+idempotency_key="model-only-${version//./-}-${digest:7:16}"
 if ! curl --fail-with-body --silent --show-error \
   --request POST "$AGENT_REGISTRY_URL/v1/releases" \
   --header "Authorization: Bearer $REGISTRY_PUBLISH_TOKEN" \
@@ -97,5 +103,5 @@ if [[ ${MODEL_ONLY_SET_DEFAULT:-false} == true ]]; then
     --data-binary "@$temporary_dir/default.json" >/dev/null
 fi
 
-echo "Published model-only 1.0.0 as $image"
+echo "Published model-only $version as $image"
 echo "Release ID: $release_id"

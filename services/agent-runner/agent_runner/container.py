@@ -94,7 +94,7 @@ class PodmanBackend:
 
     async def managed(self) -> list[tuple[str, str]]:
         output = await self._run(
-            "ps", "--all", "--filter", "label=ai.porfirium.attempt-network",
+            "ps", "--all", "--no-trunc", "--filter", "label=ai.porfirium.attempt-network",
             "--format", '{{.ID}} {{.Label "ai.porfirium.attempt-network"}}',
         )
         managed: list[tuple[str, str]] = []
