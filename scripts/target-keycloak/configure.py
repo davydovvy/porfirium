@@ -184,11 +184,14 @@ def main() -> None:
     }
     current_redirects = set(web.get("redirectUris", []))
     current_origins = set(web.get("webOrigins", []))
+    attributes = web.setdefault("attributes", {})
+    post_logout_redirects = attributes.get("post.logout.redirect.uris")
     if not required_redirects.issubset(current_redirects) or not required_origins.issubset(
         current_origins
-    ):
+    ) or post_logout_redirects != "+":
         web["redirectUris"] = sorted(current_redirects | required_redirects)
         web["webOrigins"] = sorted(current_origins | required_origins)
+        attributes["post.logout.redirect.uris"] = "+"
         request(f"{admin}/clients/{web['id']}", token=admin_token, method="PUT", body=web)
 
     mapper_path = f"{admin}/clients/{web['id']}/protocol-mappers/models"

@@ -2,7 +2,7 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { App, loadAgentCatalog } from './App'
-import { apiFetch } from './auth'
+import { apiFetch, keycloak } from './auth'
 
 vi.mock('./auth', () => ({
   keycloak: { login: vi.fn(), logout: vi.fn() },
@@ -21,6 +21,27 @@ describe('App', () => {
     render(<App authenticated={false} />)
     expect(screen.getByText('PORFIRIUM')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /sign in with keycloak/i })).toBeInTheDocument()
+  })
+
+  it('signs out with a Keycloak-allowed portal redirect URI', async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === '/api/v1/me') {
+        return new Response(JSON.stringify({
+          id: 'user-1', username: 'alice', display_name: 'Alice', roles: [],
+        }), { status: 200 })
+      }
+      if (path === '/api/v1/agents' || path === '/api/v1/conversations') {
+        return new Response('[]', { status: 200 })
+      }
+      throw new Error(`Unexpected request: ${path}`)
+    })
+
+    render(<App authenticated />)
+    fireEvent.click(await screen.findByRole('button', { name: /sign out/i }))
+
+    expect(keycloak.logout).toHaveBeenCalledWith({
+      redirectUri: `${window.location.origin}/`,
+    })
   })
 
   it('uses target Registry defaults without requesting legacy version routes', async () => {

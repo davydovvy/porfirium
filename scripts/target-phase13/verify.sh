@@ -74,6 +74,8 @@ grep -Fq '"https://portal.local:18444/*"' \
   "$repo_dir/scripts/target-keycloak/configure.py"
 grep -Fq '"https://portal.local:18444"' \
   "$repo_dir/scripts/target-keycloak/configure.py"
+grep -Fq 'attributes["post.logout.redirect.uris"] = "+"' \
+  "$repo_dir/scripts/target-keycloak/configure.py"
 
 (
   cd "$repo_dir/apps/web"

@@ -193,7 +193,7 @@ export function App({ authenticated }: { authenticated: boolean }) {
         <button className={active?.conversation_id === item.conversation_id ? 'selected' : ''} key={item.conversation_id} onClick={() => openConversation(item.conversation_id).catch((reason) => setError(reason.message))}>{item.title}</button>)}</div>
       <div className="profile"><div className="avatar">{identity?.display_name?.[0] ?? '…'}</div>
         <div><strong>{identity?.display_name ?? 'Loading identity'}</strong><small>{identity?.username}</small></div>
-        <button className="logout" aria-label="Sign out" onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>↗</button></div>
+        <button className="logout" aria-label="Sign out" onClick={() => keycloak.logout({ redirectUri: `${window.location.origin}/` })}>↗</button></div>
     </aside>
     {view === 'authoring' ? <AgentBuilder
       canPublish={Boolean(identity?.capabilities?.agent_publication)}

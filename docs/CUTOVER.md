@@ -17,7 +17,8 @@ observability services remain in service.
   legacy Compose default.
 - The target Compose topology runs the portal against Portal BFF and publishes its rehearsal origin
   on `127.0.0.1:18444`.
-- The local Keycloak web client accepts both the rehearsal and public portal origins.
+- The local Keycloak web client accepts both the rehearsal and public portal origins for login and
+  post-logout redirects.
 - The legacy Portal, Portal API, worker, Temporal, and application PostgreSQL services and the
   legacy application volume are absent from this workstation. Nothing from them is required for
   this cutover.
