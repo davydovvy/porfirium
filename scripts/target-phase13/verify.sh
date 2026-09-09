@@ -4,8 +4,8 @@ set -euo pipefail
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 target_compose="$repo_dir/deploy/compose/target.yaml"
 rootless_override="$repo_dir/deploy/compose/rootless-host-runner.yaml"
-portal_url=${TARGET_PORTAL_URL:-https://portal.local:18444}
-target_portal_port=${TARGET_PORTAL_PORT:-18444}
+portal_url=${TARGET_PORTAL_URL:-https://portal.local:8444}
+target_portal_port=${TARGET_PORTAL_PORT:-8444}
 portal_resolve=${TARGET_PORTAL_RESOLVE:-portal.local:${target_portal_port}:127.0.0.1}
 check_secret="phase13-compose-check"
 export TARGET_PORTAL_PORT="$target_portal_port"
@@ -70,6 +70,10 @@ test "$(grep -Fc 'reverse_proxy {$PORTAL_API_UPSTREAM:portal-api:8000}' \
 grep -Fq 'auto_https disable_redirects' "$repo_dir/apps/web/Caddyfile"
 grep -Fq 'skip_install_trust' "$repo_dir/apps/web/Caddyfile"
 grep -Fq 'RUN setcap -r /usr/bin/caddy' "$repo_dir/apps/web/Dockerfile"
+grep -Fq '"https://portal.local:8444/*"' \
+  "$repo_dir/scripts/target-keycloak/configure.py"
+grep -Fq '"https://portal.local:8444"' \
+  "$repo_dir/scripts/target-keycloak/configure.py"
 grep -Fq '"https://portal.local:18444/*"' \
   "$repo_dir/scripts/target-keycloak/configure.py"
 grep -Fq '"https://portal.local:18444"' \

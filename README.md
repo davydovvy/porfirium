@@ -7,18 +7,16 @@ All conversations use agents; the target product has no separate Direct LLM mode
 
 ## Start and verify
 
-Prerequisites are Linux, Docker Engine with Compose, the standalone Keycloak project, a
-`portal.local` mapping to `127.0.0.1`, and an uncommitted `.env` containing local secrets and
-Yandex settings.
+Prerequisites are Linux, rootless Podman with Compose, Docker Engine for the shared gateways and
+observability services, the standalone Keycloak project, a `portal.local` mapping to `127.0.0.1`,
+and the ignored local target environment files described in the operations guide.
 
 ```bash
-./scripts/phase4/start.sh
-./scripts/phase4/verify.sh
+./scripts/target-phase13/verify.sh
 ```
 
 Open <https://portal.local:8444>. Supporting interfaces are available at:
 
-- Temporal: <http://localhost:8080>
 - Agentgateway: <http://localhost:8089>
 - Langfuse: <http://localhost:3000>
 - Keycloak: <https://keycloak.local:8443>
@@ -38,20 +36,20 @@ The portal is the only browser-facing boundary. The Agent Registry owns releases
 grants, the Agent Runner owns isolated execution, and NATS JetStream carries durable commands and
 events. Service-owned databases and versioned contracts allow components to evolve independently.
 
-The repository still runs the previous Portal API and Temporal worker. The target implementation
-has completed Phases 0–11: contracts and feasibility, service infrastructure, Registry, Checkpoint
-API and SDK, Runtime API and message SDK, isolated Runner, configuration and delegation, durable
-conversations, end-to-end run completion, container-free human-input suspension, and the Portal
-BFF/web migration. Phase 12 hardening is in progress: its first slice adds bounded consumer
-failure handling, dead-letter inspection and replay, capacity enforcement, orphan cleanup, an
-adjacent-minor Runtime compatibility window, trusted-builder provenance policy, bounded retention,
+The target implementation has completed Phases 0–12: contracts and feasibility, service
+infrastructure, Registry, Checkpoint API and SDK, Runtime API and message SDK, isolated Runner,
+configuration and delegation, durable conversations, end-to-end run completion, container-free
+human-input suspension, the Portal BFF/web migration, and final hardening. That hardening adds
+bounded consumer failure handling, dead-letter inspection and replay, capacity enforcement,
+orphan cleanup, an adjacent-minor Runtime compatibility window, trusted-builder provenance policy,
+bounded retention,
 backup/restore tooling, signed end-to-end trace propagation, and malformed-event containment. A
 second immutable target package now provides a two-stage planning assistant with its own signed
 publication workflow. The additive Runtime protocol and Python SDK now define bounded typed tool
 calls and propagate signed per-run tool grants. Runtime exchanges the opaque delegation grant on
 each call, retains the short-lived user token only in memory, and forwards both authorization
-dimensions to the MCP boundary. The legacy runtime remains available until target acceptance and
-the planned production cutover.
+dimensions to the MCP boundary. Phase 13 has moved the target portal to the public
+`https://portal.local:8444` origin; only browser confirmation and legacy retirement remain.
 
 The authoritative documents are:
 

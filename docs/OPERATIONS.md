@@ -290,12 +290,12 @@ export TARGET_RUNNER_HOST="$TARGET_RUNNER_BIND_HOST"
 ./scripts/target-runner/start-host.sh
 ```
 
-The same target topology serves the existing portal on the rehearsal origin
-`https://portal.local:18444`. Its Caddy proxy sends same-origin `/api/*` and `/health/*` requests
+The target topology serves the public portal on `https://portal.local:8444`. Its Caddy proxy sends
+same-origin `/api/*` and `/health/*` requests
 to Portal BFF. Before browser testing, run the local Keycloak configurator so both the public and
 rehearsal origins are valid for login and logout. The configurator sets Keycloak's valid
 post-logout redirects to the client's restricted redirect URI list. The portal supplies the root
-return URI with a trailing slash (`https://portal.local:18444/`) so it matches that list.
+return URI with a trailing slash (`https://portal.local:8444/`) so it matches that list.
 
 After the target services and host Runner are ready, configure Keycloak, build the portal, and run
 its focused gate:
@@ -310,9 +310,10 @@ podman compose --profile target \
 ```
 
 The gate resolves `portal.local` to loopback itself, so it does not require a workstation hosts-file
-entry. Set `TARGET_PORTAL_PORT`, `TARGET_PORTAL_URL`, and `TARGET_PORTAL_RESOLVE` together when using
-a different port or hostname. If sign-out leaves the browser on a Keycloak error page, rerun the
-configurator and confirm the browser loaded the latest portal bundle before testing again.
+entry. Set `TARGET_PORTAL_PORT`, `TARGET_PORTAL_URL`, and `TARGET_PORTAL_RESOLVE` together to use a
+different port or hostname; port `18444` remains available for an explicit rehearsal deployment.
+If sign-out leaves the browser on a Keycloak error page, rerun the configurator and confirm the
+browser loaded the latest portal bundle before testing again.
 
 The launcher refuses a non-rootless engine, a missing Runtime container, or incomplete Runner
 configuration. It also rejects wildcard bind addresses: Runner must listen on a dedicated host

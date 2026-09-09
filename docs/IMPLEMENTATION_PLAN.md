@@ -310,8 +310,9 @@ procedures, rollout and rollback remain in `OPERATIONS.md`.
 
 ## Phase 13 — Portal cutover and legacy retirement
 
-Implementation status: plan accepted; implementation pending. [Portal cutover plan](CUTOVER.md)
-defines the work and exit gate.
+Implementation status: public cutover deployed and automated acceptance passed; browser
+confirmation and legacy retirement remain. [Portal cutover plan](CUTOVER.md) defines the remaining
+work and exit gate.
 
 Reuse the existing React portal with Portal BFF while preserving the current Keycloak login. Do
 not migrate or back up legacy agents, conversations, messages, runs, checkpoints, application data,

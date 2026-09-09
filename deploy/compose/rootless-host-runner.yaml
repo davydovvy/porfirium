@@ -42,4 +42,4 @@ services:
 
   portal:
     ports:
-      - "127.0.0.1:${TARGET_PORTAL_PORT:-18444}:8444"
+      - "127.0.0.1:${TARGET_PORTAL_PORT:-8444}:8444"

@@ -15,17 +15,17 @@ observability services remain in service.
   and live acceptance.
 - Its Caddy image accepts a deployment-time API upstream and retains `portal-api:8000` as the
   legacy Compose default.
-- The target Compose topology runs the portal against Portal BFF and publishes its rehearsal origin
-  on `127.0.0.1:18444`.
+- The target Compose topology runs the portal against Portal BFF and publishes the public origin on
+  `127.0.0.1:8444`. The `18444` rehearsal origin remains available through an explicit port
+  override.
 - The local Keycloak web client accepts both the rehearsal and public portal origins for login and
   post-logout redirects.
-- The legacy Portal, Portal API, worker, Temporal, and application PostgreSQL services and the
-  legacy application volume are absent from this workstation. Nothing from them is required for
-  this cutover.
+- The legacy Portal, Portal API, worker, Temporal, and application PostgreSQL containers are
+  stopped. Nothing from them is required by the public portal.
 - Signed `model-only` 1.0.1 and `planning-assistant` 1.1.1 releases are published and passed the
   complete Phase 12 live matrix.
 
-## Implementation sequence
+## Completed implementation
 
 1. Make the portal image's API upstream configurable at deployment time. Keep the legacy Compose
    default as `portal-api:8000`, and configure the target deployment as `portal-bff:8100`. Keep API
@@ -46,9 +46,17 @@ observability services remain in service.
    legacy application database.
 7. Repeat portal health, authentication, fresh conversation, streaming, cancellation, and both
    agent checks through `https://portal.local:8444`.
-8. Remove legacy service definitions and code only after the public portal checks pass. This
-   cleanup may delete legacy application and Temporal storage because the user has explicitly
-   waived migration, backup, and history retention.
+
+The target portal passed the focused portal gate and the complete Phase 12 acceptance baseline.
+Both agents also passed the live matrix through the public `8444` origin after cutover.
+
+## Remaining retirement work
+
+1. Confirm login, logout, identity, conversation creation, streaming, cancellation, and agent
+   selection in a browser on `https://portal.local:8444`.
+2. Remove the stopped legacy containers, service definitions, code, and obsolete storage. This
+   cleanup may delete legacy application and Temporal storage because migration and backup were
+   explicitly waived.
 
 ## Rollback
 
@@ -59,10 +67,9 @@ data remains authoritative throughout rollback.
 
 ## Exit gate
 
-Phase 13 is complete when `https://portal.local:8444` serves the existing React portal through
-Portal BFF, all portal and Phase 12 checks pass, no portal route or dependency refers to Portal API
-or Temporal, and the legacy runtime can remain stopped or be removed without affecting the target
-platform.
+Phase 13 is complete when the public browser checks pass, no portal route or dependency refers to
+Portal API or Temporal, and the stopped legacy runtime has been removed without affecting the
+target platform.
 
 ## Separate follow-up
 
