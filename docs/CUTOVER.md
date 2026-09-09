@@ -5,58 +5,31 @@ messages, runs, checkpoints, application data, and Temporal history will not be 
 up. Users start with an empty target conversation list and only the releases already published in
 the target Registry. Keycloak remains the identity provider.
 
-The public portal remains `https://portal.local:8444`. The cutover replaces its backend route from
-legacy `portal-api:8000` to target `portal-bff:8100`. Shared Keycloak, Agentgateway, MCP, and
-observability services remain in service.
+The public portal remains `https://portal.local:8444` and routes exclusively to target
+`portal-bff:8100`. Shared Keycloak, Agentgateway, MCP, and observability services remain in service.
 
 ## Current state
 
 - The React application already uses the target `/api/v1` endpoints and passed Phase 12 component
   and live acceptance.
-- Its Caddy image accepts a deployment-time API upstream and retains `portal-api:8000` as the
-  legacy Compose default.
+- Its Caddy image requires the deployment-time Portal BFF upstream; there is no legacy fallback.
 - The target Compose topology runs the portal against Portal BFF and publishes the public origin on
   `127.0.0.1:8444`. The `18444` rehearsal origin remains available through an explicit port
   override.
 - The local Keycloak web client accepts both the rehearsal and public portal origins for login and
   post-logout redirects.
-- The legacy Portal, Portal API, worker, Temporal, and application PostgreSQL containers are
-  stopped. Nothing from them is required by the public portal.
+- The legacy Portal, Portal API, worker, Temporal, application PostgreSQL, their code, and obsolete
+  local volumes have been removed.
 - Signed `model-only` 1.0.1 and `planning-assistant` 1.1.1 releases are published and passed the
   complete Phase 12 live matrix.
 
-## Completed implementation
+## Acceptance evidence
 
-1. Make the portal image's API upstream configurable at deployment time. Keep the legacy Compose
-   default as `portal-api:8000`, and configure the target deployment as `portal-bff:8100`. Keep API
-   requests same-origin so browser tokens remain at the Portal BFF boundary.
-2. Add the existing portal image to the target Compose topology on a rehearsal port such as
-   `18444`. Give it only the target network connection needed to reach Portal BFF. Preserve the
-   existing TLS, security headers, SPA fallback, and Keycloak browser client settings.
-3. Add a target portal verification script. It must validate the rendered Compose configuration,
-   Caddy routing, frontend lint/tests/build, Portal BFF readiness through the portal origin, and the
-   absence of any dependency on Portal API, Temporal, or the legacy application database.
-4. Run browser-level acceptance through the rehearsal portal origin. Verify login/logout, identity,
-   empty conversation state for a fresh user, agent selection, message streaming, cancellation,
-   delegated time-tool output, authorization boundaries, and agent publication controls.
-5. Run the complete Phase 12 gate again against the same target services used by the portal. The
-   two agents must still reach durable Runner completion with the expected tool records.
-6. Switch the public portal by stopping the old portal container and starting the verified target
-   portal on `127.0.0.1:8444`. Do not start Portal API, agent-worker, Temporal, Temporal UI, or the
-   legacy application database.
-7. Repeat portal health, authentication, fresh conversation, streaming, cancellation, and both
-   agent checks through `https://portal.local:8444`.
-
-The target portal passed the focused portal gate and the complete Phase 12 acceptance baseline.
-Both agents also passed the live matrix through the public `8444` origin after cutover.
-
-## Remaining retirement work
-
-1. Confirm login, logout, identity, conversation creation, streaming, cancellation, and agent
-   selection in a browser on `https://portal.local:8444`.
-2. Remove the stopped legacy containers, service definitions, code, and obsolete storage. This
-   cleanup may delete legacy application and Temporal storage because migration and backup were
-   explicitly waived.
+- The focused portal gate passes against the public origin.
+- The complete Phase 12 baseline passes, including recovery and the live two-agent matrix.
+- Public browser login, logout, identity, conversations, streaming, cancellation, and agent
+  selection were confirmed after cutover.
+- Removing the legacy runtime did not affect target portal readiness.
 
 ## Rollback
 
@@ -67,9 +40,8 @@ data remains authoritative throughout rollback.
 
 ## Exit gate
 
-Phase 13 is complete when the public browser checks pass, no portal route or dependency refers to
-Portal API or Temporal, and the stopped legacy runtime has been removed without affecting the
-target platform.
+Phase 13 is complete. The public portal routes only to Portal BFF, its acceptance gates pass, and
+the legacy runtime has been removed without affecting the target platform.
 
 ## Separate follow-up
 

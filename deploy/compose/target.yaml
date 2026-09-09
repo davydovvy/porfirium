@@ -135,7 +135,7 @@ services:
     cap_drop:
       - ALL
     environment:
-      PORTAL_API_UPSTREAM: portal-bff:8100
+      PORTAL_BFF_UPSTREAM: portal-bff:8100
     extra_hosts:
       - "portal.local:127.0.0.1"
     depends_on:

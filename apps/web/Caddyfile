@@ -7,10 +7,10 @@ https://portal.local:8444 {
 	tls internal
 	encode zstd gzip
 	handle /api/* {
-		reverse_proxy {$PORTAL_API_UPSTREAM:portal-api:8000}
+		reverse_proxy {$PORTAL_BFF_UPSTREAM}
 	}
 	handle /health/* {
-		reverse_proxy {$PORTAL_API_UPSTREAM:portal-api:8000}
+		reverse_proxy {$PORTAL_BFF_UPSTREAM}
 	}
 	handle {
 		root * /srv

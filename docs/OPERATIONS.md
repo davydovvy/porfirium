@@ -1,22 +1,19 @@
 # Porfirium operations
 
-Status: current pre-migration deployment
+Status: target platform deployed
 
-These procedures operate the existing Portal API and Temporal-based runtime. The target Agent
-Registry, Agent Runner, SDK, and JetStream architecture has completed its contract foundation,
-feasibility gates, infrastructure foundation, Registry, Checkpoint API, Runtime API, SDK, isolated
-Runner MVP, configuration, delegation, gateway policy, durable conversations, and end-to-end
-completion and human-input suspension phases, but is not yet the deployed runtime.
-Target-service procedures will replace this document during an accepted transition.
+These procedures operate the Portal BFF, service-owned target control plane, rootless host Runner,
+Runtime API, and JetStream execution backbone. The retired Portal API and Temporal runtime are no
+longer part of the repository or local deployment.
 
 ## Start
 
-Ensure standalone Keycloak is running, `portal.local` resolves to `127.0.0.1`, and the uncommitted
-`.env` contains the generated local secrets and Yandex configuration.
+Ensure standalone Keycloak and the shared Docker services are running, `portal.local` resolves to
+`127.0.0.1`, and `.env.target.local` contains the target deployment values. Start the rootless
+target topology and host Runner using the commands under **Target rootless deployment** below.
 
 ```bash
-./scripts/phase4/start.sh
-./scripts/phase4/status.sh
+./scripts/target-phase13/verify.sh
 ```
 
 Open <https://portal.local:8444>. For local demo data, sign in as `alise` or `bob` with password
@@ -24,48 +21,22 @@ Open <https://portal.local:8444>. For local demo data, sign in as `alise` or `bo
 
 ## Use and inspect
 
-Create a conversation against a selected immutable agent release. The current pre-migration stack
-executes turns with `AgentRunWorkflow` on `porfirium-agent-runtime-v1`.
+Create a conversation against a selected immutable agent release. The target platform admits runs
+through Portal BFF and executes each attempt in an isolated rootless container.
 
 Useful interfaces and logs:
 
 ```bash
-docker compose logs --tail=100 agent-worker portal-api agentgateway \
-  demo-time-mcp demo-mtg-catalog-mcp
+podman logs --tail=100 porfirium-agent-runtime-api
+docker compose logs --tail=100 agentgateway demo-time-mcp demo-mtg-catalog-mcp
 ```
 
-- Temporal: <http://localhost:8080>
 - Agentgateway: <http://localhost:8089>
 - Langfuse: <http://localhost:3000>
 - Keycloak: <https://keycloak.local:8443>
 
-Workflow IDs use `porfirium-agent-<turn-id>`. A turn's correlation ID is propagated as its W3C
-trace ID, allowing model and tool activity to be inspected together in Langfuse.
-
-## Filesystem agent publication
-
-Validate without database access:
-
-```bash
-cd apps/portal-api
-.venv/bin/porfirium agents validate ../../agents/tool-assistant/1.3.0 --json
-cd ../..
-```
-
-Perform platform validation, publication, and status inspection inside the Portal API container:
-
-```bash
-docker compose exec portal-api .venv/bin/porfirium agents validate \
-  /agents/tool-assistant/1.3.0 --platform --json
-docker compose exec portal-api .venv/bin/porfirium agents publish \
-  /agents/tool-assistant/1.3.0 --json
-docker compose exec portal-api .venv/bin/porfirium agents status tool-assistant:1.3.0 --json
-```
-
-An identical repeated publication is safe. Changed content under an existing semantic version is
-rejected; publish a new version instead. Publication does not change the default. Removing a source
-directory after publication does not affect stored releases, though repository packages should be
-kept for reproducibility.
+A run's correlation ID is propagated as its W3C trace ID, allowing model and tool activity to be
+inspected together in Langfuse.
 
 ## Portal agent authoring
 
@@ -92,17 +63,11 @@ supported operation.
 ## Verify
 
 ```bash
-./scripts/phase4/verify.sh
-./scripts/increment8/verify.sh
-./scripts/increment9/verify.sh
+./scripts/target-phase13/verify.sh
+./scripts/target-phase12/verify-hardening.sh
 ```
 
-These gates cover backend and MCP tests, Python lint, frontend lint/tests/build, Compose validation,
-secret scanning, declarative runtime behavior, filesystem publication, and portal authoring.
-Provider-backed smoke tests are intentionally separate because they use credentials, external
-state, and paid APIs.
-
-Target-platform verification is independent of the deployed legacy runtime:
+Target-platform verification includes:
 
 ```bash
 ./scripts/contracts/verify.sh
@@ -501,34 +466,29 @@ implementation plan.
 
 ## Recovery
 
-If an MCP service or Agentgateway is unhealthy, inspect and restart only that service. If the agent
-worker is unavailable, restart it; accepted workflows resume from Temporal history.
+If an MCP service or Agentgateway is unhealthy, inspect and restart only that service. If the host
+Runner is unavailable, restart it with the same configuration; accepted work resumes from durable
+Runner, Runtime, Conversation, checkpoint, and JetStream state.
 
 ```bash
-docker compose restart agent-worker
-docker compose logs --tail=200 agent-worker
+docker compose restart agentgateway
+docker compose logs --tail=200 agentgateway
+podman logs --tail=200 porfirium-agent-runtime-api
 ```
 
-`Failed decoding arguments` indicates an activity payload/contract mismatch, not a missing poller.
-Fix and redeploy the worker. If retries are exhausted, confirm the application turn is non-terminal
-and recover using the same workflow ID and original `run_snapshot_id`; never create a replacement
-snapshot for an accepted turn.
+If retries are exhausted, correlate the run identifier across Runner and sanitized Runtime logs,
+restore the failed dependency, and use the supported replay/reconciliation path. Never create a
+replacement snapshot for an accepted run.
 
 ## Rollback and stop
 
 For a faulty agent version, stop selecting it or deprecate it when allowed, then create new
 conversations against a known-good release. Let accepted work finish from its immutable snapshot.
-Do not edit or delete releases, artifacts, grants, snapshots, conversations, audit rows, or
-Temporal histories to roll back behavior.
-
-To stop the runtime without deleting state:
-
-```bash
-./scripts/phase4/stop.sh
-```
-
-Do not run `docker compose down -v` unless permanent deletion of application, Temporal, and
-observability state is explicitly intended.
+Do not edit or delete releases, artifacts, grants, snapshots, conversations, audit rows, checkpoint
+state, or JetStream events to roll back behavior. Stop the host Runner and target Compose services
+without `-v` to retain target state. Do not run either Compose engine's volume-removal commands
+unless permanent deletion of the corresponding target or observability state is explicitly
+intended.
 
 ## Completion-handshake rollout
 

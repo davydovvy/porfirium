@@ -2,24 +2,25 @@
 
 ## Project Structure & Module Organization
 
-Porfirium is a Docker Compose–based agent platform. The FastAPI control plane and Temporal worker
-live in `apps/portal-api/portal_api`; backend tests are in `apps/portal-api/tests`, and Alembic
-migrations are in `apps/portal-api/migrations`. The React/Vite portal is under `apps/web/src`.
-Independent MCP servers are in `services/`, while immutable versioned agent packages live under
-`agents/<agent-id>/<version>/`. Deployment configuration belongs in `compose.yaml` and `deploy/`.
+Porfirium uses rootless Podman for the target agent platform and Docker Compose for shared gateway
+and observability services. Target FastAPI services and their tests live in `services/`. The
+React/Vite portal is under `apps/web/src`. Independent MCP servers are also in `services/`, while
+immutable versioned agent packages live under `agents/<agent-id>/<version>/`. Deployment
+configuration belongs in `compose.yaml` and `deploy/`.
 Target architecture, migration, and operator guidance are maintained in `docs/`; repeatable
 verification entry points belong in `scripts/`. Avoid accumulating completed-phase narratives in
 source docs.
 
 ## Build, Test, and Development Commands
 
-- `./scripts/phase4/start.sh` starts the current local stack (standalone Keycloak is required).
-- `./scripts/phase4/verify.sh` runs the accepted platform-wide verification suite.
-- `./scripts/increment9/verify.sh` checks portal authoring, backend, frontend, and production build.
-- `cd apps/portal-api && uv run pytest -q` runs backend tests; `uv run ruff check .` lints Python.
+- `./scripts/target-phase13/verify.sh` checks the public target portal and production build.
+- `./scripts/target-phase12/verify-hardening.sh` runs the target service lint and test suites.
+- `./scripts/target-phase12/verify-acceptance.sh` is the complete platform acceptance entry point;
+  its recovery and live checks require explicit opt-ins and local credentials.
 - `cd apps/web && npm run dev` starts Vite; `npm run lint`, `npm test`, and `npm run build` provide
   focused frontend checks.
-- `docker compose logs portal-api agent-worker` inspects API and durable-runtime failures.
+- `podman logs porfirium-agent-runtime-api` inspects Runtime failures; use the host Runner process
+  logs and `docker compose logs agentgateway` for execution and gateway failures.
 
 ## Coding Style & Naming Conventions
 
@@ -48,5 +49,5 @@ for visible portal changes. Document rollout and rollback for schema or runtime 
 ## Security & Configuration
 
 Never commit `.env`, credentials, tokens, provider payloads, or production data. Keep browser
-tokens at the Portal API boundary, enforce owner/role checks server-side, and treat prompts, tool
+tokens at the Portal BFF boundary, enforce owner/role checks server-side, and treat prompts, tool
 arguments, artifacts, and tool results as untrusted input.

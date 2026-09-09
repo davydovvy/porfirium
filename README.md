@@ -42,14 +42,14 @@ configuration and delegation, durable conversations, end-to-end run completion, 
 human-input suspension, the Portal BFF/web migration, and final hardening. That hardening adds
 bounded consumer failure handling, dead-letter inspection and replay, capacity enforcement,
 orphan cleanup, an adjacent-minor Runtime compatibility window, trusted-builder provenance policy,
-bounded retention,
-backup/restore tooling, signed end-to-end trace propagation, and malformed-event containment. A
+bounded retention, backup/restore tooling, signed end-to-end trace propagation, and malformed-event
+containment. A
 second immutable target package now provides a two-stage planning assistant with its own signed
 publication workflow. The additive Runtime protocol and Python SDK now define bounded typed tool
 calls and propagate signed per-run tool grants. Runtime exchanges the opaque delegation grant on
 each call, retains the short-lived user token only in memory, and forwards both authorization
-dimensions to the MCP boundary. Phase 13 has moved the target portal to the public
-`https://portal.local:8444` origin; only browser confirmation and legacy retirement remain.
+dimensions to the MCP boundary. Phase 13 moved the target portal to the public
+`https://portal.local:8444` origin and retired the legacy runtime.
 
 The authoritative documents are:
 
@@ -100,11 +100,7 @@ PHASE12_INCLUDE_RECOVERY=true PHASE12_INCLUDE_LIVE=true \
 ./scripts/target-model-only/verify.sh
 python3 scripts/target-keycloak/configure.py
 
-cd apps/portal-api
-uv run pytest -q
-uv run ruff check .
-
-cd ../web
+cd apps/web
 npm run lint
 npm test -- --run
 npm run build

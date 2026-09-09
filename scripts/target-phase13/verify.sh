@@ -45,7 +45,7 @@ import sys
 
 config = json.load(sys.stdin)
 portal = config["services"]["portal"]
-assert portal["environment"]["PORTAL_API_UPSTREAM"] == "portal-bff:8100"
+assert portal["environment"]["PORTAL_BFF_UPSTREAM"] == "portal-bff:8100"
 assert portal["cap_drop"] == ["ALL"]
 assert portal["security_opt"] == ["no-new-privileges:true"]
 assert portal["depends_on"] == {
@@ -63,9 +63,20 @@ for legacy_dependency in ("portal-api", "temporal", "application-postgres"):
     assert legacy_dependency not in serialized
 ' <<<"$compose_config"
 
-grep -Fq 'reverse_proxy {$PORTAL_API_UPSTREAM:portal-api:8000}' \
+if grep -Eq '^  (portal|portal-api|agent-worker|temporal|temporal-ui|application-postgres):' \
+  "$repo_dir/compose.yaml"; then
+  echo "FAIL: retired legacy service remains in shared Compose" >&2
+  exit 1
+fi
+test ! -e "$repo_dir/apps/portal-api"
+if grep -Fq 'portal-api' "$repo_dir/apps/web/Caddyfile"; then
+  echo "FAIL: retired Portal API remains in the web proxy configuration" >&2
+  exit 1
+fi
+
+grep -Fq 'reverse_proxy {$PORTAL_BFF_UPSTREAM}' \
   "$repo_dir/apps/web/Caddyfile"
-test "$(grep -Fc 'reverse_proxy {$PORTAL_API_UPSTREAM:portal-api:8000}' \
+test "$(grep -Fc 'reverse_proxy {$PORTAL_BFF_UPSTREAM}' \
   "$repo_dir/apps/web/Caddyfile")" -eq 2
 grep -Fq 'auto_https disable_redirects' "$repo_dir/apps/web/Caddyfile"
 grep -Fq 'skip_install_trust' "$repo_dir/apps/web/Caddyfile"

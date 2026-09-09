@@ -310,16 +310,15 @@ procedures, rollout and rollback remain in `OPERATIONS.md`.
 
 ## Phase 13 — Portal cutover and legacy retirement
 
-Implementation status: public cutover deployed and automated acceptance passed; browser
-confirmation and legacy retirement remain. [Portal cutover plan](CUTOVER.md) defines the remaining
-work and exit gate.
+Implementation status: complete. The public portal, full Phase 12 baseline, live two-agent matrix,
+and browser flows passed before the legacy runtime was retired. [Cutover record](CUTOVER.md)
+captures the accepted state and rollback boundary.
 
 Reuse the existing React portal with Portal BFF while preserving the current Keycloak login. Do
 not migrate or back up legacy agents, conversations, messages, runs, checkpoints, application data,
 or Temporal history. New conversations start in the target platform with its signed releases.
 
-First make the portal backend upstream configurable and deploy it with the target Compose topology
-on a rehearsal port. Verify the browser flows and complete Phase 12 gate, then move the target
-portal to `https://portal.local:8444`. The legacy Portal API, worker, Temporal services, and
-application database remain stopped and can be removed after public-origin acceptance. Rollback
-uses the previous accepted target portal image and configuration; it does not restore legacy data.
+The target portal is deployed at `https://portal.local:8444` with Portal BFF as its only backend.
+The legacy Portal API, worker, Temporal services, application database, and obsolete local data
+have been removed. Rollback uses the previous accepted target portal image and configuration; it
+does not restore legacy data.
